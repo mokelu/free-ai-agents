@@ -1,7 +1,7 @@
-{
+﻿{
   "id": "free-ai-agents",
   "name": "Free AI and Agents",
-  "version": "1.5.2",
+  "version": "1.5.3",
   "minAppVersion": "1.4.0",
   "description": "AI chat and vault-editing agents in your sidebar. Free monthly tokens with no signup; bring your own key for 20+ other providers.",
   "author": "Riemann Research",
