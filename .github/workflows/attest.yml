@@ -4,6 +4,10 @@ on:
   release:
     types: [published]
   workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to attest (defaults to the latest release)
+        required: false
 
 permissions:
   contents: read
@@ -14,12 +18,30 @@ jobs:
   attest:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Resolve release tag
+        id: rel
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "${{ github.event_name }}" = "release" ]; then
+            tag="${{ github.event.release.tag_name }}"
+          elif [ -n "${{ github.event.inputs.tag }}" ]; then
+            tag="${{ github.event.inputs.tag }}"
+          else
+            tag="$(gh release view -R "${{ github.repository }}" --json tagName -q .tagName)"
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "attesting tag: $tag"
+
+      - name: Download the assets that were actually published
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p dist
+          gh release download "${{ steps.rel.outputs.tag }}" -R "${{ github.repository }}" -D dist
+          ls -l dist
 
       - name: Attest release assets
         uses: actions/attest-build-provenance@v2
         with:
-          subject-path: |
-            main.js
-            manifest.json
-            styles.css
+          subject-path: dist/*
