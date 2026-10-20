@@ -207,9 +207,12 @@ function createOpenAiDoor(def, transport, opts) {
         { "Content-Type": "application/json", Authorization: "Bearer " + key },
         b
       );
-      const attempt = (useTools, tokKey) => {
-        const body = { model: modelId, messages: useTools ? toOpenAiWire(messages) : flattenForChat(messages) };
-        body[tokKey] = 4e3;
+      const effort = def.id === "riemann" ? poolEffort(modelId) : null;
+      const wireModel = effort ? effort.model : modelId;
+      const attempt = (useTools, tokKey, noEffort) => {
+        const body = { model: wireModel, messages: useTools ? toOpenAiWire(messages) : flattenForChat(messages) };
+        body[tokKey] = effort ? 12e3 : 4e3;
+        if (effort && effort.effort && !noEffort) body.reasoning_effort = effort.effort;
         if (useTools) body.tools = tools.map((t) => ({ type: "function", function: { name: t.name, description: t.description, parameters: t.parameters } }));
         return post(body);
       };
@@ -218,11 +221,16 @@ function createOpenAiDoor(def, transport, opts) {
         if (/max_tokens|max_completion_tokens/i.test(m)) return true;
         return /unsupported.*parameter|unrecognized/i.test(m) && !/tool|function/i.test(m);
       };
+      const effortIssue = (e) => {
+        const m = String(e && (e.providerMessage || e.message) || "");
+        return /reasoning/i.test(m) || (/unsupported.*parameter|unrecognized|unknown.*param/i.test(m) && !/tool|function/i.test(m));
+      };
       const run = async (useTools) => {
         try {
           return await attempt(useTools, "max_tokens");
         } catch (e) {
           if (isBadRequestErr(e) && tokenIssue(e)) return attempt(useTools, "max_completion_tokens");
+          if (isBadRequestErr(e) && effort && effortIssue(e)) return attempt(useTools, "max_tokens", true);
           throw e;
         }
       };
@@ -254,9 +262,27 @@ function createOpenAiDoor(def, transport, opts) {
   };
   return door;
 }
+var POOL_EFFORT = [
+  ["-instant", "instant"],
+  ["-low", "low"],
+  ["-medium", "medium"],
+  ["-high", "high"]
+];
+function poolEffort(modelId) {
+  const id = String(modelId || "");
+  for (const row of POOL_EFFORT) {
+    const suffix = row[0];
+    if (id.length > suffix.length && id.slice(-suffix.length) === suffix) return { model: id.slice(0, -suffix.length), effort: row[1] };
+  }
+  if (id === "mercury-2.5") return { model: id, effort: "" };
+  return null;
+}
 var RIEMANN_SEED = [
-  { modelId: "mercury-2", name: "Mercury 2", vendor: "Riemann Inference", color: "#8b7cff", ctx: "" },
-  { modelId: "mercury-2.5", name: "Mercury 2.5", vendor: "Riemann Inference", color: "#6ea8fe", ctx: "" }
+  { modelId: "mercury-2.5", name: "Mercury 2.5 (Think: Medium)", vendor: "Riemann Inference", color: "#6ea8fe", ctx: "" },
+  { modelId: "mercury-2.5-high", name: "Mercury 2.5 (Think: High)", vendor: "Riemann Inference", color: "#6ea8fe", ctx: "" },
+  { modelId: "mercury-2.5-low", name: "Mercury 2.5 (Think: Low)", vendor: "Riemann Inference", color: "#6ea8fe", ctx: "" },
+  { modelId: "mercury-2.5-instant", name: "Mercury 2.5 (Think: Off)", vendor: "Riemann Inference", color: "#6ea8fe", ctx: "" },
+  { modelId: "mercury-2", name: "Mercury 2", vendor: "Riemann Inference", color: "#8b7cff", ctx: "" }
 ];
 function createRiemannDoor(baseUrl, transport) {
   const def = { id: "riemann", name: "Riemann Inference", baseUrl, color: "#8b7cff", dialect: "openai" };
@@ -2220,6 +2246,7 @@ function mountPanel(root, deps) {
     return true;
   }
   function title() {
+    if (aiTitle) return aiTitle;
     const first = msgs.find((m) => m.kind === "user" && looksLikeTopic(m.text) && !isGreeting(m.text));
     if (!first) return "New conversation";
     return makeTitle(first.text) || "New conversation";

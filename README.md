@@ -4,7 +4,8 @@ Free AI chat and vault-editing agents in your Obsidian sidebar. No account, no s
 
 ## Features
 
-- **Free pool** — pick a pool model and chat with no account and no key.
+- **Free pool** — pick a pool model and chat with no account and no key. Mercury 2.5 is offered in thinking levels — **Medium**, **High**, **Low** and **Off** — so you choose speed or depth.
+- **Model-written conversation titles** — the chat header is named by the model you are already using, not by a guess from your first message.
 - **Agents that edit your vault** — create, rewrite, move and tag notes through tools, with an approval step before anything is changed.
 - **Chat and agent modes** — ask questions, or let the agent act with tools such as read, search, write, move, tags, properties and canvas.
 - **Web tools** — `web_read` and `web_search` let the model read a page or search the web, using the free web allowance or your own Jina key.
