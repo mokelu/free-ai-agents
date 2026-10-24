@@ -1,4 +1,4 @@
-﻿"use strict";
+"use strict";
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -66,7 +66,25 @@ var PRESETS = [
   { id: "minimax", name: "MiniMax", baseUrl: "https://api.minimax.chat/v1", color: "#ec4899", dialect: "openai" },
   { id: "inception", name: "Inception", baseUrl: "https://api.inceptionlabs.ai/v1", color: "#6a55e8", dialect: "openai" }
 ];
-var STT_MODELS = { groq: "whisper-large-v3-turbo", openai: "whisper-1", riemann: "whisper-large-v3" };
+var STT_MODELS = {
+  groq: [
+    { id: "whisper-large-v3-turbo", name: "Whisper Large v3 Turbo" },
+    { id: "whisper-large-v3", name: "Whisper Large v3" }
+  ],
+  openai: [
+    { id: "whisper-1", name: "Whisper" },
+    { id: "gpt-4o-mini-transcribe", name: "GPT-4o mini Transcribe" },
+    { id: "gpt-4o-transcribe", name: "GPT-4o Transcribe" }
+  ],
+  riemann: [{ id: "whisper-large-v3", name: "Whisper Large v3" }]
+};
+function sttInfo(def, id, extra) {
+  const src = extra || def.stt || null;
+  if (src && Array.isArray(src.models) && src.models.length) {
+    return { models: src.models, path: src.path || "/audio/transcriptions" };
+  }
+  return { models: STT_MODELS[id] || [], path: "/audio/transcriptions" };
+}
 function presetById(id) {
   return PRESETS.filter((p) => p.id === id)[0];
 }
@@ -190,16 +208,20 @@ function createOpenAiDoor(def, transport, opts) {
       door.connected = false;
       door.models = [];
     },
-    async transcribe(audio) {
-      const model = STT_MODELS[door.id];
-      if (!model) throw new Error("This provider has no speech-to-text.");
+    sttModels() {
+      return sttInfo(def, door.id, opts && opts.sttExtra ? opts.sttExtra() : null).models;
+    },
+    async transcribe(audio, modelId) {
+      const info = sttInfo(def, door.id, opts && opts.sttExtra ? opts.sttExtra() : null);
+      if (!info.models.length) throw new Error("This provider has no speech-to-text.");
+      const model = (info.models.filter((m) => m.id === modelId)[0] || info.models[0]).id;
       if (door.byok !== false && !key) throw new Error("Add your " + door.name + " key first.");
       const mp = buildMultipart({ model, response_format: "json" }, audio);
       const headers = key ? { Authorization: "Bearer " + key } : {};
-      const j = await transport.postBytes(def.baseUrl + "/audio/transcriptions", headers, mp.body, mp.contentType);
+      const j = await transport.postBytes(def.baseUrl + info.path, headers, mp.body, mp.contentType);
       return j && typeof j.text === "string" ? j.text.trim() : "";
     },
-    async chat(modelId, messages, tools) {
+    async chat(modelId, messages, tools, callOpts) {
       if (!door.connected) throw new Error("door not connected");
       const native = Array.isArray(tools) && tools.length > 0;
       const post = (b) => transport.postJson(
@@ -207,7 +229,9 @@ function createOpenAiDoor(def, transport, opts) {
         { "Content-Type": "application/json", Authorization: "Bearer " + key },
         b
       );
-      const effort = def.id === "riemann" ? poolEffort(modelId) : null;
+      let effort = def.id === "riemann" ? poolEffort(modelId) : null;
+      const picked = callOpts && typeof callOpts.effort === "string" ? callOpts.effort.trim() : "";
+      if (picked && !(effort && effort.effort)) effort = { model: effort ? effort.model : modelId, effort: picked };
       const wireModel = effort ? effort.model : modelId;
       const attempt = (useTools, tokKey, noEffort) => {
         const body = { model: wireModel, messages: useTools ? toOpenAiWire(messages) : flattenForChat(messages) };
@@ -278,10 +302,7 @@ function poolEffort(modelId) {
   return null;
 }
 var RIEMANN_SEED = [
-  { modelId: "mercury-2.5", name: "Mercury 2.5 (Think: Medium)", vendor: "Riemann Inference", color: "#6ea8fe", ctx: "" },
-  { modelId: "mercury-2.5-high", name: "Mercury 2.5 (Think: High)", vendor: "Riemann Inference", color: "#6ea8fe", ctx: "" },
-  { modelId: "mercury-2.5-low", name: "Mercury 2.5 (Think: Low)", vendor: "Riemann Inference", color: "#6ea8fe", ctx: "" },
-  { modelId: "mercury-2.5-instant", name: "Mercury 2.5 (Think: Off)", vendor: "Riemann Inference", color: "#6ea8fe", ctx: "" },
+  { modelId: "mercury-2.5", name: "Mercury 2.5", vendor: "Riemann Inference", color: "#6ea8fe", ctx: "", effort: ["instant", "low", "medium", "high"], effortDefault: "medium" },
   { modelId: "mercury-2", name: "Mercury 2", vendor: "Riemann Inference", color: "#8b7cff", ctx: "" }
 ];
 function createRiemannDoor(baseUrl, transport) {
@@ -462,6 +483,9 @@ var DoorRegistry = class {
     this.transport = transport;
     this.doors = [];
     this.customDefs = [];
+    this.efforts = {};
+    this.sttExtra = {};
+    this.catalogDefs = {};
     const riemann = createRiemannDoor(RIEMANN_BASE_URL, transport);
     this.doors.push(riemann);
   }
@@ -475,13 +499,40 @@ var DoorRegistry = class {
     if (!c) return void 0;
     return { id: c.id, name: c.name, baseUrl: c.baseUrl, color: c.color || "#9d9d9d", dialect: c.dialect || "openai" };
   }
+  setCatalog(providers) {
+    const defs = {};
+    const stt = {};
+    (providers || []).forEach((cp) => {
+      defs[cp.id] = cp;
+      if (cp.stt) stt[cp.id] = cp.stt;
+    });
+    this.catalogDefs = defs;
+    this.sttExtra = stt;
+  }
+  keyUrlFor(id) {
+    const cp = this.catalogDefs[id];
+    return cp && cp.keyUrl ? cp.keyUrl : "";
+  }
+  addCatalogProvider(cp) {
+    if (!catalogAddable(cp)) return null;
+    if (this.doorById(cp.id)) return this.doorById(cp.id);
+    this.addCustomDef({ id: cp.id, name: cp.name, baseUrl: cp.baseUrl, color: cp.color, dialect: cp.dialect, fromCatalog: true });
+    return this.addDoor(cp.id);
+  }
+  setEffort(appId, level) {
+    if (level) this.efforts[appId] = String(level);
+    else delete this.efforts[appId];
+  }
+  effortOf(appId) {
+    return this.efforts[appId] || "";
+  }
   addDoor(id, initialKey) {
     const existing = this.doorById(id);
     if (existing) return existing;
     const def = this.defById(id);
     if (!def) return null;
     const dialect = def.dialect || "openai";
-    const d = id === "riemann" ? createRiemannDoor(def.baseUrl, this.transport) : dialect === "anthropic" ? createAnthropicDoor(def, this.transport) : createOpenAiDoor(def, this.transport);
+    const d = id === "riemann" ? createRiemannDoor(def.baseUrl, this.transport) : dialect === "anthropic" ? createAnthropicDoor(def, this.transport) : createOpenAiDoor(def, this.transport, { sttExtra: () => this.sttExtra[id] || null });
     if (initialKey && d.setKey) d.setKey(initialKey);
     this.doors.push(d);
     return d;
@@ -490,6 +541,9 @@ var DoorRegistry = class {
     if (id === "riemann" || id === "test") return;
     this.doors = this.doors.filter((d) => d.id !== id);
     this.customDefs = this.customDefs.filter((c) => c.id !== id);
+    Object.keys(this.efforts).forEach((k) => {
+      if (k.indexOf(id + ":") === 0) delete this.efforts[k];
+    });
   }
   addCustomDef(def) {
     if (!def.id || !def.name || !def.baseUrl) throw new Error("custom door needs id, name, baseUrl");
@@ -523,17 +577,38 @@ var DoorRegistry = class {
     const p = splitAppId(appId);
     const d = this.doorById(p.doorId);
     if (!d || !d.connected) return Promise.reject(new Error("door not connected"));
-    return d.chat(p.modelId, history, tools);
+    return d.chat(p.modelId, history, tools, { effort: this.efforts[appId] || "" });
   }
   doorIds() {
     return this.doors.map((d) => d.id).filter((id) => id !== "riemann" && id !== "test");
   }
-  async transcribe(audio) {
-    let real = null;
-    for (const id of ["groq", "openai", "riemann"]) {
+  voiceDoors() {
+    return this.doors.filter((d) => d.id !== "riemann" && d.transcribe && d.sttModels && d.byok !== false && d.hasKey && d.hasKey() && d.sttModels().length);
+  }
+  voiceOptions() {
+    const out = [];
+    this.voiceDoors().forEach((d) => {
+      d.sttModels().forEach((m) => out.push({ value: d.id + ":" + m.id, label: d.name + " \u00B7 " + m.name }));
+    });
+    return out;
+  }
+  async transcribe(audio, choice) {
+    const usable = (d) => d && d.transcribe && d.sttModels && d.sttModels().length && (d.byok === false || d.hasKey && d.hasKey());
+    if (choice) {
+      const cut = choice.indexOf(":");
+      const cd = cut > 0 ? this.doorById(choice.slice(0, cut)) : null;
+      if (usable(cd)) return cd.transcribe(audio, choice.slice(cut + 1));
+    }
+    const order = [];
+    ["groq", "openai", "riemann"].forEach((id) => {
       const d = this.doorById(id);
-      if (!d || !d.transcribe) continue;
-      if (d.byok !== false && !(d.hasKey && d.hasKey())) continue;
+      if (usable(d)) order.push(d);
+    });
+    this.doors.forEach((d) => {
+      if (usable(d) && order.indexOf(d) < 0) order.push(d);
+    });
+    let real = null;
+    for (const d of order) {
       try {
         return await d.transcribe(audio);
       } catch (e) {
@@ -588,10 +663,19 @@ function httpFail(res) {
   if (typeof te.resetInDays === "number") e.resetInDays = te.resetInDays;
   return e;
 }
+var QUOTA_SEEN = { ai: 0, web: 0 };
+function seenLimit(kind, n2) {
+  QUOTA_SEEN[kind] = n2;
+  return n2;
+}
+function fmtFull(n2) {
+  return Math.round(n2).toLocaleString("en-US");
+}
 function freeQuotaText(kind, days) {
   const d = typeof days === "number" && days > 0 ? days : 30;
   const when = "They come back in " + d + (d === 1 ? " day" : " days") + ".";
-  const what = kind === "web" ? "30,000 web search" : "1,000,000 AI";
+  const seen = QUOTA_SEEN[kind === "web" ? "web" : "ai"];
+  const what = (seen ? fmtFull(seen) + " " : "") + (kind === "web" ? "web search" : "AI");
   return "Your FREE " + what + " tokens are used up on this device.\n" + when + "\nBut you do not need to wait!\nYou can get many more millions and billions of AI tokens.\nGo to www.usefree.space\nIt shows all AI models, free deals and promos.\nThere are many to choose from. Enjoy :)\nNo account. No stupid signups.";
 }
 function buildMultipart(fields, file) {
@@ -705,6 +789,8 @@ var DEFAULT_DATA = {
   saveChats: true,
   rememberKeys: true,
   voiceTyping: false,
+  voiceChoice: "",
+  effort: {},
   jinaKey: "",
   deviceId: "",
   approvalMode: "risky",
@@ -727,6 +813,11 @@ function sanitizeData(raw) {
     autoDefaulted: true,
     allowEval: false,
     voiceTyping: d.voiceTyping === true,
+    voiceChoice: typeof d.voiceChoice === "string" ? d.voiceChoice : "",
+    effort: d.effort && typeof d.effort === "object" && !Array.isArray(d.effort) ? Object.keys(d.effort).reduce((o, k) => {
+      if (typeof d.effort[k] === "string" && /^[a-z0-9_-]{1,24}$/.test(d.effort[k])) o[k] = d.effort[k];
+      return o;
+    }, {}) : {},
     jinaKey: typeof d.jinaKey === "string" ? d.jinaKey : "",
     deviceId: typeof d.deviceId === "string" ? d.deviceId : "",
     approvalMode: d.approvalMode === "ask" || d.approvalMode === "never" ? d.approvalMode : "risky",
@@ -828,14 +919,14 @@ var PanelSettingsTab = class extends import_obsidian2.PluginSettingTab {
         return;
       }
       const days = q.resetInDays + (q.resetInDays === 1 ? " day" : " days");
-      if (q.left <= 0) qs.setDesc("You\u2019ve used all 1,000,000 free tokens. They come back in " + days + ". Get more at usefree.space.");
+      if (q.left <= 0) qs.setDesc("You\u2019ve used all " + fmtFull(q.limit) + " free tokens. They come back in " + days + ". Get more at usefree.space.");
       else qs.setDesc(fmtTokens(q.left) + " of " + fmtTokens(q.limit) + " left \xB7 resets in " + days);
       bar.style.display = "";
       fill.style.width = Math.max(0, Math.min(100, q.limit ? q.left / q.limit * 100 : 0)) + "%";
     });
     new S(containerEl).setName("Web access").setHeading();
     containerEl.createEl("p", {
-      text: "The AI can open web pages and search the web. Leave the key blank to use the included 30,000 tokens per device every 30 days.",
+      text: "The AI can open web pages and search the web. Leave the key blank to use the included free web allowance for this device. The meter below shows what is left.",
       cls: "setting-item-description"
     });
     const webOwn = () => String(f.data.jinaKey || "").trim();
@@ -846,7 +937,7 @@ var PanelSettingsTab = class extends import_obsidian2.PluginSettingTab {
     ws.addButton((b) => b.setButtonText("Go to usefree.space").onClick(() => open(FREE_SITE_URL)));
     const paintWeb = async () => {
       if (webOwn()) {
-        ws.setDesc("Using your own Jina key. The included 30,000 tokens are not used.");
+        ws.setDesc("Using your own Jina key. The included free allowance is not used.");
         wbar.style.display = "none";
         return;
       }
@@ -859,7 +950,7 @@ var PanelSettingsTab = class extends import_obsidian2.PluginSettingTab {
       }
       const days = q.resetInDays + (q.resetInDays === 1 ? " day" : " days");
       if (q.left <= 0) {
-        ws.setDesc("You\u2019ve used all 30,000 free web tokens. They come back in " + days + ". Get more at usefree.space.");
+        ws.setDesc("You\u2019ve used all " + fmtFull(q.limit) + " free web tokens. They come back in " + days + ". Get more at usefree.space.");
       } else {
         ws.setDesc(fmtTokens(q.left) + " of " + fmtTokens(q.limit) + " left \xB7 resets in " + days);
       }
@@ -867,7 +958,7 @@ var PanelSettingsTab = class extends import_obsidian2.PluginSettingTab {
       wfill.style.width = Math.max(0, Math.min(100, q.limit ? q.left / q.limit * 100 : 0)) + "%";
     };
     void paintWeb();
-    new S(containerEl).setName("Your own Jina key").setDesc("Optional. Paste a key from jina.ai to use your own quota and skip the 30,000-token allowance. Stored on this device only.").addText((t) => {
+    new S(containerEl).setName("Your own Jina key").setDesc("Optional. Paste a key from jina.ai to use your own quota and skip the free web allowance. Stored on this device only.").addText((t) => {
       t.setPlaceholder("jina_...");
       t.setValue(f.data.jinaKey || "");
       t.inputEl.type = "password";
@@ -882,6 +973,12 @@ var PanelSettingsTab = class extends import_obsidian2.PluginSettingTab {
       text: "Connect an account with another AI provider to use its models. You pay that provider directly, or use their free tier.",
       cls: "setting-item-description"
     });
+    if (f.catalogReady && !f.catalogReady() && !this.catalogTried) {
+      this.catalogTried = true;
+      void f.loadCatalog().then(() => {
+        if (containerEl.isConnected) this.display();
+      });
+    }
     const added = f.registry.doors.map((d) => d.id).filter((id) => id !== "riemann" && id !== "test");
     if (!added.length) {
       containerEl.createEl("p", { text: "No accounts connected yet. Add one below.", cls: "setting-item-description" });
@@ -890,7 +987,8 @@ var PanelSettingsTab = class extends import_obsidian2.PluginSettingTab {
       const d = f.registry.doorById(id);
       this.providerRow(containerEl, id, d && d.name || id, true);
     });
-    const avail = PRESETS.filter((p) => !f.registry.doorById(p.id)).sort((a, b) => a.name.localeCompare(b.name));
+    const fromCatalog = (f.catalogProviders ? f.catalogProviders() : []).filter((cp) => !f.registry.doorById(cp.id)).map((cp) => ({ id: cp.id, name: cp.name + (cp.stt ? " (voice)" : "") }));
+    const avail = PRESETS.filter((p) => !f.registry.doorById(p.id)).map((p) => ({ id: p.id, name: p.name })).concat(fromCatalog).sort((a, b) => a.name.localeCompare(b.name));
     if (avail.length) {
       let pick = avail[0].id;
       new S(containerEl).setName("Add a provider").setDesc("Choose one, add it, then paste your key.").addDropdown((dd) => {
@@ -908,9 +1006,9 @@ var PanelSettingsTab = class extends import_obsidian2.PluginSettingTab {
       })
     );
     new S(containerEl).setName("Voice typing").setHeading();
-    const groqOk = this.hasKey("groq");
+    const voiceOpts = f.registry.voiceOptions();
     const vs = new S(containerEl).setName("Speak instead of typing").setDesc(
-      groqOk ? "Shows a mic in the chat. Uses your Groq key." : "Needs a Groq key (free tier). Add one to turn this on."
+      voiceOpts.length ? "Shows a mic in the chat. Uses the voice model chosen below." : "Needs a provider that offers speech-to-text, like Groq (free tier) or OpenAI. Add a key to turn this on."
     ).addToggle(
       (t) => t.setValue(f.data.voiceTyping === true).onChange(async (v) => {
         f.data.voiceTyping = v;
@@ -918,8 +1016,18 @@ var PanelSettingsTab = class extends import_obsidian2.PluginSettingTab {
         f.refreshPanel();
       })
     );
-    if (!groqOk) {
+    if (!voiceOpts.length) {
       vs.addButton((b) => b.setButtonText("Add a Groq key").onClick(() => void this.addProvider("groq")));
+    } else {
+      new S(containerEl).setName("Voice model").setDesc("Which provider and model turns your speech into text.").addDropdown((dd) => {
+        dd.addOption("", "Automatic");
+        voiceOpts.forEach((o) => dd.addOption(o.value, o.label));
+        dd.setValue(voiceOpts.some((o) => o.value === f.data.voiceChoice) ? f.data.voiceChoice : "");
+        dd.onChange(async (v) => {
+          f.data.voiceChoice = v;
+          await f.save();
+        });
+      });
     }
     new S(containerEl).setName("Chats and privacy").setHeading();
     containerEl.createEl("p", {
@@ -1018,12 +1126,7 @@ var PanelSettingsTab = class extends import_obsidian2.PluginSettingTab {
   }
   async addProvider(id) {
     const f = this.facade;
-    if (!f.registry.doorById(id) && presetById(id)) {
-      f.registry.addDoor(id);
-      if (!f.data.doors.includes(id)) f.data.doors.push(id);
-      await f.save();
-      f.refreshPanel();
-    }
+    await f.ensureProvider(id);
     f.setFocus(id);
     this.display();
   }
@@ -1058,12 +1161,19 @@ var PanelSettingsTab = class extends import_obsidian2.PluginSettingTab {
       }
       desc.createSpan({ cls: "ai-rp-sdot " + cls });
       desc.createSpan({ text });
+      const sdef = f.registry.defById(id);
+      if (sdef && !presetById(id) && id !== "riemann") {
+        try {
+          desc.createSpan({ text: " Your key is sent to " + new URL(sdef.baseUrl).host + "." });
+        } catch (e) {
+        }
+      }
       if (!hasKey && id !== "riemann") {
         desc.createSpan({ text: " " });
         const a = desc.createEl("a", { text: "Get a key", href: "#" });
         a.addEventListener("click", (e) => {
           e.preventDefault();
-          window.open(KEY_URLS[id] || FREE_SITE_URL, "_blank");
+          window.open(f.registry.keyUrlFor(id) || KEY_URLS[id] || FREE_SITE_URL, "_blank");
         });
       }
       if (btn) {
@@ -1518,6 +1628,52 @@ function applyUsage(r, u) {
 function safeUrl(u, fallback) {
   return typeof u === "string" && /^https:\/\//i.test(u) ? u : fallback;
 }
+function normLevels(v) {
+  if (!Array.isArray(v)) return [];
+  const out = [];
+  v.forEach((x) => {
+    const t = typeof x === "string" ? x.trim().toLowerCase() : "";
+    if (/^[a-z0-9_-]{1,24}$/.test(t) && out.indexOf(t) < 0) out.push(t);
+  });
+  return out.length > 1 ? out : [];
+}
+function normEffortFields(m) {
+  const levels = normLevels(m && m.effort);
+  const def = m && typeof m.effortDefault === "string" ? m.effortDefault.trim().toLowerCase() : "";
+  return { effort: levels, effortDefault: levels.indexOf(def) >= 0 ? def : "" };
+}
+function normStt(s) {
+  if (!s || typeof s !== "object") return null;
+  const raw = Array.isArray(s.models) ? s.models : typeof s.model === "string" ? [s.model] : [];
+  const models = [];
+  raw.forEach((x) => {
+    const id = typeof x === "string" ? x : x && typeof x.id === "string" ? x.id : "";
+    if (!id || id.length > 80 || models.some((m) => m.id === id)) return;
+    models.push({ id, name: x && typeof x.name === "string" && x.name ? x.name : id });
+  });
+  if (!models.length) return null;
+  const def = typeof s.default === "string" ? models.filter((m) => m.id === s.default)[0] : null;
+  if (def) models.splice(models.indexOf(def), 1), models.unshift(def);
+  const path = typeof s.path === "string" && /^\/[A-Za-z0-9._\/-]*$/.test(s.path) && s.path.indexOf("..") < 0 ? s.path : "/audio/transcriptions";
+  return { models, path };
+}
+function safeBase(u) {
+  if (typeof u !== "string") return "";
+  try {
+    const x = new URL(u.trim());
+    if (x.protocol !== "https:" || x.username || x.password) return "";
+    return x.origin + x.pathname.replace(/\/+$/, "");
+  } catch (e) {
+    return "";
+  }
+}
+function catalogAddable(cp) {
+  return !!(cp && cp.baseUrl && cp.id && cp.id !== "riemann" && cp.id !== "test" && !/^custom-/.test(cp.id) && !presetById(cp.id));
+}
+function effortLabel(level) {
+  const t = String(level || "");
+  return t ? t.charAt(0).toUpperCase() + t.slice(1).replace(/[-_]/g, " ") : "";
+}
 function normCatalog(j) {
   const out = { providers: [], latest: null, pool: { auto: "", models: [] } };
   const lt = j && typeof j === "object" && j.latest && typeof j.latest === "object" ? j.latest : null;
@@ -1535,6 +1691,7 @@ function normCatalog(j) {
         name: typeof m.name === "string" && m.name ? m.name : m.id,
         tags: Array.isArray(m.tags) ? m.tags.filter((t) => typeof t === "string") : [],
         isNew: m.new === true,
+        ...normEffortFields(m),
         upcoming: typeof m.upcoming === "string" ? m.upcoming : "",
         upcomingAt: typeof m.upcomingAt === "string" ? Date.parse(m.upcomingAt) || 0 : 0,
         deal: dl ? { title: dl.title, ends: typeof dl.ends === "string" ? dl.ends : "", endsAt: typeof dl.endsAt === "string" ? Date.parse(dl.endsAt) || 0 : 0, url: typeof dl.url === "string" ? dl.url : "" } : null
@@ -1544,6 +1701,11 @@ function normCatalog(j) {
       id: p.id,
       name: typeof p.name === "string" && p.name ? p.name : p.id,
       url: typeof p.url === "string" ? p.url : "",
+      baseUrl: safeBase(p.baseUrl),
+      dialect: p.dialect === "anthropic" ? "anthropic" : "openai",
+      color: validateHexColor(p.color),
+      keyUrl: safeUrl(p.keyUrl, ""),
+      stt: normStt(p.stt),
       models
     });
   });
@@ -1557,6 +1719,7 @@ function normCatalog(j) {
         name: typeof m.name === "string" && m.name ? m.name : m.id,
         tags: Array.isArray(m.tags) ? m.tags.filter((t) => typeof t === "string") : [],
         isNew: m.new === true,
+        ...normEffortFields(m),
         item: typeof m.item === "string" ? m.item : "",
         url: typeof m.url === "string" ? m.url : ""
       };
@@ -1901,7 +2064,7 @@ function mountPanel(root, deps) {
       if (j) catalog = normCatalog(j);
       const rd = deps.registry && typeof deps.registry.doorById === "function" ? deps.registry.doorById("riemann") : null;
       if (rd && catalog && catalog.pool.models.length) {
-        rd.models = catalog.pool.models.map((m) => ({ modelId: m.id, name: m.name, vendor: "Riemann Inference", color: "#8b7cff", ctx: "" }));
+        rd.models = catalog.pool.models.map((m) => ({ modelId: m.id, name: m.name, vendor: "Riemann Inference", color: "#8b7cff", ctx: "", effort: m.effort, effortDefault: m.effortDefault }));
         rd.connected = true;
         const ids = Array.from(enabled);
         const onlyPool = ids.every((id) => id === "auto" || id.indexOf("riemann:") === 0);
@@ -1913,6 +2076,7 @@ function mountPanel(root, deps) {
       }
     } catch (e) {
     }
+    syncEfforts();
     if (!destroyed && (menuOpen || catalog && catalog.latest)) render();
   }
   function fmtNum(n2) {
@@ -3376,6 +3540,56 @@ function mountPanel(root, deps) {
     const ln = String(name).toLowerCase();
     return p.models.find((x) => x.id.toLowerCase() === lid || x.name.toLowerCase() === ln) || null;
   }
+  function effortInfo(doorId, modelId, name) {
+    let src = null;
+    if (doorId === "riemann" && catalog) {
+      const lid = String(modelId).toLowerCase();
+      src = catalog.pool.models.find((x) => x.id.toLowerCase() === lid) || null;
+    }
+    if (!src) src = catFind(doorId, modelId, name);
+    if (src && src.effort && src.effort.length) return { levels: src.effort, def: src.effortDefault || "" };
+    const d = deps.registry.doorById(doorId);
+    const dm = d ? d.models.find((x) => x.modelId === modelId) : null;
+    if (dm && dm.effort && dm.effort.length) return { levels: dm.effort, def: dm.effortDefault || "" };
+    return null;
+  }
+  function syncEfforts() {
+    const reg = deps.registry;
+    if (!reg || !reg.efforts) return;
+    let changed = false;
+    Object.keys(reg.efforts).forEach((appId) => {
+      const p = splitAppId(appId);
+      const info = effortInfo(p.doorId, p.modelId, p.modelId);
+      if (!info) {
+        const known = p.doorId === "riemann" ? !!(catalog && catalog.pool.models.some((x) => x.id === p.modelId)) : !!catFind(p.doorId, p.modelId, p.modelId);
+        if (known) {
+          delete reg.efforts[appId];
+          changed = true;
+        }
+        return;
+      }
+      if (info.levels.indexOf(reg.efforts[appId]) < 0) {
+        delete reg.efforts[appId];
+        changed = true;
+      }
+    });
+    if (changed && deps.saveEffort) deps.saveEffort();
+  }
+  function hideLegacyEffort(list) {
+    return list.filter((m) => {
+      const pe = poolEffort(m.modelId);
+      if (!pe || !pe.effort) return true;
+      const base = list.find((x) => x.modelId === pe.model);
+      return !(base && effortInfo("riemann", base.modelId, base.name));
+    });
+  }
+  function addKeyFor(g) {
+    menuOpen = false;
+    menuQuery = "";
+    render();
+    if (deps.addProvider) void deps.addProvider(g.id, g.cdef || null);
+    else setTimeout(() => deps.openSettings(), 0);
+  }
   function mkRow(doorId, doorName, modelId, name, live, cm) {
     return {
       appId: doorId + ":" + modelId,
@@ -3410,17 +3624,17 @@ function mountPanel(root, deps) {
       } else if (cp) {
         cp.models.forEach((cm) => rows.push(mkRow(d.id, d.name, cm.id, cm.name, false, cm)));
       }
-      groups.push({ id: d.id, name: d.name, url: cp ? cp.url : "", connected: !!d.connected, rows });
+      groups.push({ id: d.id, name: d.name, url: cp ? cp.url : "", connected: !!d.connected, addable: true, rows });
     });
     if (catalog) catalog.providers.forEach((cp) => {
       if (seen.has(cp.id)) return;
       seen.add(cp.id);
-      groups.push({ id: cp.id, name: cp.name, url: cp.url, connected: false, rows: cp.models.map((cm) => mkRow(cp.id, cp.name, cm.id, cm.name, false, cm)) });
+      groups.push({ id: cp.id, name: cp.name, url: cp.url, connected: false, addable: catalogAddable(cp), cdef: cp, rows: cp.models.map((cm) => mkRow(cp.id, cp.name, cm.id, cm.name, false, cm)) });
     });
     PRESETS.forEach((p) => {
       if (seen.has(p.id)) return;
       seen.add(p.id);
-      groups.push({ id: p.id, name: p.name, url: "", connected: false, rows: [] });
+      groups.push({ id: p.id, name: p.name, url: "", connected: false, addable: true, rows: [] });
     });
     groups.sort((a, b) => (b.connected ? 1 : 0) - (a.connected ? 1 : 0));
     return groups;
@@ -3434,6 +3648,14 @@ function mountPanel(root, deps) {
     b.type = "button";
     b.addEventListener("click", () => openUrl(safeUrl(d && d.url, safeUrl(g.url, DEALS_BASE + "/"))));
     c.appendChild(b);
+    if (g.addable) {
+      const b2 = el("button", "ai-rp-alt", "I have a key");
+      b2.type = "button";
+      b2.addEventListener("click", () => addKeyFor(g));
+      c.appendChild(b2);
+    } else {
+      c.appendChild(el("div", "ai-rp-dd", "This provider can\u2019t be used inside the plugin yet."));
+    }
     return c;
   }
   function rowEl(name, o) {
@@ -3491,6 +3713,25 @@ function mountPanel(root, deps) {
       deps.saveEnabled(Array.from(enabled));
       render();
     };
+    const effortStrip = (appId, info) => {
+      const cur = deps.registry.effortOf(appId) || info.def || "";
+      const wrap = el("div", "ai-rp-effort");
+      wrap.appendChild(el("span", "ai-rp-effort-l", "Thinking"));
+      info.levels.forEach((lv) => {
+        const b = el("button", "ai-rp-effort-b" + (cur === lv ? " on" : ""), effortLabel(lv));
+        b.type = "button";
+        b.setAttribute("aria-pressed", cur === lv ? "true" : "false");
+        if (lv === "instant") b.title = "No extra thinking. Fastest.";
+        b.addEventListener("click", () => {
+          deps.registry.setEffort(appId, lv);
+          if (deps.saveEffort) deps.saveEffort();
+          paintPool();
+          paintActual();
+        });
+        wrap.appendChild(b);
+      });
+      return wrap;
+    };
     const paintPool = () => {
       poolHost.innerHTML = "";
       const out = quotaOut;
@@ -3510,13 +3751,18 @@ function mountPanel(root, deps) {
         e.appendChild(a);
         pb.appendChild(e);
       }
-      const poolModels = catalog.pool.models.length ? catalog.pool.models.map((m) => ({ appId: "riemann:" + m.id, name: m.name, modelId: m.id, doorId: "riemann", doorName: "Riemann Inference", isNew: m.isNew })) : models.filter((m) => m.doorId === "riemann");
+      const poolAll = catalog.pool.models.length ? catalog.pool.models.map((m) => ({ appId: "riemann:" + m.id, name: m.name, modelId: m.id, doorId: "riemann", doorName: "Riemann Inference", isNew: m.isNew })) : models.filter((m) => m.doorId === "riemann");
+      const poolModels = hideLegacyEffort(poolAll);
       [AUTO].concat(poolModels).forEach((m) => {
         const cm = m.appId === "auto" ? null : catFind("riemann", m.modelId, m.name);
         const tags = [];
         if ((cm && cm.isNew) || m.isNew) tags.push(["ai-rp-t-new", "New"]);
         tags.push(out ? ["ai-rp-t-lock", "Pool empty"] : ["ai-rp-t-free", "Free"]);
         pb.appendChild(rowEl(m.name, { ok: !out, sel: enabled.has(m.appId), tags, onClick: out ? null : () => select(m.appId) }));
+        if (!out && m.appId !== "auto" && enabled.has(m.appId)) {
+          const ei = effortInfo("riemann", m.modelId, m.name);
+          if (ei) pb.appendChild(effortStrip(m.appId, ei));
+        }
       });
       poolHost.appendChild(pb);
     };
@@ -3571,18 +3817,14 @@ function mountPanel(root, deps) {
         h.appendChild(el("span", "", g.name));
         if (g.connected) {
           h.appendChild(el("span", "ai-rp-gsub", g.id === "test" ? "test mode" : "your key"));
-        } else {
+        } else if (g.addable) {
           const kb = el("button", "ai-rp-gbtn", "Add key");
           kb.type = "button";
           kb.title = "Goes to Settings \u2192 " + g.name;
-          kb.addEventListener("click", () => {
-            menuOpen = false;
-            menuQuery = "";
-            render();
-            if (deps.addProvider) void deps.addProvider(g.id);
-            else setTimeout(() => deps.openSettings(), 0);
-          });
+          kb.addEventListener("click", () => addKeyFor(g));
           h.appendChild(kb);
+        } else {
+          h.appendChild(el("span", "ai-rp-gsub", "website only"));
         }
         actualHost.appendChild(h);
         if (headerOnly) {
@@ -3602,6 +3844,10 @@ function mountPanel(root, deps) {
             paintActual();
           };
           actualHost.appendChild(rowEl(r.name, { ok, sel: ok && enabled.has(r.appId), tags, onClick }));
+          if (ok && enabled.has(r.appId)) {
+            const ei = effortInfo(g.id, r.modelId, r.name);
+            if (ei) actualHost.appendChild(effortStrip(r.appId, ei));
+          }
           if (!g.connected && !r.upcoming && dealOpen === r.appId) actualHost.appendChild(dealCard(r, g));
         });
       });
@@ -5187,11 +5433,7 @@ var PanelView = class extends import_obsidian5.ItemView {
       app: this.app,
       chats: this.plugin.chats,
       chatsEnabled: () => this.plugin.data.saveChats !== false,
-      voiceReady: () => {
-        if (this.plugin.data.voiceTyping !== true) return false;
-        const g = this.plugin.registry.doorById("groq");
-        return !!(g && g.hasKey && g.hasKey());
-      },
+      voiceReady: () => this.plugin.data.voiceTyping === true && this.plugin.registry.voiceDoors().length > 0,
       registry: this.plugin.registry,
       tools: this.plugin.tools,
       ambient: () => this.plugin.ambient.snapshot(),
@@ -5207,25 +5449,13 @@ var PanelView = class extends import_obsidian5.ItemView {
           typesetRixMath(container);
         });
       },
-      addProvider: async (id) => {
-        if (!this.plugin.registry.doorById(id) && presetById(id)) {
-          this.plugin.registry.addDoor(id);
-          if (!this.plugin.data.doors.includes(id)) this.plugin.data.doors.push(id);
-          await this.plugin.save();
-          this.plugin.refreshPanel();
-        }
+      addProvider: async (id, cp) => {
+        await this.plugin.ensureProvider(id, cp);
         this.plugin.openSettings(id);
       },
-      transcribe: (audio) => this.plugin.registry.transcribe(audio),
-      getCatalog: async () => {
-        try {
-          const res = await (0, import_obsidian5.requestUrl)({ url: CATALOG_URL, method: "GET", throw: false });
-          if (res.status < 200 || res.status >= 300) return null;
-          return res.json;
-        } catch (e) {
-          return null;
-        }
-      },
+      transcribe: (audio) => this.plugin.registry.transcribe(audio, this.plugin.data.voiceChoice),
+      saveEffort: () => void this.plugin.save(),
+      getCatalog: () => this.plugin.loadCatalog(),
       getQuota: () => this.plugin.fetchQuota(),
       getWebQuota: () => this.plugin.fetchWebQuota(),
       getApprovalMode: () => this.plugin.data.approvalMode,
@@ -5256,6 +5486,16 @@ var PanelView = class extends import_obsidian5.ItemView {
     if (this.panel) this.panel.chatsCleared();
   }
 };
+function migrateLegacyEffort(data) {
+  data.enabledModels = data.enabledModels.map((id) => {
+    if (id.indexOf("riemann:") !== 0) return id;
+    const pe = poolEffort(id.slice(8));
+    if (!pe || !pe.effort) return id;
+    const next = "riemann:" + pe.model;
+    if (!data.effort[next]) data.effort[next] = pe.effort;
+    return next;
+  }).filter((id, i, a) => a.indexOf(id) === i);
+}
 var ObsidianAppPlugin = class extends import_obsidian5.Plugin {
   constructor() {
     super(...arguments);
@@ -5266,6 +5506,7 @@ var ObsidianAppPlugin = class extends import_obsidian5.Plugin {
     this.ambient = createAmbient(this.app);
     const raw = await this.loadData();
     this.data = sanitizeData(raw);
+    migrateLegacyEffort(this.data);
     if (!this.data.deviceId) {
       this.data.deviceId = typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : "d-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10);
       await this.saveData(this.data);
@@ -5277,6 +5518,7 @@ var ObsidianAppPlugin = class extends import_obsidian5.Plugin {
     this.settingsFocus = null;
     this.registry = new DoorRegistry(createObsidianTransport(() => this.data.deviceId));
     this.registry.customDefs = this.data.customDefs.slice();
+    this.registry.efforts = this.data.effort;
     this.data.doors.forEach((id) => this.registry.addDoor(id));
     this.registry.setTestMode(this.data.testMode);
     this.applyKeysToDoors();
@@ -5316,6 +5558,10 @@ var ObsidianAppPlugin = class extends import_obsidian5.Plugin {
       }),
       getQuota: () => this.fetchQuota(),
       getWebQuota: () => this.fetchWebQuota(),
+      ensureProvider: (id, cp) => this.ensureProvider(id, cp),
+      catalogProviders: () => this.catalogProviders(),
+      catalogReady: () => !!this.catalogRaw,
+      loadCatalog: () => this.loadCatalog(),
       version: this.manifest && this.manifest.version ? this.manifest.version : "",
       setFocus: (id) => {
         this.settingsFocus = id;
@@ -5326,6 +5572,40 @@ var ObsidianAppPlugin = class extends import_obsidian5.Plugin {
         return v;
       }
     };
+  }
+  loadCatalog() {
+    if (this.catalogInflight) return this.catalogInflight;
+    this.catalogInflight = (async () => {
+      try {
+        const res = await (0, import_obsidian5.requestUrl)({ url: CATALOG_URL, method: "GET", throw: false });
+        if (res.status < 200 || res.status >= 300) return null;
+        const j = res.json;
+        this.catalogRaw = j;
+        this.registry.setCatalog(normCatalog(j).providers);
+        return j;
+      } catch (e) {
+        return null;
+      } finally {
+        this.catalogInflight = null;
+      }
+    })();
+    return this.catalogInflight;
+  }
+  catalogProviders() {
+    return this.catalogRaw ? normCatalog(this.catalogRaw).providers.filter(catalogAddable) : [];
+  }
+  async ensureProvider(id, cp) {
+    if (this.registry.doorById(id)) return true;
+    if (presetById(id)) {
+      this.registry.addDoor(id);
+    } else {
+      const c = cp && cp.id === id ? cp : this.catalogProviders().filter((x) => x.id === id)[0];
+      if (!c || !this.registry.addCatalogProvider(c)) return false;
+    }
+    if (!this.data.doors.includes(id)) this.data.doors.push(id);
+    await this.save();
+    this.refreshPanel();
+    return true;
   }
   async fetchQuota() {
     try {
@@ -5338,7 +5618,7 @@ var ObsidianAppPlugin = class extends import_obsidian5.Plugin {
       if (typeof j.device_tokens_left !== "number") return null;
       return {
         left: j.device_tokens_left,
-        limit: typeof j.device_limit === "number" ? j.device_limit : 1e6,
+        limit: typeof j.device_limit === "number" ? seenLimit("ai", j.device_limit) : 1e6,
         resetInDays: typeof j.device_reset_in_days === "number" ? j.device_reset_in_days : 30,
         upgradeUrl: typeof j.upgrade_url === "string" && j.upgrade_url ? j.upgrade_url : FALLBACK_UPGRADE_URL
       };
@@ -5357,7 +5637,7 @@ var ObsidianAppPlugin = class extends import_obsidian5.Plugin {
       if (typeof j.device_tokens_left !== "number") return null;
       return {
         left: j.device_tokens_left,
-        limit: typeof j.device_limit === "number" ? j.device_limit : 3e4,
+        limit: typeof j.device_limit === "number" ? seenLimit("web", j.device_limit) : 3e4,
         resetInDays: typeof j.device_reset_in_days === "number" ? j.device_reset_in_days : 30,
         available: j.available !== false,
         upgradeUrl: typeof j.upgrade_url === "string" && j.upgrade_url ? j.upgrade_url : FALLBACK_UPGRADE_URL
