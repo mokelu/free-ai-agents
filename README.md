@@ -1,5 +1,10 @@
 # Free AI and Agents
 
+<p align="center">
+  <img src="images/screenshot-61.png" width="49%" alt="Free AI and Agents chat in the Obsidian sidebar" />
+  <img src="images/screenshot-62.png" width="49%" alt="The free pool answering in Obsidian" />
+</p>
+
 Free AI chat and vault-editing agents in your Obsidian sidebar. No account, no signup, and no API key needed to start — you get a free monthly token allowance from [usefree.space](https://usefree.space). Bring your own key if you want to use other providers.
 
 ## Features
