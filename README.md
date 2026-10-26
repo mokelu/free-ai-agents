@@ -38,9 +38,6 @@ OR,
 
 - No account, no email, and no client-side telemetry.
 - The plugin stores its settings, your API keys (only if you turn on "Remember keys"), and your chats inside your vault.
-- To enforce the free allowance, our server records a random device ID together with token counts and timestamps. It is not linked to your identity, your vault, or the content of your messages.
-- Requests you make to other providers are governed by those providers' policies.
-
 See the privacy policy at [usefree.space/privacy](https://usefree.space/privacy).
 
 ## Permissions and safety
