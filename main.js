@@ -841,8 +841,14 @@ var KEY_URLS = {
   perplexity: "https://www.perplexity.ai/settings/api",
   cohere: "https://dashboard.cohere.com/api-keys"
 };
+function fmtM(n2) {
+  const m = n2 / 1e6;
+  let s = m >= 100 ? m.toFixed(0) : m >= 10 ? m.toFixed(1) : m.toFixed(2);
+  if (s.indexOf(".") >= 0) s = s.replace(/0+$/, "").replace(/\.$/, "");
+  return s + "M";
+}
 function fmtTokens(n2) {
-  if (n2 >= 1e6) return (n2 / 1e6).toFixed(1).replace(/\.0$/, "") + "M";
+  if (n2 >= 1e6) return fmtM(n2);
   if (n2 >= 1e3) return Math.round(n2 / 1e3) + "k";
   return String(Math.max(0, Math.round(n2)));
 }
@@ -894,6 +900,14 @@ var PanelSettingsTab = class extends import_obsidian2.PluginSettingTab {
     this.errs = {};
     this.rows = {};
     this.advOpen = false;
+    this.quotaTimer = null;
+  }
+  onClose() {
+    if (this.quotaTimer) {
+      clearInterval(this.quotaTimer);
+      this.quotaTimer = null;
+    }
+    this.contentEl.empty();
   }
   display() {
     const { containerEl } = this;
@@ -912,7 +926,8 @@ var PanelSettingsTab = class extends import_obsidian2.PluginSettingTab {
     const fill = bar.createDiv({ cls: "ai-rp-sfill" });
     bar.style.display = "none";
     qs.addButton((b) => b.setButtonText("Go to usefree.space").onClick(() => open(FREE_SITE_URL)));
-    void f.getQuota().then((q) => {
+    const paintQuota = async () => {
+      const q = await f.getQuota();
       if (!containerEl.isConnected) return;
       if (!q) {
         qs.setDesc("Couldn\u2019t check right now. You can still chat. Free tokens are used when the model picker says \u201Cpool\u201D.");
@@ -923,7 +938,8 @@ var PanelSettingsTab = class extends import_obsidian2.PluginSettingTab {
       else qs.setDesc(fmtTokens(q.left) + " of " + fmtTokens(q.limit) + " left \xB7 resets in " + days);
       bar.style.display = "";
       fill.style.width = Math.max(0, Math.min(100, q.limit ? q.left / q.limit * 100 : 0)) + "%";
-    });
+    };
+    void paintQuota();
     new S(containerEl).setName("Web access").setHeading();
     containerEl.createEl("p", {
       text: "The AI can open web pages and search the web. Leave the key blank to use the included free web allowance for this device. The meter below shows what is left.",
@@ -958,6 +974,16 @@ var PanelSettingsTab = class extends import_obsidian2.PluginSettingTab {
       wfill.style.width = Math.max(0, Math.min(100, q.limit ? q.left / q.limit * 100 : 0)) + "%";
     };
     void paintWeb();
+    if (this.quotaTimer) clearInterval(this.quotaTimer);
+    this.quotaTimer = setInterval(() => {
+      if (!containerEl.isConnected) {
+        clearInterval(this.quotaTimer);
+        this.quotaTimer = null;
+        return;
+      }
+      void paintQuota();
+      void paintWeb();
+    }, 15e3);
     new S(containerEl).setName("Your own Jina key").setDesc("Optional. Paste a key from jina.ai to use your own quota and skip the free web allowance. Stored on this device only.").addText((t) => {
       t.setPlaceholder("jina_...");
       t.setValue(f.data.jinaKey || "");
@@ -1266,6 +1292,42 @@ function estimateTokens(text) {
   return Math.max(1, Math.round(words * 1.35));
 }
 var HISTORY_EXCHANGES = 20;
+var MEDIA_IN_MD_RE = /!\[\[[^\]\n]*\]\]|!\[[^\]\n]*\]\([^)\n]+\)|<img\b[^>]*>|<video\b[^>]*>[\s\S]*?<\/video>|<video\b[^>]*\/?>|<audio\b[^>]*>[\s\S]*?<\/audio>|<audio\b[^>]*\/?>|data:image\/[a-z0-9.+-]+;base64,[A-Za-z0-9+/=]+|data:video\/[a-z0-9.+-]+;base64,[A-Za-z0-9+/=]+|data:audio\/[a-z0-9.+-]+;base64,[A-Za-z0-9+/=]+/gi;
+function mediaMediaType(s2) {
+  if (/\.png|\.jpe?g|\.gif|\.webp|\.svg|\.avif|\.bmp|\.tiff/i.test(s2)) return "image";
+  if (/\.mp4|\.webm|\.mov|\.mkv|\.avi/i.test(s2)) return "video";
+  if (/\.mp3|\.wav|\.ogg|\.m4a|\.flac|\.opus|\.weba/i.test(s2)) return "audio";
+  return "media";
+}
+function mediaPlaceholder(match) {
+  let kind = mediaMediaType(match);
+  if (/<img\b/i.test(match)) kind = "image";
+  else if (/<video\b/i.test(match)) kind = "video";
+  else if (/<audio\b/i.test(match)) kind = "audio";
+  if (/^data:/i.test(match)) return "[" + kind + " removed]";
+  let name = "";
+  const wiki = match.match(/!\[\[([^\]\n]+)/i);
+  const mdm = match.match(/!\[([^\]\n]*)\]\(([^)\n]+)/i);
+  const tag = match.match(/src=["']([^"']+)["']/i);
+  if (wiki) name = wiki[1].split("|")[0];
+  else if (mdm) {
+    if (/^data:/i.test(mdm[2])) return "[" + kind + " removed]";
+    name = mdm[1] || String(mdm[2].split("/").filter(Boolean).pop() || "");
+  } else if (tag) name = tag[1];
+  name = String(name || "").trim();
+  if (kind === "media") return match;
+  if (!name) return "[attached " + kind + " not visible to text-only models]";
+  return "[" + kind + " \u201C" + name.slice(0, 60) + "\u201D not visible to text-only models]";
+}
+function sanitizeMediaForModel(s2) {
+  let out = String(s2 || "");
+  let prev = null;
+  for (let i = 0; i < 3 && out !== prev; i++) {
+    prev = out;
+    out = out.replace(MEDIA_IN_MD_RE, mediaPlaceholder);
+  }
+  return out;
+}
 function buildHistory(msgs, nextUserText, attachments = [], extraSystem = "", environment = "") {
   const system = extraSystem ? SYSTEM_PROMPT + "\n\n" + extraSystem : SYSTEM_PROMPT;
   const out = [{ role: "system", content: system }];
@@ -1276,25 +1338,25 @@ function buildHistory(msgs, nextUserText, attachments = [], extraSystem = "", en
   const window2 = userIdx.length > HISTORY_EXCHANGES ? msgs.slice(userIdx[userIdx.length - HISTORY_EXCHANGES]) : msgs;
   window2.forEach((m) => {
     if (m.kind === "user") {
-      out.push({ role: "user", content: m.text });
+      out.push({ role: "user", content: sanitizeMediaForModel(m.text) });
       return;
     }
     const ids = m.turn.active ? [m.turn.active, ...m.turn.models] : m.turn.models;
     for (const id of ids) {
       const r = m.turn.responses[id];
       if ((id === m.turn.pinned || !m.turn.pinned) && r && r.status === "success" && r.text.trim()) {
-        out.push({ role: "assistant", content: r.text });
+        out.push({ role: "assistant", content: sanitizeMediaForModel(r.text) });
         break;
       }
     }
   });
-  let user = nextUserText;
+  let user = sanitizeMediaForModel(nextUserText);
   const extras = attachments.filter((a) => a.trim());
   if (extras.length) {
-    user += "\n\n" + extras.map((a) => "Attached context:\n" + a).join("\n\n");
+    user += "\n\n" + extras.map((a) => sanitizeMediaForModel("Attached context:\n" + a)).join("\n\n");
   }
   if (environment) {
-    user = environment + "\n\n---\n\n" + user;
+    user = sanitizeMediaForModel(environment) + "\n\n---\n\n" + user;
   }
   out.push({ role: "user", content: user });
   return out;
@@ -1552,7 +1614,8 @@ async function runAgent(base, deps, onUpdate) {
           denied,
           code: out.code,
           resetInDays: out.resetInDays,
-          upgradeUrl: out.upgradeUrl
+          upgradeUrl: out.upgradeUrl,
+          card: out && out.card || null
         });
         const content = denied ? "error: User denied this action." : summarizeResult(out);
         if (viaNative) toolMsgs.push({ role: "tool", toolCallId: call.id, name: call.tool, content });
@@ -1596,6 +1659,12 @@ var SVG_MIC = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke
 var SVG_SEND = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg>';
 var SVG_STOP = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="3"/></svg>';
 var SVG_EXPORT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>';
+var SVG_MAP = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5" r="2.6"/><circle cx="5" cy="19" r="2.6"/><circle cx="19" cy="19" r="2.6"/><path d="M12 7.6 5.8 16.5"/><path d="M12 7.6l6.2 8.9"/></svg>';
+var SVG_HELP = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>';
+var SVG_TOOL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>';
+var SVG_DOC = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>';
+var SVG_PLAY = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>';
+var SVG_PAUSE = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>';
 var SVG_SHIELD = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>';
 var SVG_CLOSE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12"/><path d="M18 6L6 18"/></svg>';
 function speechCtor() {
@@ -1848,7 +1917,7 @@ function reviveMsgs(raw) {
     if (!m || typeof m !== "object") return null;
     if (m.kind === "user") {
       if (typeof m.id !== "string" || typeof m.text !== "string") return null;
-      out.push({ kind: "user", id: m.id, text: m.text });
+      out.push({ kind: "user", id: m.id, text: m.text, pid: typeof m.pid === "string" ? m.pid : null });
     } else if (m.kind === "ai" && m.turn && typeof m.turn === "object") {
       const t = m.turn;
       if (typeof t.id !== "string" || !Array.isArray(t.models) || !t.responses || typeof t.responses !== "object") return null;
@@ -1861,6 +1930,7 @@ function reviveMsgs(raw) {
       });
       out.push({
         kind: "ai",
+        pid: typeof m.pid === "string" ? m.pid : null,
         turn: {
           id: t.id,
           models: t.models.filter((x) => typeof x === "string"),
@@ -1871,7 +1941,18 @@ function reviveMsgs(raw) {
       });
     } else return null;
   }
+  const known = /* @__PURE__ */ new Set();
+  let prevId = null;
+  for (const m of out) {
+    const id = nidB(m);
+    if (prevId === null || !m.pid || m.pid === id || !known.has(m.pid)) m.pid = prevId;
+    known.add(id);
+    prevId = id;
+  }
   return out;
+}
+function nidB(m) {
+  return m.kind === "user" ? m.id : m.turn.id;
 }
 var RISKY_TOOLS = /* @__PURE__ */ new Set(["delete_file", "delete_folder", "delete_section", "eval_js", "run_command", "set_plugin", "install_plugin", "reload_plugin"]);
 var APPROVAL_DANGER = {
@@ -1908,6 +1989,124 @@ var VERBS = {
 function baseName(p) {
   const last = String(p || "").split("/").filter(Boolean).pop() || "";
   return last.replace(/\.md$/i, "");
+}
+var TOOL_READ_FILE = /* @__PURE__ */ new Set(["read_file", "read_active_file", "list_files", "list_folders", "list_vault", "search_vault", "read_canvas", "search_active_file"]);
+var TOOL_WRITE_FILE = /* @__PURE__ */ new Set(["create_file", "write_file", "append_file", "prepend_file", "replace_in_file", "delete_file", "delete_folder", "move_file", "write_attachment", "write_canvas", "replace_section"]);
+function fileKindOf(tool) {
+  if (tool === "delete_file" || tool === "delete_folder") return "del";
+  if (TOOL_WRITE_FILE.has(tool)) return "write";
+  if (TOOL_READ_FILE.has(tool)) return "read";
+  return "";
+}
+function utf8len(s2) {
+  try {
+    return new TextEncoder().encode(String(s2 || "")).length;
+  } catch (e) {
+    return String(s2 || "").length;
+  }
+}
+function diffLines(before, after) {
+  const A = before === null || before === void 0 ? [] : String(before).split("\n");
+  const B = String(after === null || after === void 0 ? "" : after).split("\n");
+  let p = 0;
+  while (p < A.length && p < B.length && A[p] === B[p]) p++;
+  let e1 = A.length, e2 = B.length;
+  while (e1 > p && e2 > p && A[e1 - 1] === B[e2 - 1]) { e1--; e2--; }
+  const mA = A.slice(p, e1);
+  const mB = B.slice(p, e2);
+  let ops = [];
+  const capN = 800;
+  if (mA.length && mB.length && mA.length <= capN && mB.length <= capN) {
+    const n = mA.length, m = mB.length;
+    const dp = Array.from({ length: n + 1 }, () => new Uint16Array(m + 1));
+    for (let i = n - 1; i >= 0; i--) {
+      for (let j = m - 1; j >= 0; j--) {
+        dp[i][j] = mA[i] === mB[j] ? dp[i + 1][j + 1] + 1 : Math.max(dp[i + 1][j], dp[i][j + 1]);
+      }
+    }
+    let i = 0, j = 0;
+    while (i < n && j < m) {
+      if (mA[i] === mB[j]) { i++; j++; } else if (dp[i + 1][j] >= dp[i][j + 1]) { ops.push({ t: "del", s: mA[i++] }); } else { ops.push({ t: "add", s: mB[j++] }); }
+    }
+    while (i < n) ops.push({ t: "del", s: mA[i++] });
+    while (j < m) ops.push({ t: "add", s: mB[j++] });
+  } else {
+    ops = mA.map((s2) => ({ t: "del", s: s2 })).concat(mB.map((s2) => ({ t: "add", s: s2 })));
+  }
+  const adds = ops.filter((o) => o.t === "add").length;
+  const dels = ops.length - adds;
+  const lim = 120;
+  if (ops.length > lim) ops = ops.slice(0, lim).concat([{ t: "cut", s: (ops.length - lim) + " more changed lines" }]);
+  return { adds, dels, ops };
+}
+function fmtBytes(n2) {
+  const b = n2 || 0;
+  if (b < 1024) return b + " B";
+  if (b < 1048576) return (b / 1024).toFixed(1) + " KB";
+  return (b / 1048576).toFixed(1) + " MB";
+}
+var CAST = [
+  {
+    id: "ray", name: "Ray", emoji: "\u{1F3AD}", ring: ["#f2994a", "#f2c94c"],
+    role: "Street photographer \xB7 34", handle: "@shotby.rayz",
+    bio: ["\u{1F4FD}\u{FE0F} 35mm & rooftop mornings", "Light is a habit, not an accident", "Ask me anything \u2014 I answer at golden hour"],
+    chips: "Sharp \xB7 Warm \xB7 Golden hour", opener: "Ray picked up the phone.",
+    sys: "You are Ray \u2014 a 34-year-old male street photographer answering as a real person in a casual chat. Voice: warm, quick, a little playful; short vivid sentences; you notice light, timing and story in whatever is asked; now and then drop a one-line anecdote from a shoot. You have opinions and state them plainly. You keep all your helpfulness, accuracy and tool use exactly as normal \u2014 the persona changes only how you sound, never what you can do."
+  },
+  {
+    id: "april", name: "April", emoji: "\u{1F9C1}", ring: ["#ff9966", "#ff5e62"],
+    role: "Recipe hacker & baker \xB7 29", handle: "@april.bakes",
+    bio: ["\u{1F9C1} she/her \u00B7 turns sad fridges into dinner", "No recipe survives my kitchen", "DM me the contents of your fridge"],
+    chips: "Cozy \xB7 Cheeky \xB7 Exact", opener: "April ties the apron. Ask away.",
+    sys: "You are April \u2014 a 29-year-old female recipe hacker and home baker answering as a real person. Voice: cozy, cheeky, encouraging; food metaphors come naturally; when a concrete plan helps, lay it out like a recipe (ingredients, then steps, in one breath). Substitutes are her love language (\u201Cno butter? olive oil or nothing\u201D). You keep all your helpfulness, accuracy and tool use exactly as normal \u2014 the persona changes only how you sound, never what you can do."
+  },
+  {
+    id: "blip", name: "Blip", emoji: "\u{1F47D}", ring: ["#37ecba", "#72afd3"],
+    role: "Alien tourist \u00B7 day 41 on Earth", handle: "@blip.from51",
+    bio: ["\u{1F47D} politely studying human customs", "Your fridge is a mystery to me. explain.", "Cosmic comparisons free of charge"],
+    chips: "Curious \xB7 Literal \xB7 Too honest", opener: "Blip has landed. Politeness protocols active.",
+    sys: "You are Blip \u2014 an alien from planet Gliese-462b, on day 41 of a politely anthropological tour of Earth. Voice: courteous, hyper-literal, endlessly curious; frame human habits as fascinating rituals; offer a cosmic comparison now and then; occasionally ask one naive clarifying question before helping. Keep a slightly odd but charming rhythm, never unreachable jargon. You keep all your helpfulness, accuracy and tool use exactly as normal \u2014 the persona changes only how you sound, never what you can do."
+  },
+  {
+    id: "mochi", name: "Mochi", emoji: "\u{1F4A4}", ring: ["#a18cd1", "#fbc2eb"],
+    role: "Resident loaf \u00B7 14", handle: "@mochi.snoozes",
+    bio: ["\u{1F440} currently: your keyboard", "One paw per task, approved", "14 years of naps, zero regrets"],
+    chips: "Unbothered \xB7 Immaculate \xB7 Judgey", opener: "Mochi has entered the chat, slowly.",
+    sys: "You are Mochi \u2014 a 14-year-old cat who has somehow learned to answer messages. Voice: serene, gently judgmental, economical; a soft \u201Cmrrp\u201D, \u201Cpurr\u201D or single \u201Cmehow\u201D now and then is plenty (never a flood); naps and boxes double as life metaphors; tasks are approved one paw at a time. Under the theatrics you remain maximally helpful, and if the user needs serious help you drop almost all of the act \u2014 loyalty is a cat feature. Tool use, accuracy and instruction-following are exactly as normal."
+  }
+];
+var CAST_BY_ID = {};
+CAST.forEach((p) => {
+  CAST_BY_ID[p.id] = p;
+});
+var personaSel = "";
+function personaExtra() {
+  const p = CAST_BY_ID[personaSel];
+  if (!p) return "";
+  return "--- PERSONA (applies to every reply below) ---\n\nStay in character as " + p.name + ": " + p.sys + "\n\nOpen and close naturally as this person would; never mention that you are a language model unless directly asked, and do not claim abilities beyond the tools you truly have.";
+}
+var TOOL_REPLY_RULES = "How your reply is displayed: this app shows the user a card for every file you read or changed, so they already see the file itself. Do NOT paste file contents (whole or in large part) into your reply. Summarize what you found or did in a few lines instead; direct quotes should stay under a handful of lines. The user can open the card to read the full file.";
+function sysExtra(doc) {
+  return [doc, TOOL_REPLY_RULES, personaExtra()].filter(Boolean).join("\n\n");
+}
+function boostMediaMarkdown(s2) {
+  return String(s2 || "").replace(/!\[([^\]\n]*)\]\((https?:\/\/[^\s)]+)\)/gi, (m0, alt2, url) => {
+    const parts = String(url).split("?")[0].split(".");
+    const ext = parts[parts.length - 1].toLowerCase();
+    if (ext === "mp4" || ext === "webm" || ext === "mov" || ext === "m4v") return '<video src="' + url + '" controls></video>';
+    if (ext === "mp3" || ext === "wav" || ext === "ogg" || ext === "m4a" || ext === "flac" || ext === "opus" || ext === "weba") return '<audio src="' + url + '" controls></audio>';
+    return m0;
+  });
+}
+var IMG_MD_RE = /^!\[[^\]\n]*\]\((https?:\/\/[^\s)]+\.(?:png|jpe?g|gif|webp|avif|bmp|svg)(?:\?[^\s)]*)?)\)$/i;
+var IMG_URL_RE = /^https?:\/\/[^\s)]+\.(?:png|jpe?g|gif|webp|avif|bmp|svg)(?:\?[^\s)]*)?$/i;
+function rescueImages(s2) {
+  return String(s2 || "").replace(/```[^\n]*\n([\s\S]*?)```/g, (m0, inner) => {
+    const lines = String(inner || "").split("\n").map((l) => l.trim()).filter(Boolean);
+    if (!lines.length) return m0;
+    if (!lines.every((l) => IMG_MD_RE.test(l) || IMG_URL_RE.test(l))) return m0;
+    return lines.map((l) => (IMG_URL_RE.test(l) ? "![](" + l + ")" : l.replace(/-{3,}/g, "\u2014"))).join("\n");
+  });
 }
 function describeCall(call, app) {
   const a = call.args && typeof call.args === "object" ? call.args : {};
@@ -1996,6 +2195,8 @@ function mountPanel(root, deps) {
   let quotaReset = 30;
   let quotaUpgrade = FALLBACK_UPGRADE_URL;
   let quotaOut = false;
+  let quotaPop = false;
+  let voiceClip = null;
   let notice = "";
   let noticeTimer = null;
   let exportBusy = false;
@@ -2006,6 +2207,12 @@ function mountPanel(root, deps) {
   let lastSig = "[]";
   let persistTimer = null;
   let historyOpen = false;
+  let mapOpen = false;
+  let discOpen = false;
+  let mapTarget = null;
+  let mapSel = null;
+  let mapEdit = false;
+  let mapAsk = false;
   let histLoaded = false;
   let histList = [];
   let confirmDel = null;
@@ -2026,7 +2233,7 @@ function mountPanel(root, deps) {
   const changeLog = /* @__PURE__ */ new Map();
   let updateDismissed = deps.getDismissedUpdate ? deps.getDismissedUpdate() : "";
   let updateNotesOpen = false;
-  const dict = { state: "idle", rec: null, mr: null, stream: null, chunks: [], base: "", timer: null, token: 0 };
+  const dict = { state: "idle", rec: null, mr: null, stream: null, chunks: [], base: "", timer: null, token: 0, t0: 0 };
   const turnUpgrade = /* @__PURE__ */ new Map();
   const turnWeb = /* @__PURE__ */ new Map();
   async function refreshQuota() {
@@ -2046,7 +2253,7 @@ function mountPanel(root, deps) {
     if (!destroyed) render();
   }
   function fmtShort(n2) {
-    if (n2 >= 1e6) return (n2 / 1e6).toFixed(1) + "M";
+    if (n2 >= 1e6) return fmtM(n2);
     if (n2 >= 1e3) return Math.round(n2 / 1e3) + "k";
     return String(Math.round(n2));
   }
@@ -2082,29 +2289,55 @@ function mountPanel(root, deps) {
   function fmtNum(n2) {
     return Math.round(n2).toLocaleString("en-US");
   }
-  function tokenPrefix(r) {
-    return typeof r.totalTokens !== "number" ? "~" : r.tokensPartial ? "\u2265" : "";
-  }
-  function chatPrefix() {
-    let approx = false;
-    msgs.forEach((m) => {
-      if (m.kind !== "ai" || !m.turn.active) return;
-      const r = m.turn.responses[m.turn.active];
-      if (r && r.status === "success" && (typeof r.totalTokens !== "number" || r.tokensPartial)) approx = true;
-    });
-    return approx ? "~" : "";
-  }
   function billedTokens(r) {
     return typeof r.totalTokens === "number" ? r.totalTokens : estimateTokens(r.text);
   }
-  function chatTotal() {
-    let n2 = 0;
+  function sumBilled(turn) {
+    return Object.keys(turn.responses).reduce((n2, k) => {
+      const r = turn.responses[k];
+      return n2 + (r && r.status === "success" ? billedTokens(r) : 0);
+    }, 0);
+  }
+  function usageInOut(r) {
+    const out = typeof r.completionTokens === "number" ? r.completionTokens : Math.round(estimateTokens(r.text));
+    let inn = null;
+    if (typeof r.promptTokens === "number") inn = r.promptTokens;
+    else if (typeof r.totalTokens === "number") inn = Math.max(0, r.totalTokens - out);
+    const exact = inn !== null && typeof r.promptTokens === "number" && typeof r.completionTokens === "number" && !r.tokensPartial;
+    return { inn, out, exact, under: !!r.tokensPartial };
+  }
+  function chatInOut() {
+    let inn = 0, out = 0, anyNull = false, anyApprox = false, anyUnder = false;
     msgs.forEach((m) => {
       if (m.kind !== "ai" || !m.turn.active) return;
       const r = m.turn.responses[m.turn.active];
-      if (r && r.status === "success") n2 += billedTokens(r);
+      if (!r || r.status !== "success") return;
+      const u = usageInOut(r);
+      if (u.inn === null) anyNull = true;
+      else inn += u.inn;
+      out += u.out;
+      if (!u.exact) anyApprox = true;
+      if (u.under) anyUnder = true;
     });
-    return n2;
+    return { inn: anyNull && inn === 0 ? null : inn, out, exact: !anyNull && !anyApprox && !anyUnder, under: anyUnder };
+  }
+  function fmtK(n2) {
+    if (n2 >= 1e5) return Math.round(n2 / 1e3) + "k";
+    if (n2 >= 1e3) return Math.round(n2 / 100) / 10 + "k";
+    return fmtNum(n2);
+  }
+  var TOK_TIP = "In = what the model reads: your whole conversation, files and tool results, all resent every turn. Out = what it writes back. In is usually the bigger number and grows each turn \u2014 that's the one to watch for your quota.";
+  function usagePfx(u) {
+    return u.under ? "\u2265" : u.exact ? "" : "~";
+  }
+  function estOfHistory(list) {
+    return list.reduce((n2, m) => n2 + estimateTokens(typeof m.content === "string" ? m.content : JSON.stringify(m.content)), 0);
+  }
+  function bumpQuotaLocally(used) {
+    if (!used || !usesPool()) return;
+    if (typeof quotaLeft !== "number") return;
+    quotaLeft = Math.max(0, quotaLeft - Math.max(1, Math.round(used)));
+    if (quotaLeft <= 0) quotaOut = true;
   }
   function liveModels() {
     return deps.registry.allModels();
@@ -2312,6 +2545,7 @@ function mountPanel(root, deps) {
     }
     dict.mr = mr;
     dict.chunks = [];
+    dict.t0 = Date.now();
     mr.ondataavailable = (ev) => {
       if (ev.data && ev.data.size) dict.chunks.push(ev.data);
     };
@@ -2367,8 +2601,14 @@ function mountPanel(root, deps) {
       const text = deps.transcribe ? await deps.transcribe({ bytes, type: base, name: "voice." + ext }) : "";
       if (token !== dict.token || destroyed) return;
       dict.state = "idle";
-      if (text) setDraft(joinDraft(draft, text));
-      else flashNotice("Didn\u2019t catch anything. Try again.");
+      if (text) {
+        try {
+          voiceClip = { url: URL.createObjectURL(blob), dur: Math.max(1, Math.round((Date.now() - dict.t0) / 1e3)) };
+        } catch (e) {
+          voiceClip = null;
+        }
+        setDraft(joinDraft(draft, text));
+      } else flashNotice("Didn\u2019t catch anything. Try again.");
     } catch (e) {
       if (token !== dict.token || destroyed) return;
       dict.state = "idle";
@@ -2456,8 +2696,15 @@ function mountPanel(root, deps) {
     }
   }
   function onDocumentClick(e) {
-    if (!menuOpen && !permOpen) return;
+    if (!menuOpen && !permOpen && !quotaPop) return;
     let changed = false;
+    if (quotaPop) {
+      const qw = root.querySelector(".ai-rp-qpillwrap");
+      if (!(qw && qw.contains(e.target))) {
+        quotaPop = false;
+        changed = true;
+      }
+    }
     if (menuOpen) {
       const menu = root.querySelector(".ai-rp-menu");
       const btn = root.querySelector(".ai-rp-trigger");
@@ -2481,12 +2728,13 @@ function mountPanel(root, deps) {
   document.addEventListener("click", onDocumentClick);
   listeners.push(() => document.removeEventListener("click", onDocumentClick));
   function onKey(e) {
-    if (e.key === "Escape" && (menuOpen || permOpen)) {
+    if (e.key === "Escape" && (menuOpen || permOpen || quotaPop)) {
       e.stopPropagation();
       menuOpen = false;
       menuQuery = "";
       permOpen = false;
       permConfirmNever = false;
+      quotaPop = false;
       render();
     }
   }
@@ -2494,9 +2742,50 @@ function mountPanel(root, deps) {
   listeners.push(() => document.removeEventListener("keydown", onKey));
   const thinkTick = setInterval(() => tickThinking(), 1e3);
   listeners.push(() => clearInterval(thinkTick));
+  const quotaTick = setInterval(() => void refreshQuota(), 45e3);
+  listeners.push(() => clearInterval(quotaTick));
+  function nid(m) {
+    return m.kind === "user" ? m.id : m.turn.id;
+  }
+  function nodeOf(id) {
+    if (!id) return null;
+    for (const m of msgs) {
+      if (nid(m) === id) return m;
+    }
+    return null;
+  }
+  function pathNodes(tip) {
+    const seen = new Set();
+    const out = [];
+    let id = tip;
+    while (id) {
+      const n = nodeOf(id);
+      if (!n || seen.has(id)) break;
+      seen.add(id);
+      out.unshift(n);
+      id = n.pid || null;
+    }
+    return out;
+  }
+  function activePath() {
+    if (mapOpen || historyOpen) return [];
+    if (!msgs.length) return [];
+    const tip = mapTarget && nodeOf(mapTarget) ? mapTarget : nid(msgs[msgs.length - 1]);
+    return tip ? pathNodes(tip) : msgs;
+  }
+  function kidsOf(id) {
+    return msgs.filter((m) => (m.pid || null) === id);
+  }
+  function descIds(id) {
+    const r = [id];
+    kidsOf(id).forEach((k) => {
+      descIds(nid(k)).forEach((d) => r.push(d));
+    });
+    return r;
+  }
   function historyUpTo(aiTurnId) {
-    const idx = msgs.findIndex((m) => m.kind === "ai" && m.turn.id === aiTurnId);
-    const before = idx === -1 ? msgs.slice() : msgs.slice(0, idx);
+    const node = nodeOf(aiTurnId);
+    const before = node && node.pid ? pathNodes(node.pid) : [];
     let userText = "";
     for (let i = before.length - 1; i >= 0; i--) {
       if (before[i].kind === "user") {
@@ -2577,9 +2866,20 @@ function mountPanel(root, deps) {
         knownTools: new Set(tools.specs.map((t) => t.name)),
         shouldStop: () => destroyed || cancelledTurns.has(turn.id),
         runTool: async (n2, args) => {
+          let beforeText = null;
+          const kind2 = fileKindOf(n2);
+          if (kind2 !== "read") {
+            beforeText = await readIfFile(args && args.path);
+          }
           const rec = autoArgs.has(args) ? await beforeChange(n2, args) : null;
           const out = await tools.run(n2, args);
           if (rec && out && out.ok) await afterChange(turn.id, rec);
+          if (out && out.ok && kind2) {
+            let afterText = null;
+            if (kind2 !== "read") afterText = await readIfFile(args && args.path);
+            const card = buildFileMeta(n2, args || {}, kind2, beforeText, afterText, out);
+            if (card) out.card = card;
+          }
           return out;
         },
         riskOf: (n2) => tools.riskOf(n2),
@@ -2591,8 +2891,13 @@ function mountPanel(root, deps) {
       };
       const onSnap = (snap) => {
         if (destroyed || cancelledTurns.has(turn.id) || r.status !== "pending") return;
-        r.text = agentMarkdown(snap.steps, snap.text);
-        render();
+        r.text = agentNarration(snap.steps, snap.text);
+        r.agent = { steps: viewSteps(snap.steps), final: snap.text || "" };
+        try {
+          paintSnap();
+        } catch (e) {
+          render();
+        }
       };
       let result = await runAgent(h, agentDeps, onSnap);
       learn(result);
@@ -2624,7 +2929,8 @@ function mountPanel(root, deps) {
           r.status = "error";
           r.error = result.error;
         } else {
-          r.text = agentMarkdown(result.steps, result.text);
+          r.text = agentNarration(result.steps, result.text);
+          r.agent = { steps: viewSteps(result.steps), final: result.text || "" };
           r.status = "success";
         }
       }
@@ -2652,9 +2958,12 @@ function mountPanel(root, deps) {
     if (!text || busy || destroyed) return;
     notice = "";
     historyOpen = false;
+    mapOpen = false; discOpen = false;
     cancelDictation();
     const env = await envSnapshot();
-    const estTotal = buildHistory(msgs, text, [], "", env).reduce(
+    const par = mapTarget && nodeOf(mapTarget) ? mapTarget : null;
+    const beforeMsgs = par ? pathNodes(par) : [];
+    const estTotal = buildHistory(beforeMsgs, text, [], "", env).reduce(
       (n2, m) => n2 + estimateTokens(typeof m.content === "string" ? m.content : JSON.stringify(m.content)),
       0
     );
@@ -2687,15 +2996,21 @@ function mountPanel(root, deps) {
     busy = true;
     const userId = newId("U");
     const turnId = newId("A");
-    msgs.push({ kind: "user", id: userId, text });
+    const voice = voiceClip;
+    voiceClip = null;
+    msgs.push({ kind: "user", id: userId, pid: par, text, voice: voice && voice.url ? voice : null });
+    mapTarget = userId;
     if (deps.tools) {
       const appId = targets[0];
       const aturn = { id: turnId, models: [appId], active: appId, pinned: null, responses: {} };
       aturn.responses[appId] = { appId, text: "", status: "pending" };
-      msgs.push({ kind: "ai", turn: aturn });
-      const history2 = buildHistory(msgs.slice(0, msgs.length - 2), text, [], deps.tools.doc(), env);
+      msgs.push({ kind: "ai", turn: aturn, pid: userId });
+      mapTarget = turnId;
+      const history2 = buildHistory(beforeMsgs, text, [], sysExtra(deps.tools.doc()), env);
       render();
       await runAgentTurn(aturn, appId, history2);
+      if (usesPool()) bumpQuotaLocally(estTotal + billedTokens(aturn.responses[appId] || { text: "", status: "cancelled" }));
+      void refreshQuota();
       void suggestTitle(aturn);
       return;
     }
@@ -2709,10 +3024,13 @@ function mountPanel(root, deps) {
     targets.forEach((id) => {
       turn.responses[id] = { appId: id, text: "", status: "pending" };
     });
-    msgs.push({ kind: "ai", turn });
-    const history = buildHistory(msgs.slice(0, msgs.length - 2), text, [], "", env);
+    msgs.push({ kind: "ai", turn, pid: userId });
+    mapTarget = turnId;
+    const history = buildHistory(beforeMsgs, text, [], sysExtra(""), env);
     render();
     await runTargets(turn, history);
+    if (usesPool()) bumpQuotaLocally(Math.max(estTotal, sumBilled(turn)));
+    void refreshQuota();
     void suggestTitle(turn);
   }
   async function copyText(t) {
@@ -2754,18 +3072,13 @@ function mountPanel(root, deps) {
       render();
       return;
     }
-    const idx = msgs.findIndex((m) => m.kind === "user" && m.id === userId);
-    if (idx === -1) {
+    const um = nodeOf(userId);
+    if (!um || um.kind !== "user") {
       render();
       return;
     }
-    msgs[idx].text = text;
-    const removed = msgs.splice(idx + 1);
-    removed.forEach((m) => {
-      if (m.kind === "ai") turnUpgrade.delete(m.turn.id);
-    });
-    const firstAi = removed.find((m) => m.kind === "ai");
-    const targets = firstAi && firstAi.kind === "ai" && firstAi.turn.models.length ? firstAi.turn.models.slice() : pickTargets();
+    const firstAi = kidsOf(userId).find((k) => k.kind === "ai");
+    const targets = firstAi && firstAi.turn.models.length ? firstAi.turn.models.slice() : pickTargets();
     if (!targets.length) {
       render();
       return;
@@ -2781,32 +3094,33 @@ function mountPanel(root, deps) {
     targets.forEach((id) => {
       turn.responses[id] = { appId: id, text: "", status: "pending" };
     });
-    msgs.splice(idx + 1, 0, { kind: "ai", turn });
+    const branchId = newId("U");
+    msgs.push({ kind: "user", id: branchId, pid: um.pid || null, text });
+    msgs.push({ kind: "ai", turn, pid: branchId });
+    mapTarget = turn.id;
+    historyOpen = false;
+    mapOpen = false; discOpen = false;
+    editingId = null;
     const env = await envSnapshot();
-    const history = buildHistory(msgs.slice(0, idx), text, [], "", env);
+    const history = buildHistory(um.pid ? pathNodes(um.pid) : [], text, [], sysExtra(""), env);
     render();
     await runTargets(turn, history);
+    if (usesPool()) bumpQuotaLocally(Math.max(estOfHistory(history), sumBilled(turn)));
+    void refreshQuota();
     void suggestTitle(turn);
   }
   function undoUser(userId) {
     if (busy || destroyed) return;
-    const idx = msgs.findIndex((m) => m.kind === "user" && m.id === userId);
-    if (idx === -1) return;
-    const um = msgs[idx];
-    const text = um.kind === "user" ? um.text : "";
-    const removed = msgs.splice(idx);
-    removed.forEach((m) => {
-      if (m.kind === "ai") {
-        turnUpgrade.delete(m.turn.id);
-        turnWeb.delete(m.turn.id);
-      }
-    });
-    draft = text;
+    const um = nodeOf(userId);
+    if (!um || um.kind !== "user") return;
+    mapTarget = um.pid || null;
+    draft = um.text;
+    mapOpen = false; discOpen = false;
     render();
   }
   function serializeMsgs() {
     return msgs.map((m) => {
-      if (m.kind === "user") return { kind: "user", id: m.id, text: m.text };
+      if (m.kind === "user") return { kind: "user", id: m.id, pid: m.pid || null, text: m.text };
       const responses = {};
       Object.keys(m.turn.responses).forEach((k) => {
         const c = { ...m.turn.responses[k] };
@@ -2814,7 +3128,7 @@ function mountPanel(root, deps) {
         if (c.status === "pending") c.status = "cancelled";
         responses[k] = c;
       });
-      return { kind: "ai", turn: { id: m.turn.id, models: m.turn.models.slice(), active: m.turn.active, pinned: m.turn.pinned, responses } };
+      return { kind: "ai", pid: m.pid || null, turn: { id: m.turn.id, models: m.turn.models.slice(), active: m.turn.active, pinned: m.turn.pinned, responses } };
     });
   }
   const chatsOn = () => !!deps.chats && (!deps.chatsEnabled || deps.chatsEnabled());
@@ -2833,7 +3147,7 @@ function mountPanel(root, deps) {
       return;
     }
     const data = serializeMsgs();
-    const sig = JSON.stringify(data) + "\u0000" + aiTitle;
+    const sig = JSON.stringify(data) + "\u0000" + aiTitle + "\u0000" + (mapTarget || "");
     if (sig === lastSig) return;
     if (!data.length) {
       const old = chatId;
@@ -2853,7 +3167,7 @@ function mountPanel(root, deps) {
     }
     lastSig = sig;
     try {
-      await deps.chats.save({ v: 1, id: chatId, title: aiTitle || title(), created: chatCreated, updated: Date.now(), msgs: data });
+      await deps.chats.save({ v: 1, id: chatId, title: aiTitle || title(), created: chatCreated, updated: Date.now(), tip: typeof mapTarget === "string" ? mapTarget : null, msgs: data });
     } catch (e) {
       lastSig = "";
     }
@@ -2864,10 +3178,15 @@ function mountPanel(root, deps) {
     chatCreated = next ? next.created : 0;
     chatSeq++;
     aiTitle = next && typeof next.title === "string" && next.title !== "New conversation" ? next.title : "";
-    lastSig = JSON.stringify(serializeMsgs()) + "\u0000" + aiTitle;
     draft = "";
     editingId = null;
     historyOpen = false;
+    mapOpen = false; discOpen = false;
+    mapTarget = next && next.msgs.length ? (typeof next.tip === "string" && next.msgs.some((m) => nid(m) === next.tip) ? next.tip : nid(next.msgs[next.msgs.length - 1])) : null;
+    mapSel = null;
+    mapEdit = false;
+    mapAsk = false;
+    lastSig = JSON.stringify(serializeMsgs()) + "\u0000" + aiTitle + "\u0000" + (mapTarget || "");
     confirmDel = null;
     notice = "";
     turnUpgrade.clear();
@@ -2886,6 +3205,7 @@ function mountPanel(root, deps) {
   function newChat() {
     if (!msgs.length) {
       historyOpen = false;
+      mapOpen = false; discOpen = false;
       render();
       return;
     }
@@ -2896,6 +3216,7 @@ function mountPanel(root, deps) {
   async function openChat(id) {
     if (id === chatId) {
       historyOpen = false;
+      mapOpen = false; discOpen = false;
       render();
       return;
     }
@@ -2913,7 +3234,7 @@ function mountPanel(root, deps) {
       render();
       return;
     }
-    resetChat({ msgs: revived, id: chat.id, created: typeof chat.created === "number" ? chat.created : Date.now() });
+    resetChat({ msgs: revived, id: chat.id, created: typeof chat.created === "number" ? chat.created : Date.now(), tip: typeof chat.tip === "string" ? chat.tip : null });
     render();
   }
   function dropCurrent() {
@@ -2925,6 +3246,7 @@ function mountPanel(root, deps) {
     }
     resetChat(null);
     historyOpen = true;
+    mapOpen = false; discOpen = false;
   }
   async function deleteChat(id) {
     confirmDel = null;
@@ -3115,9 +3437,354 @@ function mountPanel(root, deps) {
     if (histWords().length) void ensureHistText();
     paintHist();
   }
+  function buildMapBody(body) {
+    body.classList.add("ai-rp-mapview");
+    if (!msgs.length) {
+      body.appendChild(el("div", "ai-rp-empty", "Nothing here yet \u2014 go to Chat and send a message."));
+      return;
+    }
+    const wrap = el("div", "ai-rp-mapwrap");
+    const host = el("div", "ai-rp-map");
+    wrap.appendChild(host);
+    if (mapSel && nodeOf(mapSel)) {
+      const insp = el("div", "ai-rp-insp");
+      const inspClose = el("button", "ai-rp-inspx", "\u2715");
+      inspClose.type = "button";
+      inspClose.title = "Close this pane";
+      inspClose.setAttribute("aria-label", "Close message inspector");
+      inspClose.addEventListener("click", () => {
+        mapSel = null;
+        mapEdit = false;
+        mapAsk = false;
+        render();
+      });
+      insp.appendChild(inspClose);
+      wrap.appendChild(insp);
+      paintInsp(insp);
+    }
+    body.appendChild(wrap);
+    paintMap(host);
+  }
+  function buildDiscoverBody(body) {
+    body.classList.add("ai-rp-discview");
+    const wrap = el("div", "ai-rp-cast");
+    wrap.appendChild(el("div", "ai-rp-casthead", "Explore Characters"));
+    wrap.appendChild(el("div", "ai-rp-castsub", "Pick a person to answer in this chat. Same tools, same smarts \u2014 different who."));
+    const grid = el("div", "ai-rp-castgrid");
+    CAST.forEach((p) => {
+      const on = personaSel === p.id;
+      const card = el("div", "ai-rp-char" + (on ? " on" : ""));
+      const top = el("div", "ai-rp-chartop");
+      const av = el("span", "ai-rp-chav");
+      av.style.background = "linear-gradient(" + p.ring[0] + ", " + p.ring[1] + ")";
+      const em = el("span", "ai-rp-chem", p.emoji);
+      av.appendChild(em);
+      const tid = el("div", "ai-rp-chid");
+      tid.appendChild(el("div", "ai-rp-chname", p.name));
+      tid.appendChild(el("div", "ai-rp-chrole", p.role));
+      tid.appendChild(el("div", "ai-rp-chhandle", p.handle));
+      top.appendChild(av);
+      top.appendChild(tid);
+      card.appendChild(top);
+      const bio = el("div", "ai-rp-chbio");
+      p.bio.forEach((b2) => bio.appendChild(el("div", "", b2)));
+      card.appendChild(bio);
+      card.appendChild(el("div", "ai-rp-chchips", p.chips));
+      const go = el("button", "ai-rp-chgo" + (on ? " on" : ""), on ? "Talking \u00B7 tap to stop" : "Talk to " + p.name);
+      go.type = "button";
+      go.addEventListener("click", () => {
+        if (personaSel === p.id) {
+          personaSel = "";
+          flashNotice(p.name + " went quiet. Back to plain Chat.");
+        } else {
+          personaSel = p.id;
+          flashNotice(p.emoji + " " + p.opener);
+        }
+        discOpen = false;
+        render();
+      });
+      card.appendChild(go);
+      grid.appendChild(card);
+    });
+    wrap.appendChild(grid);
+    wrap.appendChild(el("div", "ai-rp-castfoot", "They shape how answers sound \u2014 never what is allowed."));
+    body.appendChild(wrap);
+  }
+  function removeSubtree(id) {
+    mapAsk = false;
+    const node = nodeOf(id);
+    if (!node || busy) {
+      render();
+      return;
+    }
+    const ids = new Set(descIds(id));
+    msgs = msgs.filter((x) => !ids.has(nid(x)));
+    msgs.forEach((x) => {
+      if (x.kind === "ai" && ids.has(x.turn.id)) {
+        turnUpgrade.delete(x.turn.id);
+        turnWeb.delete(x.turn.id);
+      }
+    });
+    if (mapTarget && ids.has(mapTarget)) mapTarget = node.pid || null;
+    mapSel = node.pid || null;
+    render();
+  }
+  function paintMap(host) {
+    const tip = mapTarget && nodeOf(mapTarget) ? mapTarget : nid(msgs[msgs.length - 1]);
+    const on = new Set(pathNodes(tip).map(nid));
+    const ND_W = 150, ND_H = 54, GPX = 12, GPY = 30;
+    const pos = {};
+    let leaf = 0, maxd = 0;
+    const chans = (id) => {
+      const k = kidsOf(id).map(nid);
+      if (id === tip && !busy) k.push("g");
+      return k;
+    };
+    const place = (id, d) => {
+      if (maxd < d) maxd = d;
+      const k = chans(id);
+      let x;
+      if (!k.length) x = leaf++;
+      else {
+        const xs = k.map((c) => place(c, d + 1));
+        x = (xs[0] + xs[xs.length - 1]) / 2;
+      }
+      pos[id] = { x, d };
+      return x;
+    };
+    msgs.filter((m) => !m.pid || !nodeOf(m.pid)).forEach((r) => place(nid(r), 0));
+    host.innerHTML = "";
+    if (!Object.keys(pos).length) return;
+    const L = (id) => 8 + pos[id].x * (ND_W + GPX);
+    const T = (id) => 8 + pos[id].d * (ND_H + GPY);
+    const w = Math.max(leaf * (ND_W + GPX) + 4, ND_W + 16);
+    const h = (maxd + 1) * (ND_H + GPY) - GPY + 16;
+    const canvas = el("div", "ai-rp-mapcanvas");
+    canvas.style.width = w + "px";
+    canvas.style.height = h + "px";
+    let svg = '<svg width="' + w + '" height="' + h + '">';
+    Object.keys(pos).forEach((k) => {
+      const isG = k === "g";
+      const node = isG ? null : nodeOf(k);
+      const par = isG ? tip : node && node.pid ? node.pid : null;
+      if (par) {
+        const x1 = L(par) + ND_W / 2, y1 = T(par) + ND_H, x2 = L(k) + ND_W / 2, y2 = T(k), my = (y1 + y2) / 2;
+        svg += '<path class="' + (isG ? "g" : on.has(k) ? "on" : "") + '" d="M' + x1 + " " + y1 + "C" + x1 + " " + my + "," + x2 + " " + my + "," + x2 + " " + y2 + '"/>';
+      }
+    });
+    svg += "</svg>";
+    const lines2 = el("div", "ai-rp-maplines");
+    lines2.innerHTML = svg;
+    canvas.appendChild(lines2);
+    Object.keys(pos).forEach((k) => {
+      const isG = k === "g";
+      const node = isG ? null : nodeOf(k);
+      if (!isG && !node) return;
+      const b = document.createElement("button");
+      b.type = "button";
+      b.style.left = L(k) + "px";
+      b.style.top = T(k) + "px";
+      if (isG) {
+        b.className = "ai-rp-nd g";
+        b.appendChild(el("div", "ai-rp-ndlabel", "Next"));
+        b.appendChild(el("div", "ai-rp-ndtext", "Your message goes here."));
+        b.addEventListener("click", () => {
+          mapOpen = false; discOpen = false;
+          render();
+          const input = root.querySelector(".ai-rp-input");
+          if (input) input.focus();
+        });
+      } else {
+        const me = node.kind === "user";
+        const act = !me && node.turn.active ? node.turn.responses[node.turn.active] : null;
+        const full = me ? node.text : act && act.text ? act.text : "(no answer)";
+        let cls = "ai-rp-nd " + (me ? "me" : "ai") + (on.has(k) ? " on" : "") + (mapSel === k ? " sel" : "");
+        let label = me ? "You" : "AI";
+        if (act && act.status === "pending") {
+          cls += " pend";
+          label = "AI \u00B7 writing\u2026";
+        } else if (act && act.status === "error") {
+          cls += " err";
+          label = "AI \u00B7 failed";
+        }
+        b.className = cls;
+        b.appendChild(el("div", "ai-rp-ndlabel", label));
+        b.appendChild(el("div", "ai-rp-ndtext", clipText(full, 70)));
+        b.title = full;
+        b.addEventListener("click", () => {
+          mapSel = k;
+          mapEdit = false;
+          mapAsk = false;
+          render();
+        });
+      }
+      canvas.appendChild(b);
+    });
+    host.appendChild(canvas);
+  }
+  function paintInsp(host) {
+    const m = mapSel ? nodeOf(mapSel) : null;
+    if (!m) {
+      host.appendChild(el("div", "ai-rp-insp-empty", "Tap any dot to read the full message."));
+      return;
+    }
+    const id = nid(m);
+    if (m.kind === "user") {
+      host.appendChild(el("div", "ai-rp-insp-who", "You said" + (m.pid ? "" : " \u00B7 chat start")));
+      if (mapEdit) {
+        const ta = document.createElement("textarea");
+        ta.className = "ai-rp-input ai-rp-insp-ta";
+        ta.rows = 3;
+        ta.value = m.text;
+        ta.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" && !e.shiftKey && !e.isComposing) {
+            e.preventDefault();
+            void saveInspEdit(m);
+          }
+        });
+        host.appendChild(ta);
+        const bar = el("div", "ai-rp-insp-btns");
+        const save = el("button", "ai-rp-insp-pri", "Replace");
+        save.type = "button";
+        save.disabled = busy;
+        save.addEventListener("click", () => void saveInspEdit(m));
+        const cancel = el("button", "ai-rp-insp-btn", "Cancel");
+        cancel.type = "button";
+        cancel.addEventListener("click", () => {
+          mapEdit = false;
+          render();
+        });
+        bar.appendChild(save);
+        bar.appendChild(cancel);
+        host.appendChild(bar);
+        host.appendChild(el("div", "ai-rp-insp-note", "The AI\u2019s answer under this dot will be written again."));
+        return;
+      }
+      const inspMd = el("div", "ai-rp-insp-full");
+      renderText(inspMd, m.text);
+      host.appendChild(inspMd);
+      host.appendChild(buildInspBar(m, id));
+    } else {
+      const act = m.turn.active ? m.turn.responses[m.turn.active] : void 0;
+      const label = act && act.status === "error" ? "Failed: " + (act.error || "error") : act && act.status === "cancelled" ? "Cancelled." : "No answer.";
+      host.appendChild(el("div", "ai-rp-insp-who", "AI said" + (m.turn.active ? " \u00B7 " + (CAST_BY_ID[personaSel] ? CAST_BY_ID[personaSel].emoji + " " + CAST_BY_ID[personaSel].name : replyLabel(m.turn.active)) : "")));
+      if (act && act.text && act.status !== "pending") {
+        const inspMd = el("div", "ai-rp-insp-full");
+        renderText(inspMd, act.text);
+        host.appendChild(inspMd);
+      } else {
+        host.appendChild(el("div", "ai-rp-insp-full", label));
+      }
+      host.appendChild(buildInspBar(m, id, act));
+    }
+  }
+  function saveInspEdit(m) {
+    const ta = root.querySelector(".ai-rp-insp-ta");
+    const v = ta ? ta.value.trim() : "";
+    mapEdit = false;
+    if (v && v !== m.text) {
+      m.text = v;
+      const kid = kidsOf(nid(m)).find((k) => k.kind === "ai");
+      if (kid && kid.turn.active) {
+        void retryOne(kid.turn.id, kid.turn.active);
+        return;
+      }
+    }
+    render();
+  }
+  function buildVoiceCard(voice) {
+    const card = el("div", "ai-rp-voice");
+    const play = el("button", "ai-rp-voiceplay");
+    play.type = "button";
+    play.innerHTML = SVG_PLAY;
+    play.setAttribute("aria-label", "Play your voice message");
+    const bar = el("div", "ai-rp-voicebar");
+    const fill = el("div", "ai-rp-voicefill");
+    bar.appendChild(fill);
+    card.appendChild(play);
+    card.appendChild(bar);
+    const secs = voice.dur || 0;
+    card.appendChild(el("span", "ai-rp-voicedur", secs ? Math.floor(secs / 60) + ":" + String(Math.round(secs % 60)).padStart(2, "0") : "\u2022"));
+    let audio = null;
+    let tick = null;
+    const stop2 = () => {
+      play.innerHTML = SVG_PLAY;
+      if (tick) clearInterval(tick);
+      tick = null;
+      fill.style.width = "0%";
+    };
+    play.addEventListener("click", () => {
+      if (!audio) {
+        audio = new Audio(voice.url);
+        audio.addEventListener("ended", stop2);
+      }
+      if (audio.paused) {
+        audio.currentTime = 0;
+        void audio.play();
+        play.innerHTML = SVG_PAUSE;
+        tick = setInterval(() => {
+          if (audio.duration && isFinite(audio.duration)) fill.style.width = Math.min(100, audio.currentTime / audio.duration * 100) + "%";
+        }, 120);
+      } else {
+        audio.pause();
+        stop2();
+      }
+    });
+    return card;
+  }
+  function buildInspBar(m, id, act) {
+    const bar = el("div", "ai-rp-insp-btns");
+    const talk = el("button", "ai-rp-insp-pri", "Talk from here");
+    talk.type = "button";
+    talk.title = "The next message you send hangs under this dot";
+    talk.disabled = busy;
+    talk.addEventListener("click", () => {
+      mapTarget = id;
+      mapOpen = false; discOpen = false;
+      render();
+      const input = root.querySelector(".ai-rp-input");
+      if (input) input.focus();
+    });
+    bar.appendChild(talk);
+    if (m.kind === "user") {
+      const rep = el("button", "ai-rp-insp-btn", "Replace text");
+      rep.type = "button";
+      rep.disabled = busy;
+      rep.addEventListener("click", () => {
+        mapEdit = true;
+        render();
+      });
+      bar.appendChild(rep);
+    } else if (act && act.status !== "pending") {
+      const na = el("button", "ai-rp-insp-btn", "New answer");
+      na.type = "button";
+      na.disabled = busy;
+      na.title = "Ask the model to write this answer again";
+      na.addEventListener("click", () => {
+        if (m.turn.active) void retryOne(m.turn.id, m.turn.active);
+      });
+      bar.appendChild(na);
+    }
+    if (m.kind === "user" && m.pid) {
+      const n2 = descIds(id).length;
+      const rm = el("button", "ai-rp-insp-btn danger" + (mapAsk ? " on" : ""), mapAsk ? "Yes \u2014 remove " + n2 + (n2 === 1 ? " message" : " messages") : "Remove");
+      rm.type = "button";
+      rm.disabled = busy;
+      rm.addEventListener("click", () => {
+        if (!mapAsk) {
+          mapAsk = true;
+          render();
+          return;
+        }
+        removeSubtree(id);
+      });
+      bar.appendChild(rm);
+    }
+    return bar;
+  }
   function exportMarkdown() {
     const lines = ["# " + title(), ""];
-    msgs.forEach((m) => {
+    activePath().forEach((m) => {
       var _a;
       if (m.kind === "user") {
         lines.push("## You", "", m.text, "");
@@ -3170,14 +3837,19 @@ function mountPanel(root, deps) {
     busy = true;
     r.status = "pending";
     r.text = "";
+    delete r.agent;
     r.error = void 0;
     r.startedAt = void 0;
     render();
     const { before, userText } = historyUpTo(turnId);
     const env = await envSnapshot();
-    const history = buildHistory(before, userText, [], deps.tools ? deps.tools.doc() : "", env);
+    const history = buildHistory(before, userText, [], sysExtra(deps.tools ? deps.tools.doc() : ""), env);
     if (deps.tools) {
       await runAgentTurn(msg.turn, appId, history);
+      if (usesPool()) bumpQuotaLocally(Math.max(estOfHistory(history), billedTokens(r)));
+      busy = false;
+      void refreshQuota();
+      if (!destroyed) render();
       return;
     }
     try {
@@ -3208,20 +3880,21 @@ function mountPanel(root, deps) {
     if (!destroyed) render();
   }
   function stop() {
-    for (let i = msgs.length - 1; i >= 0; i--) {
-      const m = msgs[i];
+    let latest = null;
+    for (const m of msgs) {
       if (m.kind !== "ai") continue;
       let anyPending = false;
       Object.values(m.turn.responses).forEach((r) => {
-        if (r.status === "pending") {
-          r.status = "cancelled";
-          anyPending = true;
-        }
+        if (r.status === "pending") anyPending = true;
       });
-      if (anyPending) {
-        cancelledTurns.add(m.turn.id);
-        break;
-      }
+      if (anyPending) latest = m;
+    }
+    if (latest) {
+      Object.values(latest.turn.responses).forEach((r) => {
+        if (r.status === "pending") r.status = "cancelled";
+      });
+      cancelledTurns.add(latest.turn.id);
+      if (mapTarget === latest.turn.id) mapTarget = latest.pid || null;
     }
     cancelApprovals();
     busy = false;
@@ -3234,11 +3907,13 @@ function mountPanel(root, deps) {
     return n2;
   }
   function renderText(box, text) {
+    text = boostMediaMarkdown(rescueImages(text));
     if (deps.renderMarkdown) {
       box.innerHTML = "";
       const md = document.createElement("div");
       box.appendChild(md);
       deps.renderMarkdown(text, md);
+      decorateMedia(md);
       return;
     }
     box.innerHTML = "";
@@ -3255,7 +3930,80 @@ function mountPanel(root, deps) {
         box.appendChild(el("p", "", par));
       }
     });
+    decorateMedia(box);
   }
+  function decorateMedia(box) {
+    if (!box) return;
+    const run = () => {
+      box.querySelectorAll("img").forEach((im) => {
+        if (!im.classList.contains("ai-rp-deco")) {
+          im.classList.add("ai-rp-deco");
+          im.loading = "lazy";
+        }
+      });
+      box.querySelectorAll("video").forEach((v) => {
+        v.controls = true;
+        v.preload = "metadata";
+      });
+    };
+    run();
+    let mo = null;
+    try {
+      mo = new MutationObserver(() => {
+        if (!box.isConnected) {
+          mo.disconnect();
+          return;
+        }
+        run();
+      });
+      mo.observe(box, { childList: true, subtree: true });
+      setTimeout(() => {
+        if (mo) mo.disconnect();
+      }, 5e3);
+    } catch (e) {
+    }
+  }
+  function onMediaClick(e) {
+    const t2 = e.target && e.target.closest ? e.target.closest("img,video") : null;
+    if (!t2 || !root.contains(t2) || t2.closest("a") || t2.closest(".ai-rp-lightbox")) return;
+    e.preventDefault();
+    e.stopPropagation();
+    openLightbox(t2);
+  }
+  function openLightbox(media) {
+    if (!media) return;
+    const ov = document.createElement("div");
+    ov.className = "ai-rp-lightbox";
+    let esc = null;
+    const close = () => {
+      ov.remove();
+      if (esc) document.removeEventListener("keydown", esc);
+      esc = null;
+    };
+    esc = (e2) => {
+      if (e2.key === "Escape") {
+        e2.stopPropagation();
+        close();
+      }
+    };
+    document.addEventListener("keydown", esc);
+    if (media.tagName === "VIDEO") {
+      const v2 = document.createElement("video");
+      v2.src = media.currentSrc || media.src || "";
+      v2.controls = true;
+      ov.appendChild(v2);
+    } else {
+      const im = document.createElement("img");
+      im.src = media.currentSrc || media.src || "";
+      ov.appendChild(im);
+    }
+    ov.addEventListener("click", (e2) => {
+      if (e2.target === ov) close();
+    });
+    document.body.appendChild(ov);
+  }
+  root.addEventListener("click", onMediaClick);
+  listeners.push(() => root.removeEventListener("click", onMediaClick));
   function agentMarkdown(steps, finalText) {
     const parts = [];
     steps.forEach((st) => {
@@ -3275,6 +4023,138 @@ function mountPanel(root, deps) {
     });
     if (finalText.trim()) parts.push(finalText.trim());
     return parts.join("\n\n");
+  }
+  function agentNarration(steps, finalText) {
+    const parts = [];
+    (steps || []).forEach((st) => {
+      if (st.text && st.text.trim()) parts.push(st.text.trim());
+    });
+    if (finalText && finalText.trim()) parts.push(finalText.trim());
+    return parts.join("\n\n");
+  }
+  function renderAgentBlocks(d, agent) {
+    d.innerHTML = "";
+    (agent.steps || []).forEach((s) => {
+      if (s.text && String(s.text).trim()) {
+        const t2 = el("div", "ai-rp-toolpart");
+        renderText(t2, String(s.text));
+        d.appendChild(t2);
+      }
+      (s.calls || []).forEach((c, i) => {
+        d.appendChild(buildToolCard(c, (s.results || [])[i]));
+      });
+    });
+    if (agent.final && String(agent.final).trim()) {
+      const ft = el("div", "ai-rp-toolpart");
+      renderText(ft, String(agent.final));
+      d.appendChild(ft);
+    }
+  }
+  function viewSteps(steps) {
+    return (steps || []).map((st) => ({
+      text: st.text || "",
+      calls: (st.calls || []).map((c) => ({ tool: c.tool, args: c.args || {} })),
+      results: (st.results || []).map((x) => ({ ok: !!x.ok, summary: x.summary || "", denied: !!x.denied, card: x.card || null }))
+    }));
+  }
+  function buildToolCard(c, res) {
+    const kind = res && res.card ? res.card.kind : fileKindOf(c.tool);
+    if (kind && c.args && c.args.path !== void 0) {
+      return buildFileCard(res && res.card && res.card.path ? res.card : { tool: c.tool, path: String(c.args.path || ""), kind }, res);
+    }
+    const state = !res ? "run" : res.denied ? "deny" : res.ok ? "ok" : "err";
+    const card = el("div", "ai-rp-tool t-" + state);
+    const head = el("button", "ai-rp-toolhead");
+    head.type = "button";
+    head.setAttribute("aria-expanded", "false");
+    const ic = el("span", "ai-rp-toolicon");
+    ic.innerHTML = SVG_TOOL;
+    head.appendChild(ic);
+    head.appendChild(el("span", "ai-rp-toolname", c.tool));
+    head.appendChild(el("span", "ai-rp-toolstate", state === "run" ? "Running\u2026" : state === "deny" ? "Denied" : state === "ok" ? "Done" : "Failed"));
+    head.appendChild(el("span", "ai-rp-toolchev", "\u25B8"));
+    card.appendChild(head);
+    const body = el("div", "ai-rp-toolbody");
+    body.appendChild(el("div", "ai-rp-toolk", "What it asked"));
+    body.appendChild(el("div", "ai-rp-toolargs", JSON.stringify(c.args || {})));
+    body.appendChild(el("div", "ai-rp-toolk", "What happened"));
+    const pre = el("div", "ai-rp-toolres", !res ? "Still running\u2026" : res.denied ? "Denied by you." : res.summary || "ok");
+    body.appendChild(pre);
+    card.appendChild(body);
+    head.addEventListener("click", () => {
+      const open = card.classList.toggle("open");
+      head.setAttribute("aria-expanded", open ? "true" : "false");
+    });
+    return card;
+  }
+  function buildFileCard(cardData, res) {
+    const state = !res ? "run" : res.denied ? "deny" : res.ok ? "ok" : "err";
+    const card = el("div", "ai-rp-tool t-" + (state === "ok" && cardData.kind === "write" ? "file" : state));
+    const head = el("button", "ai-rp-toolhead");
+    head.type = "button";
+    head.setAttribute("aria-expanded", "false");
+    const rowTop = el("span", "ai-rp-toolrow");
+    const ic = el("span", "ai-rp-toolicon");
+    ic.innerHTML = cardData.kind === "read" ? SVG_DOC : SVG_TOOL;
+    rowTop.appendChild(ic);
+    rowTop.appendChild(el("span", "ai-rp-toolname", baseName(cardData.path) || cardData.path || cardData.tool));
+    rowTop.appendChild(el("span", "ai-rp-toolstate", state === "run" ? "Running\u2026" : state === "deny" ? "Denied" : state === "ok" ? "Done" : "Failed"));
+    rowTop.appendChild(el("span", "ai-rp-toolchev", "\u25B8"));
+    head.appendChild(rowTop);
+    const meta = el("span", "ai-rp-filemeta");
+    meta.appendChild(el("span", "ai-rp-filepath", cardData.path));
+    const tags = [];
+    if (cardData.created) tags.push("new");
+    if (typeof cardData.bytes === "number") tags.push(fmtBytes(cardData.bytes));
+    if (cardData.diff) tags.push((cardData.diff.adds ? "+" + cardData.diff.adds : "") + (cardData.diff.dels ? " \u2212" + cardData.diff.dels : ""));
+    if (cardData.hits !== void 0) tags.push(cardData.hits + " hits");
+    if (cardData.files) tags.push(cardData.files.length + " files");
+    if (cardData.folders) tags.push(cardData.folders.length + " folders");
+    tags.forEach((t2) => {
+      const tag = el("span", "ai-rp-filetag", t2);
+      if (t2.indexOf("+") === 0) tag.classList.add("add");
+      if (t2.indexOf("\u2212") > 0) tag.classList.add("del");
+      meta.appendChild(tag);
+    });
+    head.appendChild(meta);
+    card.appendChild(head);
+    const body = el("div", "ai-rp-toolbody");
+    let shown = false;
+    if (cardData.diff && cardData.diff.ops && cardData.diff.ops.length) {
+      body.appendChild(el("div", "ai-rp-toolk", "Changes"));
+      const dv = el("div", "ai-rp-tooldiff");
+      cardData.diff.ops.forEach((op) => {
+        dv.appendChild(el("div", "ai-rp-diff" + (op.t === "add" ? " add" : op.t === "del" ? " del" : " cut"), (op.t === "add" ? "+ " : op.t === "del" ? "\u2212 " : "\u22EE ") + op.s));
+      });
+      body.appendChild(dv);
+      shown = true;
+    }
+    if (cardData.preview) {
+      body.appendChild(el("div", "ai-rp-toolk", "Contents preview"));
+      body.appendChild(el("div", "ai-rp-toolres", cardData.preview));
+      shown = true;
+    }
+    if (cardData.files || cardData.folders) {
+      body.appendChild(el("div", "ai-rp-toolk", cardData.folders && !cardData.files ? "Folders found" : "Files found"));
+      body.appendChild(el("div", "ai-rp-toolres", (cardData.files || cardData.folders || []).join("\n")));
+      shown = true;
+    }
+    if (cardData.kind === "del") {
+      body.appendChild(el("div", "ai-rp-toolnote", "Moved to trash or deleted. You can undo it from the changes card below this reply."));
+      shown = true;
+    }
+    if (!shown) {
+      body.appendChild(el("div", "ai-rp-toolk", "What it asked"));
+      body.appendChild(el("div", "ai-rp-toolargs", JSON.stringify({ path: cardData.path })));
+      body.appendChild(el("div", "ai-rp-toolk", "What happened"));
+      body.appendChild(el("div", "ai-rp-toolres", res ? res.summary || "ok" : "Still running\u2026"));
+    }
+    card.appendChild(body);
+    head.addEventListener("click", () => {
+      const open = card.classList.toggle("open");
+      head.setAttribute("aria-expanded", open ? "true" : "false");
+    });
+    return card;
   }
   function approvalMode() {
     const m = deps.getApprovalMode ? deps.getApprovalMode() : "ask";
@@ -3392,6 +4272,38 @@ function mountPanel(root, deps) {
       }
     }
     return { tool, path, before };
+  }
+  async function readIfFile(pathMaybe) {
+    try {
+      const app = deps.app || window.app;
+      const p = (0, import_obsidian3.normalizePath)(String(pathMaybe || "").replace(/^\/+/, "").trim());
+      if (!p) return null;
+      const f = app && app.vault ? app.vault.getAbstractFileByPath(p) : null;
+      if (!f || typeof f.extension !== "string") return null;
+      return await app.vault.read(f);
+    } catch (e) {
+      return null;
+    }
+  }
+  function buildFileMeta(tool, args, kind, before, after, out) {
+    const path = typeof args.path === "string" && args.path ? args.path : out && out.result && out.result.path || "";
+    if (!path) return null;
+    const card = { tool, path, kind };
+    if (kind === "read") {
+      const r = out.result || {};
+      if (typeof r.content === "string") {
+        card.bytes = utf8len(r.content);
+        card.preview = r.content.slice(0, 8e3);
+      }
+      if (Array.isArray(r.files)) card.files = r.files.slice(0, 60);
+      if (Array.isArray(r.folders)) card.folders = r.folders.slice(0, 60);
+      if (Array.isArray(r.hits)) card.hits = r.hits.length;
+    } else {
+      if (typeof args.content === "string") card.bytes = utf8len(args.content);
+      if (before !== null || after !== null) card.diff = diffLines(before, after);
+      card.created = before === null && after !== null;
+    }
+    return card;
   }
   async function afterChange(turnId, rec) {
     const app = deps.app || window.app;
@@ -3865,22 +4777,67 @@ function mountPanel(root, deps) {
   }
   function render(showEmptyWarn = false) {
     if (destroyed) return;
+    const prevComposer = root.querySelector(".ai-rp-composer .ai-rp-input");
+    const composerWasFocused = !!prevComposer && document.activeElement === prevComposer && !prevComposer.readOnly && !prevComposer.disabled;
+    const composerCaret = composerWasFocused ? [prevComposer.selectionStart || 0, prevComposer.selectionEnd || 0] : null;
     const prevBody = root.querySelector(".ai-rp-body");
     const stickToBottom = !prevBody || prevBody.scrollHeight - prevBody.scrollTop - prevBody.clientHeight < 80;
+    const prevBodyScroll = prevBody ? prevBody.scrollTop : 0;
     const prevList = root.querySelector(".ai-rp-mlist");
     const prevListScroll = prevList ? prevList.scrollTop : 0;
     const prevSearch = root.querySelector(".ai-rp-search");
     const searchWasFocused = !!prevSearch && document.activeElement === prevSearch;
     const prevHSearch = root.querySelector(".ai-rp-hsearch");
     const hSearchWasFocused = !!prevHSearch && document.activeElement === prevHSearch;
+    const prevMap = root.querySelector(".ai-rp-map");
+    const mapScrollTop = prevMap ? prevMap.scrollTop : 0;
+    const mapScrollLeft = prevMap ? prevMap.scrollLeft : 0;
     if (historyOpen && !chatsOn()) historyOpen = false;
     pruneAndDefault();
     const models = liveModels();
     root.innerHTML = "";
     root.classList.add("ai-rp");
+    root.classList.toggle("ai-rp-nofeed", mapOpen || discOpen);
     const head = el("div", "ai-rp-head");
-    head.appendChild(el("span", "ai-rp-title", title()));
-    const acts = el("div", "ai-rp-hact");
+    const headTop = el("div", "ai-rp-headtop");
+    headTop.appendChild(el("span", "ai-rp-title", title()));
+    head.appendChild(headTop);
+    const acts = el("div", "ai-rp-headtools");
+    const qwrap = el("span", "ai-rp-qpillwrap");
+    const q = el("button", "ai-rp-qpill" + (quotaOut ? " out" : ""));
+    q.type = "button";
+    q.setAttribute("aria-expanded", quotaPop ? "true" : "false");
+    q.title = "Free tokens left on this device \u2014 click for details";
+    q.appendChild(el("span", "ai-rp-qpill-txt", quotaLeft === null ? "Free tokens" : fmtLeft(quotaLeft)));
+    q.addEventListener("click", () => {
+      quotaPop = !quotaPop;
+      render();
+    });
+    qwrap.appendChild(q);
+    if (quotaPop) {
+      const pop = el("div", "ai-rp-qpop");
+      pop.appendChild(el("div", "ai-rp-qhead", "Free tokens"));
+      const cIn = chatInOut();
+      const qrows = [
+        ["Left now", quotaLeft === null ? "\u2026checking" : fmtNum(quotaLeft)],
+        ["Monthly limit", quotaLimit ? fmtNum(quotaLimit) : "\u2014"],
+        ["Refill", "in " + quotaReset + " day" + (quotaReset === 1 ? "" : "s")],
+        ["This chat so far", usagePfx(cIn) + fmtK((cIn.inn || 0) + cIn.out) + " tokens"],
+        ["Sent in", cIn.inn === null ? "\u2014 not recorded" : usagePfx(cIn) + fmtK(cIn.inn)],
+        ["Wrote out", usagePfx(cIn) + fmtK(cIn.out)]
+      ];
+      qrows.forEach((qr) => {
+        const row = el("div", "ai-rp-qrow");
+        row.appendChild(el("span", "ai-rp-qk", qr[0]));
+        row.appendChild(el("span", "ai-rp-qv", qr[1]));
+        pop.appendChild(row);
+      });
+      const more = el("button", "ai-rp-qlink", "More free tokens at usefree.space");
+      more.type = "button";
+      more.addEventListener("click", () => openUrl(quotaUpgrade));
+      pop.appendChild(more);
+      qwrap.appendChild(pop);
+    }
     if (deps.chats) {
       const nb = el("button", "ai-rp-hbtn");
       nb.type = "button";
@@ -3897,10 +4854,44 @@ function mountPanel(root, deps) {
         hb.title = "Past chats";
         hb.setAttribute("aria-label", "Past chats");
         hb.setAttribute("aria-pressed", historyOpen ? "true" : "false");
-        hb.addEventListener("click", () => void toggleHistory());
+        hb.addEventListener("click", () => {
+          mapOpen = false; discOpen = false;
+          void toggleHistory();
+        });
         acts.appendChild(hb);
       }
     }
+    const vg = el("span", "ai-rp-seg");
+    const vm = el("button", "ai-rp-segb", mapOpen || discOpen ? "Chat" : "Map");
+    vm.type = "button";
+    vm.setAttribute("aria-pressed", mapOpen ? "true" : "false");
+    vm.title = mapOpen ? "Back to the conversation" : "See the conversation as a map";
+    vm.addEventListener("click", () => {
+      if (mapOpen || discOpen) {
+        mapOpen = false;
+        discOpen = false;
+      } else {
+        mapOpen = true;
+        mapEdit = false;
+        mapAsk = false;
+      }
+      historyOpen = false;
+      render();
+    });
+    const vd = el("button", "ai-rp-segb ai-rp-segd" + (discOpen ? " on" : ""), "Characters");
+    vd.type = "button";
+    vd.setAttribute("aria-pressed", discOpen ? "true" : "false");
+    vd.title = "Explore characters \u2014 pick who answers";
+    vd.setAttribute("aria-label", "Explore characters");
+    vd.addEventListener("click", () => {
+      historyOpen = false;
+      mapOpen = false;
+      discOpen = true;
+      render();
+    });
+    vg.appendChild(vm);
+    vg.appendChild(vd);
+    acts.appendChild(vg);
     const ex = el("button", "ai-rp-export");
     ex.type = "button";
     ex.innerHTML = SVG_EXPORT + "<span>Export</span>";
@@ -3909,14 +4900,17 @@ function mountPanel(root, deps) {
     ex.disabled = !msgs.length || busy || exportBusy;
     ex.addEventListener("click", () => void exportChat());
     acts.appendChild(ex);
+    acts.appendChild(qwrap);
     head.appendChild(acts);
     root.appendChild(head);
     const body = el("div", "ai-rp-body");
-    const upd = historyOpen ? null : updateInfo();
+    const upd = historyOpen || mapOpen || discOpen ? null : updateInfo();
     if (upd) body.appendChild(buildUpdateBar(upd));
-    const shownMsgs = historyOpen ? [] : msgs;
+    const shownMsgs = discOpen ? [] : activePath();
     if (historyOpen) buildHistoryBody(body);
-    if (!msgs.length && !historyOpen) {
+    if (discOpen) buildDiscoverBody(body);
+    else if (mapOpen) buildMapBody(body);
+    if (!msgs.length && !historyOpen && !mapOpen && !discOpen) {
       const empty = el(
         "div",
         "ai-rp-empty",
@@ -3960,7 +4954,12 @@ function mountPanel(root, deps) {
           wrap2.appendChild(bar);
           row.appendChild(wrap2);
         } else {
-          row.appendChild(el("div", "ai-rp-ububble", m.text));
+          if (m.voice && m.voice.url) {
+            row.appendChild(buildVoiceCard(m.voice));
+          }
+          const ub = el("div", "ai-rp-ububble ai-rp-md");
+          renderText(ub, m.text);
+          row.appendChild(ub);
           const bar = el("div", "ai-rp-ubar");
           const copy = iconBtn("Copy", SVG_COPY, () => {
             void copyText(m.text).then(() => flash(copy));
@@ -3971,7 +4970,7 @@ function mountPanel(root, deps) {
           });
           edit.disabled = busy;
           const undo = iconBtn(
-            "Undo: remove this message and its reply (text returns to composer)",
+            "Undo: put this message back in the composer (it stays on the map as a saved branch)",
             SVG_UNDO,
             () => undoUser(m.id)
           );
@@ -3979,6 +4978,21 @@ function mountPanel(root, deps) {
           bar.appendChild(copy);
           bar.appendChild(edit);
           bar.appendChild(undo);
+          const nkids = kidsOf(m.id).length;
+          if (nkids > 1) {
+            const fork = el("button", "ai-rp-fork", nkids + " paths start here \u00B7 open map");
+            fork.type = "button";
+            fork.title = "This message has branches. See them on the map.";
+            fork.addEventListener("click", () => {
+              mapSel = m.id;
+              mapEdit = false;
+              mapAsk = false;
+              historyOpen = false;
+              mapOpen = true;
+              render();
+            });
+            bar.appendChild(fork);
+          }
           row.appendChild(bar);
         }
         body.appendChild(row);
@@ -3990,6 +5004,8 @@ function mountPanel(root, deps) {
       if (!act) {
         d.textContent = "Waiting for models\u2026";
       } else if (act.status === "pending") {
+        wrap.__turn = m.turn;
+        wrap.__appr = approvals.filter((x) => x.turnId === m.turn.id).map((x) => "#" + x.id).join("|");
         if (!act.startedAt) act.startedAt = Date.now();
         const th = el("div", "ai-rp-thinking");
         th.setAttribute("data-t0", String(act.startedAt));
@@ -4009,7 +5025,11 @@ function mountPanel(root, deps) {
       } else if (act.status === "cancelled") {
         d.textContent = "Cancelled.";
       } else {
-        renderText(d, act.text);
+        if (act.agent && act.agent.steps && act.agent.steps.length) {
+          renderAgentBlocks(d, act.agent);
+        } else {
+          renderText(d, act.text);
+        }
       }
       wrap.appendChild(d);
       const chg = buildChanges(m.turn.id);
@@ -4034,11 +5054,15 @@ function mountPanel(root, deps) {
         tb.disabled = busy;
         bar.appendChild(cb);
         bar.appendChild(tb);
-        const t = billedTokens(act);
-        const who = el("span", "ai-rp-who", replyLabel(m.turn.active));
-        who.title = "Model that wrote this reply";
+        const p3 = CAST_BY_ID[personaSel];
+        const who = el("span", "ai-rp-who", p3 ? p3.emoji + " " + p3.name : replyLabel(m.turn.active));
+        who.title = p3 ? "You\u2019re talking to " + p3.name + " \u2014 same model underneath" : "Model that wrote this reply";
         bar.appendChild(who);
-        bar.appendChild(el("span", "ai-rp-tok", tokenPrefix(act) + fmtNum(t) + " tokens \xB7 " + chatPrefix() + fmtNum(chatTotal()) + " this chat"));
+        const tu = usageInOut(act);
+        const tok = el("span", "ai-rp-tok");
+        tok.textContent = usagePfx(tu) + "In " + (tu.inn === null ? "\u2014" : fmtK(tu.inn)) + " out " + fmtK(tu.out);
+        tok.title = TOK_TIP;
+        bar.appendChild(tok);
         wrap.appendChild(bar);
       }
       body.appendChild(wrap);
@@ -4172,13 +5196,31 @@ function mountPanel(root, deps) {
     });
     wrapP.appendChild(ptrig);
     bottom.appendChild(wrapP);
+    const helpBtn = el("button", "ai-rp-mapbtn");
+    helpBtn.type = "button";
+    helpBtn.innerHTML = SVG_HELP;
+    helpBtn.title = "Report a problem \u2014 coming soon";
+    helpBtn.setAttribute("aria-label", "Report a problem (coming soon)");
+    helpBtn.addEventListener("click", () => {
+      flashNotice("Report a problem is coming soon. For now, reach us at support@usefree.space \u2014 we help with anything.");
+    });
+    bottom.appendChild(helpBtn);
     foot.appendChild(bottom);
     if (menuOpen) foot.appendChild(buildMenu(models));
     if (permOpen) foot.appendChild(buildPermMenu());
     root.appendChild(foot);
-    if (stickToBottom && !historyOpen) {
-      const nextBody = root.querySelector(".ai-rp-body");
+    const nextBody = root.querySelector(".ai-rp-body");
+    if (stickToBottom && !historyOpen && !mapOpen) {
       if (nextBody) nextBody.scrollTop = nextBody.scrollHeight;
+    } else if (nextBody && !mapOpen) {
+      nextBody.scrollTop = Math.max(0, Math.min(prevBodyScroll, nextBody.scrollHeight - nextBody.clientHeight));
+    }
+    if (mapOpen) {
+      const nm = root.querySelector(".ai-rp-map");
+      if (nm) {
+        nm.scrollTop = mapScrollTop;
+        nm.scrollLeft = mapScrollLeft;
+      }
     }
     autogrow();
     if (!busy) schedulePersist();
@@ -4199,6 +5241,60 @@ function mountPanel(root, deps) {
           si.setSelectionRange(si.value.length, si.value.length);
         }
       }
+    }
+    if (composerWasFocused) {
+      const ci = root.querySelector(".ai-rp-composer .ai-rp-input");
+      if (ci && document.activeElement !== ci) {
+        ci.focus();
+        try {
+          ci.setSelectionRange(composerCaret[0], composerCaret[1]);
+        } catch (e) {
+        }
+      }
+    }
+  }
+  function paintSnap() {
+    if (mapOpen || historyOpen) {
+      render();
+      return;
+    }
+    const b0 = root.querySelector(".ai-rp-body");
+    const stick = !b0 || b0.scrollHeight - b0.scrollTop - b0.clientHeight < 80;
+    let painted = false;
+    const rows = Array.prototype.slice.call(root.querySelectorAll(".ai-rp-mres"));
+    for (const wrapEl of rows) {
+      const turn = wrapEl.__turn;
+      if (!turn) continue;
+      const act = turn.active ? turn.responses[turn.active] : void 0;
+      if (!act || act.status !== "pending") continue;
+      const d = wrapEl.querySelector(".ai-rp-ai");
+      if (!d) {
+        render();
+        return;
+      }
+      const sig = approvals.filter((x) => x.turnId === turn.id).map((x) => "#" + x.id).join("|");
+      if (wrapEl.__appr !== sig) {
+        render();
+        return;
+      }
+      painted = true;
+      if (!act.text) continue;
+      let part = wrapEl.querySelector(".ai-rp-partial");
+      if (!part) {
+        part = el("div", "ai-rp-partial");
+        const card = d.querySelector(".ai-rp-appr");
+        if (card) d.insertBefore(part, card);
+        else d.appendChild(part);
+      }
+      renderText(part, act.text);
+    }
+    if (!painted) {
+      render();
+      return;
+    }
+    if (stick) {
+      const nb = root.querySelector(".ai-rp-body");
+      if (nb) nb.scrollTop = nb.scrollHeight;
     }
   }
   render();
@@ -4603,6 +5699,7 @@ function createVaultTools(app, opts) {
     { name: "screenshot", risk: "read", description: "Take a screenshot of the app (desktop only).", params: [] },
     { name: "web_read", risk: "read", description: "Open a web page and return its readable text as markdown.", params: [{ name: "url", desc: "full address starting with https://", required: true }] },
     { name: "web_search", risk: "read", description: "Search the web and return top results with titles, links and snippets.", params: [{ name: "query", desc: "what to search for", required: true }] },
+    { name: "find_image", risk: "read", description: "Find a real, visible picture by topic through a free, keyless image search. Take your favorite url and include it in your reply as its own line: ![](url) \u2014 the app will display it as an actual picture.", params: [{ name: "query", desc: "what the picture should show", required: true }, { name: "limit", desc: "how many candidates (1-10, default 6)" }] },
     { name: "eval_js", risk: "write", description: "Run JavaScript inside the app (power user).", params: [{ name: "code", desc: "JS expression, `app` in scope", required: true }] }
   ];
   const riskByName = new Map(specs.map((t) => [t.name, t.risk]));
@@ -5178,6 +6275,44 @@ function createVaultTools(app, opts) {
           if (!q) throw new Error("Enter something to search for.");
           return await jinaCall("search", q);
         }
+        case "find_image": {
+          const q = s(a.query).trim();
+          if (!q) throw new Error("Tell me what the picture should show.");
+          let lim = parseInt(String(a.limit == null ? 6 : a.limit), 10);
+          if (!(lim > 0)) lim = 6;
+          if (lim > 10) lim = 10;
+          const url = "https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=" + encodeURIComponent(q) + "&gsrnamespace=6&gsrlimit=" + (lim + 4) + "&prop=imageinfo&iiprop=url%7Csize%7Cmime&iiurlwidth=640&format=json";
+          let res;
+          try {
+            res = await (0, import_obsidian3.requestUrl)({ url, method: "GET", throw: false });
+          } catch (e) {
+            return { ok: false, error: "Couldn't reach the image search. Check your internet connection." };
+          }
+          let j2 = null;
+          try {
+            j2 = res.json;
+          } catch (e) {
+          }
+          const pages = j2 && j2.query && j2.query.pages ? Object.values(j2.query.pages) : [];
+          const okMimes = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/svg+xml", "image/tiff"];
+          const images = [];
+          for (const p of pages) {
+            if (!p || !p.imageinfo || !p.imageinfo[0]) continue;
+            const ii = p.imageinfo[0];
+            if (okMimes.indexOf(ii.mime) < 0) continue;
+            const thumb = ii.thumburl || ii.url;
+            if (!thumb) continue;
+            images.push({ title: String(p.title || "").replace(/^File:/, "").replace(/\.[a-z0-9]+$/i, ""), url: thumb });
+            if (images.length >= lim) break;
+          }
+          if (!images.length) {
+            return { ok: true, result: { images: [], note: "Nothing found for that query. Try simpler or different words." } };
+          }
+          return {
+            ok: true,
+            result: { images, tip: "Pick the best fit and put it in your reply alone on its own line \u2014 exactly like: ![](the url). It will appear as a real picture. Never invent image urls yourself; only ones from this list." }
+          };
+        }
         case "screenshot": {
           return {
             ok: false,
@@ -5707,6 +6842,12 @@ var ObsidianAppPlugin = class extends import_obsidian5.Plugin {
       setting == null ? void 0 : setting.openTabById("free-ai-agents");
     } catch (e) {
       setting == null ? void 0 : setting.open();
+    }
+    try {
+      const tabs = setting.pluginTabs || {};
+      const p = typeof tabs.get === "function" ? tabs.get("free-ai-agents") : tabs["free-ai-agents"];
+      if (p && p === setting.activeTab && typeof p.display === "function") p.display();
+    } catch (e) {
     }
   }
   async activatePanel() {
