@@ -2484,7 +2484,6 @@ var DEFAULT_DATA = {
   deviceId: "",
   approvalMode: "risky",
   dismissedUpdate: "",
-  updateNudgeDay: "",
   chatFontSize: 13,
   sttEnabled: true,
   sttUrl: "https://stt.usefree.space",
@@ -2519,7 +2518,6 @@ function sanitizeData(raw) {
     deviceId: typeof d.deviceId === "string" ? d.deviceId : "",
     approvalMode: d.approvalMode === "ask" || d.approvalMode === "never" ? d.approvalMode : "risky",
     dismissedUpdate: typeof d.dismissedUpdate === "string" ? d.dismissedUpdate : "",
-    updateNudgeDay: typeof d.updateNudgeDay === "string" ? d.updateNudgeDay : "",
     chatFontSize: typeof d.chatFontSize === "number" && d.chatFontSize >= 10 && d.chatFontSize <= 24 ? d.chatFontSize : 13,
     sttEnabled: d.sttEnabled !== false,
     sttUrl: typeof d.sttUrl === "string" && d.sttUrl ? d.sttUrl : "https://stt.usefree.space",
@@ -4713,7 +4711,7 @@ function mountPanel(root, deps) {
           if (destroyed || cancelledTurns.has(turn.id)) return;
           const r = turn.responses[appId];
           if (!r || r.status !== "pending") return;
-          r.text = attachUpdateNote(result.text);
+          r.text = result.text;
           r.status = "success";
           if (result.promptTokens !== void 0) r.promptTokens = result.promptTokens;
           if (result.completionTokens !== void 0) r.completionTokens = result.completionTokens;
@@ -4826,7 +4824,7 @@ function mountPanel(root, deps) {
           r.status = "error";
           r.error = result.error;
         } else {
-          r.text = attachUpdateNote(agentNarration(result.steps, result.text));
+          r.text = agentNarration(result.steps, result.text);
           r.agent = { steps: viewSteps(result.steps), final: result.text || "" };
           r.status = "success";
         }
@@ -5808,7 +5806,7 @@ function mountPanel(root, deps) {
     try {
       const result = await deps.registry.callModel(appId, history);
       if (!destroyed && !cancelledTurns.has(turnId)) {
-        r.text = attachUpdateNote(result.text);
+        r.text = result.text;
         r.status = "success";
         if (result.promptTokens !== void 0) r.promptTokens = result.promptTokens;
         if (result.completionTokens !== void 0) r.completionTokens = result.completionTokens;
@@ -6355,25 +6353,10 @@ function mountPanel(root, deps) {
     menu.appendChild(el("div", "ai-rp-mfoot", "Applies to every chat. You can change it any time."));
     return menu;
   }
-  function todayKey() {
-    const d = new Date();
-    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
-  }
-  function attachUpdateNote(text) {
-    try {
-      if (!text || !catalog || !catalog.latest || !deps.version) return text;
-      if (cmpVersion(catalog.latest.version, deps.version) <= 0) return text;
-      if ((deps.getUpdateNudgeDay ? deps.getUpdateNudgeDay() : "") === todayKey()) return text;
-      if (deps.setUpdateNudgeDay) deps.setUpdateNudgeDay(todayKey());
-      return text + "\n\n---\n" + "💡 v" + catalog.latest.version + " is now available. Please update from Obsidian anytime. We are phasing out 1.5.X (beta program) — this is our first stable release. Please update soon to avoid disruption.\n+ New free voice mode\n+ New connectors and tools\n+ New free automation\n+ Support for 15+ languages\n+ Fixed scrolling bugs and more";
-    } catch (e) {
-      return text;
-    }
-  }
   function updateInfo() {
     if (!catalog || !catalog.latest || !deps.version) return null;
     if (cmpVersion(catalog.latest.version, deps.version) <= 0) return null;
-    if (updateDismissed === todayKey()) return null;
+    if (updateDismissed === catalog.latest.version) return null;
     return catalog.latest;
   }
   function buildUpdateBar(u) {
@@ -6402,9 +6385,9 @@ function mountPanel(root, deps) {
     x.title = "Dismiss";
     x.setAttribute("aria-label", "Dismiss update notice");
     x.addEventListener("click", () => {
-      updateDismissed = todayKey();
+      updateDismissed = u.version;
       updateNotesOpen = false;
-      if (deps.setDismissedUpdate) deps.setDismissedUpdate(todayKey());
+      if (deps.setDismissedUpdate) deps.setDismissedUpdate(u.version);
       render();
     });
     row.appendChild(x);
@@ -8869,11 +8852,6 @@ var PanelView = class extends import_obsidian5.ItemView {
       getDismissedUpdate: () => this.plugin.data.dismissedUpdate || "",
       setDismissedUpdate: (v) => {
         this.plugin.data.dismissedUpdate = v;
-        void this.plugin.save();
-      },
-      getUpdateNudgeDay: () => this.plugin.data.updateNudgeDay || "",
-      setUpdateNudgeDay: (v) => {
-        this.plugin.data.updateNudgeDay = v;
         void this.plugin.save();
       },
       chatFontSize: () => this.plugin.data.chatFontSize,
