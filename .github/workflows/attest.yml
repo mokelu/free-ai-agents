@@ -1,4 +1,4 @@
-name: Attest release assets
+﻿name: Attest release assets
 
 on:
   release:
@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   attest:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Resolve release tag
         id: rel
