@@ -14,7 +14,10 @@ Free AI chat and vault-editing agents in your Obsidian sidebar. No account, no s
 - **Agents that edit your vault** — create, rewrite, move and tag notes through tools, with an approval step before anything is changed.
 - **Chat and agent modes** — ask questions, or let the agent act with tools such as read, search, write, move, tags, properties and canvas.
 - **Web tools** — `web_read` and `web_search` let the model read a page or search the web, using the free web allowance or your own Jina key.
-- **Voice typing** — optional dictation with your own Groq key.
+- **Voice typing** — optional dictation. Defaults to the **Riemann STT** service (private, no keys: a per-device key is issued automatically on first use). Cloud providers (Groq, OpenAI) remain available as alternatives.
+- **Quick tools** — translate, summarize, calculate, explain, or ask about your current note in one click from the sidebar header.
+- **Chat display settings** — adjust the chat font size to your liking.
+- **Localized UI** — follows Obsidian's interface language (English, 简体中文, 繁體中文, 日本語, 한국어, Español, Français, Deutsch, Português, Русский, Italiano, العربية, हिन्दी, ไทย, Tiếng Việt) for all core interface text and settings.
 - **Local history and snapshots** — a change history with restore, and chats you can export.
 
 ## Install?

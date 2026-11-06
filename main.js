@@ -25,6 +25,1628 @@ __export(main_exports, {
   default: () => ObsidianAppPlugin
 });
 module.exports = __toCommonJS(main_exports);
+
+// i18n.ts - lightweight localization (core UI strings). English is the fallback.
+var AI_UI = {
+  en: {
+    newChat: "New chat",
+    pastChats: "Past chats",
+    map: "Map",
+    chat: "Chat",
+    backToChat: "Back to the conversation",
+    viewAsMap: "See the conversation as a map",
+    characters: "Characters",
+    exploreChars: "Pick who answers",
+    export: "Export",
+    exportTitle: "Export this chat as a note in your vault",
+    reportProblem: "Report a problem",
+    sectionPlay: "Play",
+    sectionStudy: "Study",
+    sectionAutomation: "Automation",
+    offlineLabel: "Offline",
+    quotaLimitLabel: "Limit",
+    searchPh: "Search…",
+    reportComingSoon: "Report a problem is coming soon. For now, reach us at support@usefree.space - we help with anything.",
+    freeTokens: "Free tokens",
+    quotaTitle: "Free tokens left on this device - click for details",
+    quotaLeftNow: "Left now",
+    quotaMonthly: "Monthly limit",
+    quotaRefill: "Refill",
+    quotaThisChat: "This chat so far",
+    quotaSentIn: "Sent in",
+    quotaWroteOut: "Wrote out",
+    quotaMore: "Get more at usefree.space",
+    checking: "\u2026checking",
+    askPh: "Ask anything...",
+    listeningPh: "Listening\u2026 tap the mic when you\u2019re done",
+    transcribingPh: "Transcribing\u2026",
+    micUnavailable: "Voice input isn\u2019t available in this environment",
+    micStop: "Stop and use what you said",
+    micListen: "Voice input \u2014 speak and it types for you",
+    voiceAria: "Voice input",
+    send: "Send",
+    stop: "Stop",
+    warnPickModel: "Pick at least 1 model below to send.",
+    noModels: "No models",
+    models: "models",
+    emptyNothing: "Nothing here yet \u2014 send a message below.",
+    emptyNoModels: "No models connected \u2014 add a key in Settings to begin.",
+    openSettings: "Open Settings",
+    emptyHistory: "No saved chats yet. Your conversations are saved on this device automatically.",
+    emptyDiscover: "Nothing here yet \u2014 go to Chat and send a message.",
+    loading: "Loading\u2026",
+    stFreeTokens: "Free tokens",
+    stFreeTokensDesc: "No account needed. Free tokens are used when you pick a \u201Cpool\u201D model in the chat.",
+    stGoFree: "Go to usefree.space",
+    stWebAccess: "Web access",
+    stWebDesc: "The AI can open web pages and search the web. Leave the key blank to use the included free web allowance for this device. The meter below shows what is left.",
+    stJinaKey: "Your own Jina key",
+    stJinaDesc: "Optional. Paste a key from jina.ai to use your own quota and skip the free web allowance. Stored on this device only.",
+    stAccounts: "Your own AI accounts",
+    stAccountsDesc: "Connect an account with another AI provider to use its models. You pay that provider directly, or use their free tier.",
+    stNoAccounts: "No accounts connected yet. Add one below.",
+    stAddProvider: "Add a provider",
+    stAddProviderDesc: "Choose one, add it, then paste your key.",
+    stAdd: "Add",
+    stKeepKeys: "Keep my keys after restarting Obsidian",
+    stVoice: "Voice typing",
+    stSpeak: "Speak instead of typing",
+    stChats: "Chats and privacy",
+    stYourChats: "Your chats",
+    stYourChatsDesc: "Export everything to a file, or delete everything.",
+    stExportAll: "Export all",
+    stDeleteAll: "Delete all",
+    stAiNotes: "The AI and your notes",
+    stAbout: "About",
+    stHelp: "Get help",
+    stEmail: "Email us",
+    stFindTokens: "Find more free tokens",
+    stChatDisplay: "Chat display",
+    stFontSize: "Chat font size",
+    stFontSizeDesc: "The size of the text in chat messages.",
+    stVoiceModel: "Voice model",
+    stVoiceModelDesc: "Which provider and model turns your speech into text.",
+    stAutomatic: "Automatic",
+    stAdvanced: "Advanced",
+    stAnyOpenAI: "Add any OpenAI-style service",
+    stAnyOpenAIDesc: "For local models (Ollama, LM Studio) or other services that work like OpenAI. The web address usually ends in /v1.",
+    toolsBtn: "Quick tools",
+    toolsTitle: "Quick tools",
+    toolsInputPh: "Type or paste...",
+    tTranslate: "Translate",
+    tSummarize: "Summarize",
+    tCalc: "Calculate / solve",
+    tExplain: "Explain / define",
+    tAskNote: "Ask about current note",
+    tRun: "Run",
+    tNeedInput: "Type or paste something first.",
+    tUsedNote: "Using the current note.",
+    stWebAllowance: "Free web allowance",
+    connectingPh: "Connecting\u2026",
+    connectedOne: "Connected \xB7 1 model",
+    connectedMany: "Connected \xB7 {n} models",
+    keySaved: "Key saved. Click Connect to check it.",
+    notConnected: "Not connected. Paste your key to connect.",
+    onlyNeeded: "Only needed if you were given a key. Free tokens work without one.",
+    keySentTo: "Your key is sent to {host}.",
+    connectBtn: "Connect",
+    saveKeyBtn: "Save key",
+    allowBtn: "Allow",
+    denyBtn: "Deny",
+    askBeforeChanging: "When the AI asks before changing your notes",
+    deleteAllTitle: "Delete all chats?",
+    deleteAllWarn: "This cannot be undone. Type \u201Cdelete\u201D to confirm.",
+    cancelBtn: "Cancel",
+    exportedOne: "Exported 1 chat to {name}",
+    exportedMany: "Exported {n} chats to {name}",
+    exportFailedMsg: "Couldn\u2019t export the chats.",
+    deletedAllNote: "All chats deleted.",
+    enterNameUrl: "Enter a name and a web address that starts with http:// or https://",
+    cantAddService: "Couldn\u2019t add that service.",
+    noAudio: "Didn\u2019t catch anything. Try again.",
+    micBlocked: "Microphone access is blocked. Allow it in your system or app settings, then try again.",
+    useOwnJina: "Using your own Jina key. The included free allowance is not used.",
+    getKey: "Get a key",
+    pasteKeyFirst: "Paste your key first.",
+    msgTooLong: "Message too long (~{n}k tokens, max ~100k). Paste a smaller snippet.",
+    deleteAsk: "Delete?",
+    deleteChatTitle: "Delete this chat",
+    noChatMatch: "No chats match \u201C{qq201D}.",
+    searchingChats: "Searching inside conversations\u2026",
+    closePane: "Close this pane",
+    closeInsp: "Close message inspector",
+    tapDot: "Tap any dot to read the full message.",
+    details: "Details",
+    alwaysAllow: "Always allow this chat",
+    searchModelsPh: "Search models or providers",
+    myFreePool: "My free pool",
+    poolEmpty: "Pool empty",
+    tagFree: "Free",
+    quotaCheckFail: "Couldn\u2019t check right now. You can still chat. Free tokens are used when the model picker says \u201Cpool\u201D.",
+    webCheckFail: "Couldn\u2019t check the web allowance right now. Web tools may still work.",
+    recUnsupported: "Recording isn\u2019t supported here.",
+    startRecFail: "Couldn\u2019t start recording.",
+    openMicFail: "Couldn\u2019t open the microphone.",
+    voiceUnavailableHere: "Voice input isn\u2019t available here.",
+    addGroqKey: "Add a Groq key",
+    updateBtn: "Update",
+    remove: "Remove",
+    yesRemoveOne: "Yes \u2014 remove 1 message",
+    yesRemoveMany: "Yes \u2014 remove {n} messages"
+  },
+  "zh-cn": {
+    newChat: "新对话",
+    pastChats: "历史对话",
+    map: "地图",
+    chat: "聊天",
+    backToChat: "返回对话",
+    viewAsMap: "将对话显示为地图",
+    characters: "角色",
+    exploreChars: "选择回答者",
+    export: "导出",
+    exportTitle: "将本次对话导出为笔记",
+    reportProblem: "反馈问题",
+    reportComingSoon: "反馈问题功能即将推出。目前请发送邮件至 support@usefree.space，我们随时提供帮助。",
+    freeTokens: "免费额度",
+    quotaTitle: "本设备剩余免费额度——点击查看详情",
+    quotaLeftNow: "剩余",
+    quotaMonthly: "每月上限",
+    quotaRefill: "恢复",
+    quotaThisChat: "本次对话累计",
+    quotaSentIn: "已发送",
+    quotaWroteOut: "已输出",
+    quotaMore: "前往 usefree.space 获取更多免费额度",
+    checking: "正在检查……",
+    askPh: "想问什么都可以……",
+    listeningPh: "正在聆听……说完点击麦克风",
+    transcribingPh: "正在转写……",
+    micUnavailable: "当前环境不支持语音输入",
+    micStop: "停止并使用刚才说的话",
+    micListen: "语音输入——说出来即可自动输入",
+    voiceAria: "语音输入",
+    send: "发送",
+    stop: "停止",
+    warnPickModel: "请至少选择一个模型后再发送。",
+    noModels: "没有模型",
+    models: "个模型",
+    emptyNothing: "这里还什么都没有——在下方发送一条消息吧。",
+    emptyNoModels: "尚未连接任何模型——请在设置中添加密钥后开始。",
+    openSettings: "打开设置",
+    emptyHistory: "还没有保存的对话。你的对话会自动保存在本设备上。",
+    emptyDiscover: "这里还什么都没有——请前往「聊天」发送消息。",
+    loading: "加载中……",
+    stFreeTokens: "免费额度",
+    stFreeTokensDesc: "无需注册。在对话中选择“池”模型时会使用免费额度。",
+    stGoFree: "前往 usefree.space",
+    stWebAccess: "联网访问",
+    stWebDesc: "AI 可以打开网页并搜索网络。留空密钥即可使用内置的设备免费联网额度，下方显示剩余量。",
+    stJinaKey: "你自己的 Jina 密钥",
+    stJinaDesc: "可选。粘贴 jina.ai 的密钥即可使用自己的配额，跳过免费联网额度。仅保存在本设备上。",
+    stAccounts: "你自己的 AI 账号",
+    stAccountsDesc: "连接其他 AI 提供商的账号以使用其模型。费用直接付给该提供商，或使用其免费档。",
+    stNoAccounts: "尚未连接任何账号。请在下方添加。",
+    stAddProvider: "添加提供商",
+    stAddProviderDesc: "选择一家，添加后粘贴你的密钥。",
+    stAdd: "添加",
+    stKeepKeys: "重启 Obsidian 后保留我的密钥",
+    stVoice: "语音输入",
+    stSpeak: "用语音代替打字",
+    stChats: "对话与隐私",
+    stYourChats: "你的对话",
+    stYourChatsDesc: "导出全部内容到文件，或全部删除。",
+    stExportAll: "全部导出",
+    stDeleteAll: "全部删除",
+    stAiNotes: "AI 与你的笔记",
+    stAbout: "关于",
+    stHelp: "获取帮助",
+    stEmail: "给我们发邮件",
+    stFindTokens: "寻找更多免费额度",
+    stChatDisplay: "聊天显示",
+    stFontSize: "聊天字号",
+    stFontSizeDesc: "聊天消息中的文字大小。",
+    stVoiceModel: "语音模型",
+    stVoiceModelDesc: "选择把语音转成文字的提供商与模型。",
+    stAutomatic: "自动",
+    stAdvanced: "高级",
+    stAnyOpenAI: "添加任意兼容 OpenAI 的服务",
+    stAnyOpenAIDesc: "适用于本地模型（Ollama、LM Studio）或其他兼容 OpenAI 的服务。网址通常以 /v1 结尾。",
+    toolsBtn: "快捷工具",
+    toolsTitle: "快捷工具",
+    toolsInputPh: "输入或粘贴……",
+    tTranslate: "翻译",
+    tSummarize: "总结",
+    tCalc: "计算/求解",
+    tExplain: "解释/释义",
+    tAskNote: "询问当前笔记",
+    tRun: "运行",
+    tNeedInput: "请先输入或粘贴内容。",
+    tUsedNote: "正在使用当前笔记。",
+    stWebAllowance: "免费联网额度",
+    connectingPh: "正在连接……",
+    connectedOne: "已连接 · 1 个模型",
+    connectedMany: "已连接 · {n} 个模型",
+    keySaved: "密钥已保存。点击「连接」进行验证。",
+    notConnected: "未连接。请粘贴你的密钥以连接。",
+    onlyNeeded: "仅在向你发放了密钥时需要填写。无需密钥即可使用免费额度。",
+    keySentTo: "你的密钥会发送到 {host}。",
+    connectBtn: "连接",
+    saveKeyBtn: "保存密钥",
+    allowBtn: "允许",
+    denyBtn: "拒绝",
+    askBeforeChanging: "当 AI 在修改笔记前请求许可时",
+    deleteAllTitle: "删除所有对话？",
+    deleteAllWarn: "此操作无法撤销。请输入 delete 以确认。",
+    cancelBtn: "取消",
+    exportedOne: "已导出 1 个对话到 {name}",
+    exportedMany: "已导出 {n} 个对话到 {name}",
+    exportFailedMsg: "导出对话失败。",
+    deletedAllNote: "所有对话已删除。",
+    enterNameUrl: "请输入名称和以 http:// 或 https:// 开头的网址。",
+    cantAddService: "无法添加该服务。",
+    noAudio: "没有捕获到声音，请重试。",
+    micBlocked: "麦克风访问被阻止。请在系统或应用设置中允许后重试。",
+    useOwnJina: "正在使用你自己的 Jina 密钥。不会使用内置的免费联网额度。",
+    getKey: "获取密钥",
+    pasteKeyFirst: "请先粘贴你的密钥。",
+    msgTooLong: "消息过长（约 {n}k 令牌，上限约 100k）。请粘贴更短的内容。",
+    deleteAsk: "删除？",
+    deleteChatTitle: "删除此对话",
+    noChatMatch: "没有与「{q}」匹配的对话。",
+    searchingChats: "正在对话中搜索……",
+    closePane: "关闭此面板",
+    closeInsp: "关闭消息检查器",
+    tapDot: "点击任意节点阅读完整消息。",
+    details: "详情",
+    alwaysAllow: "始终允许此对话",
+    searchModelsPh: "搜索模型或提供商",
+    myFreePool: "我的免费池",
+    poolEmpty: "池已空",
+    tagFree: "免费",
+    quotaCheckFail: "暂时无法检查。你仍可聊天。选择“池”模型时会使用免费额度。",
+    webCheckFail: "暂时无法检查联网额度。联网工具可能仍可用。",
+    recUnsupported: "此环境不支持录音。",
+    startRecFail: "无法开始录音。",
+    openMicFail: "无法打开麦克风。",
+    voiceUnavailableHere: "此处不提供语音输入。",
+    addGroqKey: "添加 Groq 密钥",
+    updateBtn: "更新",
+    remove: "移除",
+    yesRemoveOne: "是——移除 1 条消息",
+    yesRemoveMany: "是——移除 {n} 条消息"
+  },
+  "zh-tw": {
+    newChat: "新對話",
+    pastChats: "歷史對話",
+    map: "地圖",
+    chat: "聊天",
+    backToChat: "返回對話",
+    viewAsMap: "將對話顯示為地圖",
+    characters: "角色",
+    exploreChars: "選擇回答者",
+    export: "匯出",
+    exportTitle: "將本次對話匯出為筆記",
+    reportProblem: "回饋問題",
+    reportComingSoon: "回饋問題功能即將推出。目前請寄信至 support@usefree.space，我們隨時提供協助。",
+    freeTokens: "免費額度",
+    quotaTitle: "本裝置剩餘免費額度——按一下查看詳情",
+    quotaLeftNow: "剩餘",
+    quotaMonthly: "每月上限",
+    quotaRefill: "恢復",
+    quotaThisChat: "本次對話累計",
+    quotaSentIn: "已送出",
+    quotaWroteOut: "已輸出",
+    quotaMore: "前往 usefree.space 取得更多免費額度",
+    checking: "正在檢查……",
+    askPh: "想問什麼都可以……",
+    listeningPh: "正在聆聽……說完請點麥克風",
+    transcribingPh: "正在轉寫……",
+    micUnavailable: "目前環境不支援語音輸入",
+    micStop: "停止並使用剛才說的話",
+    micListen: "語音輸入——說出來即可自動輸入",
+    voiceAria: "語音輸入",
+    send: "送出",
+    stop: "停止",
+    warnPickModel: "請至少選擇一個模型後再送出。",
+    noModels: "沒有模型",
+    models: "個模型",
+    emptyNothing: "這裡還沒有內容——在下方傳送一則訊息吧。",
+    emptyNoModels: "尚未連接任何模型——請在設定中新增金鑰後開始。",
+    openSettings: "開啟設定",
+    emptyHistory: "還沒有儲存的對話。你的對話會自動保存在本裝置上。",
+    emptyDiscover: "這裡還沒有內容——請前往「聊天」傳送訊息。",
+    loading: "載入中……",
+    stFreeTokens: "免費額度",
+    stFreeTokensDesc: "無需註冊。在對話中選擇「池」模型時會使用免費額度。",
+    stGoFree: "前往 usefree.space",
+    stWebAccess: "連網存取",
+    stWebDesc: "AI 可以開啟網頁並搜尋網路。金鑰留空即可使用內建的裝置免費連網額度，下方顯示剩餘量。",
+    stJinaKey: "你自己的 Jina 金鑰",
+    stJinaDesc: "選用。貼上 jina.ai 的金鑰即可使用自己的配額，略過免費連網額度。僅保存在本裝置上。",
+    stAccounts: "你自己的 AI 帳號",
+    stAccountsDesc: "連接其他 AI 提供者的帳號以使用其模型。費用直接付給該提供者，或使用其免費方案。",
+    stNoAccounts: "尚未連接任何帳號。請在下方新增。",
+    stAddProvider: "新增提供者",
+    stAddProviderDesc: "選擇一家，新增後貼上你的金鑰。",
+    stAdd: "新增",
+    stKeepKeys: "重新啟動 Obsidian 後保留我的金鑰",
+    stVoice: "語音輸入",
+    stSpeak: "用語音代替打字",
+    stChats: "對話與隱私",
+    stYourChats: "你的對話",
+    stYourChatsDesc: "匯出全部內容到檔案，或全部刪除。",
+    stExportAll: "全部匯出",
+    stDeleteAll: "全部刪除",
+    stAiNotes: "AI 與你的筆記",
+    stAbout: "關於",
+    stHelp: "取得協助",
+    stEmail: "寄信給我們",
+    stFindTokens: "尋找更多免費額度",
+    stChatDisplay: "聊天顯示",
+    stFontSize: "聊天字級",
+    stFontSizeDesc: "聊天訊息中的文字大小。",
+    stVoiceModel: "語音模型",
+    stVoiceModelDesc: "選擇把語音轉成文字的提供者與模型。",
+    stAutomatic: "自動",
+    stAdvanced: "進階",
+    stAnyOpenAI: "新增任意相容 OpenAI 的服務",
+    stAnyOpenAIDesc: "適用於本機模型（Ollama、LM Studio）或其他相容 OpenAI 的服務。網址通常以 /v1 結尾。",
+    toolsBtn: "快速工具",
+    toolsTitle: "快速工具",
+    toolsInputPh: "輸入或貼上……",
+    tTranslate: "翻譯",
+    tSummarize: "摘要",
+    tCalc: "計算/求解",
+    tExplain: "解釋/釋義",
+    tAskNote: "詢問目前筆記",
+    tRun: "執行",
+    tNeedInput: "請先輸入或貼上內容。",
+    tUsedNote: "正在使用目前筆記。",
+    stWebAllowance: "免費連網額度",
+    connectingPh: "正在連接……",
+    connectedOne: "已連接 · 1 個模型",
+    connectedMany: "已連接 · {n} 個模型",
+    keySaved: "金鑰已儲存。按一下「連接」進行驗證。",
+    notConnected: "尚未連接。請貼上你的金鑰以連接。",
+    onlyNeeded: "僅在發放金鑰給你時需要填寫。無需金鑰即可使用免費額度。",
+    keySentTo: "你的金鑰會傳送到 {host}。",
+    connectBtn: "連接",
+    saveKeyBtn: "儲存金鑰",
+    allowBtn: "允許",
+    denyBtn: "拒絕",
+    askBeforeChanging: "當 AI 在修改筆記前請求許可時",
+    deleteAllTitle: "刪除所有對話？",
+    deleteAllWarn: "此操作無法復原。請輸入 delete 以確認。",
+    cancelBtn: "取消",
+    exportedOne: "已匯出 1 個對話到 {name}",
+    exportedMany: "已匯出 {n} 個對話到 {name}",
+    exportFailedMsg: "匯出對話失敗。",
+    deletedAllNote: "所有對話已刪除。",
+    enterNameUrl: "請輸入名稱和以 http:// 或 https:// 開頭的網址。",
+    cantAddService: "無法新增該服務。",
+    noAudio: "沒有捕捉到聲音，請重試。",
+    micBlocked: "麥克風存取遭封鎖。請在系統或應用程式設定中允許後重試。",
+    useOwnJina: "正在使用你自己的 Jina 金鑰。不會使用內建的免費連網額度。",
+    getKey: "取得金鑰",
+    pasteKeyFirst: "請先貼上你的金鑰。",
+    msgTooLong: "訊息過長（約 {n}k 令牌，上限約 100k）。請貼上更短的內容。",
+    deleteAsk: "刪除？",
+    deleteChatTitle: "刪除此對話",
+    noChatMatch: "沒有與「{q}」相符的對話。",
+    searchingChats: "正在對話中搜尋……",
+    closePane: "關閉此面板",
+    closeInsp: "關閉訊息檢查器",
+    tapDot: "點按任意節點閱讀完整訊息。",
+    details: "詳情",
+    alwaysAllow: "一律允許此對話",
+    searchModelsPh: "搜尋模型或提供者",
+    myFreePool: "我的免費池",
+    poolEmpty: "池已空",
+    tagFree: "免費",
+    quotaCheckFail: "暫時無法檢查。你仍可聊天。選擇「池」模型時會使用免費額度。",
+    webCheckFail: "暫時無法檢查連網額度。連網工具可能仍可用。",
+    recUnsupported: "此環境不支援錄音。",
+    startRecFail: "無法開始錄音。",
+    openMicFail: "無法開啟麥克風。",
+    voiceUnavailableHere: "此處不提供語音輸入。",
+    addGroqKey: "新增 Groq 金鑰",
+    updateBtn: "更新",
+    remove: "移除",
+    yesRemoveOne: "是——移除 1 則訊息",
+    yesRemoveMany: "是——移除 {n} 則訊息"
+  },
+  ja: {
+    newChat: "新しい会話",
+    pastChats: "過去の会話",
+    map: "マップ",
+    chat: "チャット",
+    backToChat: "会話に戻る",
+    viewAsMap: "会話をマップとして表示",
+    characters: "キャラクター",
+    exploreChars: "回答者を選ぶ",
+    export: "エクスポート",
+    exportTitle: "この会話をノートとして書き出す",
+    reportProblem: "問題を報告する",
+    reportComingSoon: "問題報告機能は近日公開予定です。今は support@usefree.space までご連絡ください。何でもお手伝いします。",
+    freeTokens: "無料トークン",
+    quotaTitle: "この端末の残り無料トークン（クリックで詳細）",
+    quotaLeftNow: "残り",
+    quotaMonthly: "月間上限",
+    quotaRefill: "補充",
+    quotaThisChat: "この会話の合計",
+    quotaSentIn: "送信",
+    quotaWroteOut: "出力",
+    quotaMore: "usefree.space でもっと無料トークンを",
+    checking: "確認中…",
+    askPh: "何でも質問してください…",
+    listeningPh: "聞き取り中… 終わったらマイクをタップ",
+    transcribingPh: "文字起こし中…",
+    micUnavailable: "この環境では音声入力は利用できません",
+    micStop: "停止して発言を使用",
+    micListen: "音声入力 — 話すと自動入力されます",
+    voiceAria: "音声入力",
+    send: "送信",
+    stop: "停止",
+    warnPickModel: "送信するにはモデルを1つ以上選択してください。",
+    noModels: "モデルがありません",
+    models: "モデル",
+    emptyNothing: "まだ何もありません — 下のメッセージ欄から送信してください。",
+    emptyNoModels: "モデルが接続されていません — 設定でキーを追加してください。",
+    openSettings: "設定を開く",
+    emptyHistory: "保存済みの会話はまだありません。会話はこの端末に自動保存されます。",
+    emptyDiscover: "まだ何もありません — チャットに移動してメッセージを送信してください。",
+    loading: "読み込み中…",
+    stFreeTokens: "無料トークン",
+    stFreeTokensDesc: "登録は不要です。チャットで「プール」モデルを選ぶと無料トークンが使われます。",
+    stGoFree: "usefree.space へ",
+    stWebAccess: "ウェブアクセス",
+    stWebDesc: "AI はウェブページを開いたりウェブ検索ができます。キーを空にすると、この端末の無料ウェブ枠を使います。残量は下部のメーターに表示されます。",
+    stJinaKey: "自分専用の Jina キー",
+    stJinaDesc: "任意。jina.ai のキーを貼ると自分のクォータが使え、無料ウェブ枠をスキップします。この端末にのみ保存されます。",
+    stAccounts: "自分専用の AI アカウント",
+    stAccountsDesc: "別の AI 提供者のアカウントを接続するとそのモデルが使えます。料金はその提供者に直接支払うか、無料枠を利用します。",
+    stNoAccounts: "接続済みのアカウントはまだありません。下から追加してください。",
+    stAddProvider: "提供者を追加",
+    stAddProviderDesc: "選択して追加し、キーを貼り付けてください。",
+    stAdd: "追加",
+    stKeepKeys: "Obsidian 再起動後もキーを保持",
+    stVoice: "音声入力",
+    stSpeak: "タイピングの代わりに音声を使う",
+    stChats: "会話とプライバシー",
+    stYourChats: "あなたの会話",
+    stYourChatsDesc: "すべてをファイルに書き出すか、すべて削除します。",
+    stExportAll: "すべて書き出す",
+    stDeleteAll: "すべて削除",
+    stAiNotes: "AI とあなたのノート",
+    stAbout: "このプラグインについて",
+    stHelp: "ヘルプ",
+    stEmail: "メールを送る",
+    stFindTokens: "無料トークンをもっと探す",
+    stChatDisplay: "チャット表示",
+    stFontSize: "チャットのフォントサイズ",
+    stFontSizeDesc: "チャットメッセージ内の文字サイズ。",
+    stVoiceModel: "音声モデル",
+    stVoiceModelDesc: "音声をテキストに変換する提供者とモデル。",
+    stAutomatic: "自動",
+    stAdvanced: "詳細設定",
+    stAnyOpenAI: "OpenAI 互換サービスを追加",
+    stAnyOpenAIDesc: "ローカルモデル（Ollama、LM Studio）や OpenAI 互換のサービス向け。URL は通常 /v1 で終わります。",
+    toolsBtn: "クイックツール",
+    toolsTitle: "クイックツール",
+    toolsInputPh: "入力または貼り付け…",
+    tTranslate: "翻訳",
+    tSummarize: "要約",
+    tCalc: "計算/解答",
+    tExplain: "説明/定義",
+    tAskNote: "現在のノートについて質問",
+    tRun: "実行",
+    tNeedInput: "先に入力または貼り付けしてください。",
+    tUsedNote: "現在のノートを使用中。",
+    stWebAllowance: "無料ウェブ枠",
+    connectingPh: "接続中…",
+    connectedOne: "接続済み · 1 モデル",
+    connectedMany: "接続済み · {n} モデル",
+    keySaved: "キーを保存しました。「接続」を押して確認してください。",
+    notConnected: "未接続です。キーを貼り付けて接続してください。",
+    onlyNeeded: "キーを渡された場合のみ必要です。無料トークンはキーなしで使えます。",
+    keySentTo: "キーは {host} に送信されます。",
+    connectBtn: "接続",
+    saveKeyBtn: "キーを保存",
+    allowBtn: "許可",
+    denyBtn: "拒否",
+    askBeforeChanging: "AI がノートを変更する前に確認を求める場合",
+    deleteAllTitle: "すべての会話を削除しますか？",
+    deleteAllWarn: "この操作は元に戻せません。確認のため「delete」と入力してください。",
+    cancelBtn: "キャンセル",
+    exportedOne: "1 件の会話を {name} に書き出しました",
+    exportedMany: "{n} 件の会話を {name} に書き出しました",
+    exportFailedMsg: "会話を書き出せませんでした。",
+    deletedAllNote: "すべての会話を削除しました。",
+    enterNameUrl: "名前と、http:// または https:// で始まる Web アドレスを入力してください。",
+    cantAddService: "そのサービスを追加できませんでした。",
+    noAudio: "音声を取得できませんでした。もう一度お試しください。",
+    micBlocked: "マイクへのアクセスがブロックされています。システムまたはアプリの設定で許可してからもう一度お試しください。",
+    useOwnJina: "独自の Jina キーを使用中です。内蔵の無料ウェブ枠は使われません。",
+    getKey: "キーを取得",
+    pasteKeyFirst: "先にキーを貼り付けてください。",
+    msgTooLong: "メッセージが長すぎます（約 {n}k トークン、上限 約100k）。短い内容を貼り付けてください。",
+    deleteAsk: "削除しますか？",
+    deleteChatTitle: "この会話を削除",
+    noChatMatch: "「{q}」に一致する会話はありません。",
+    searchingChats: "会話内を検索中…",
+    closePane: "このペインを閉じる",
+    closeInsp: "メッセージインスペクターを閉じる",
+    tapDot: "ドットをタップすると全文を読めます。",
+    details: "詳細",
+    alwaysAllow: "この会話では常に許可",
+    searchModelsPh: "モデルまたはプロバイダーを検索",
+    myFreePool: "マイ無料プール",
+    poolEmpty: "プールは空です",
+    tagFree: "無料",
+    quotaCheckFail: "今は確認できません。チャットは引き続き利用できます。「プール」モデルを選ぶと無料トークンが使われます。",
+    webCheckFail: "今はウェブ枠を確認できません。ウェブツールは動作する場合があります。",
+    recUnsupported: "この環境では録音に対応していません。",
+    startRecFail: "録音を開始できませんでした。",
+    openMicFail: "マイクを開けませんでした。",
+    voiceUnavailableHere: "ここでは音声入力は利用できません。",
+    addGroqKey: "Groq キーを追加",
+    updateBtn: "更新",
+    remove: "削除",
+    yesRemoveOne: "はい — メッセージを1件削除",
+    yesRemoveMany: "はい — メッセージを{n}件削除"
+  },
+  ko: {
+    newChat: "새 대화",
+    pastChats: "지난 대화",
+    map: "지도",
+    chat: "채팅",
+    backToChat: "대화로 돌아가기",
+    viewAsMap: "대화를 지도로 보기",
+    characters: "캐릭터",
+    exploreChars: "답변할 대상을 선택",
+    export: "내보내기",
+    exportTitle: "이 대화를 노트로 내보내기",
+    reportProblem: "문제 신고",
+    reportComingSoon: "문제 신고 기능은 곧 제공됩니다. 지금은 support@usefree.space 로 연락 주세요. 무엇이든 도와드립니다.",
+    freeTokens: "무료 토큰",
+    quotaTitle: "이 기기의 남은 무료 토큰 — 클릭하여 자세히 보기",
+    quotaLeftNow: "남은 양",
+    quotaMonthly: "월간 한도",
+    quotaRefill: "재충전",
+    quotaThisChat: "이 대화 누적",
+    quotaSentIn: "보냄",
+    quotaWroteOut: "출력",
+    quotaMore: "usefree.space 에서 무료 토큰 더 받기",
+    checking: "확인 중…",
+    askPh: "무엇이든 물어보세요…",
+    listeningPh: "듣는 중… 끝나면 마이크를 누르세요",
+    transcribingPh: "텍스트 변환 중…",
+    micUnavailable: "이 환경에서는 음성 입력을 사용할 수 없습니다",
+    micStop: "멈추고 방금 한 말 사용",
+    micListen: "음성 입력 — 말하면 자동 입력됩니다",
+    voiceAria: "음성 입력",
+    send: "보내기",
+    stop: "멈춤",
+    warnPickModel: "보내려면 모델을 1개 이상 선택하세요.",
+    noModels: "모델 없음",
+    models: "개 모델",
+    emptyNothing: "아직 아무것도 없습니다 — 아래에 메시지를 보내세요.",
+    emptyNoModels: "연결된 모델이 없습니다 — 설정에서 키를 추가해 시작하세요.",
+    openSettings: "설정 열기",
+    emptyHistory: "저장된 대화가 아직 없습니다. 대화는 이 기기에 자동 저장됩니다.",
+    emptyDiscover: "아직 아무것도 없습니다 — 채팅으로 가서 메시지를 보내세요.",
+    loading: "불러오는 중…",
+    stFreeTokens: "무료 토큰",
+    stFreeTokensDesc: "계정이 필요 없습니다. 채팅에서 '풀' 모델을 선택하면 무료 토큰이 사용됩니다.",
+    stGoFree: "usefree.space 로 이동",
+    stWebAccess: "웹 접근",
+    stWebDesc: "AI가 웹페이지를 열고 웹 검색을 할 수 있습니다. 키를 비워두면 이 기기의 무료 웹 할당량을 사용하며 남은 양은 아래 미터에 표시됩니다.",
+    stJinaKey: "본인 소유 Jina 키",
+    stJinaDesc: "선택 사항. jina.ai 의 키를 붙여넣으면 본인 할당량을 사용하고 무료 웹 할당량을 건너뜁니다. 이 기기에만 저장됩니다.",
+    stAccounts: "본인 소유 AI 계정",
+    stAccountsDesc: "다른 AI 제공업체의 계정을 연결하면 해당 모델을 사용할 수 있습니다. 요금은 그 제공업체에 직접 지불하거나 무료 등급을 사용합니다.",
+    stNoAccounts: "연결된 계정이 아직 없습니다. 아래에서 추가하세요.",
+    stAddProvider: "제공업체 추가",
+    stAddProviderDesc: "하나를 선택해 추가한 후 키를 붙여넣으세요.",
+    stAdd: "추가",
+    stKeepKeys: "Obsidian 재시작 후에도 키 유지",
+    stVoice: "음성 입력",
+    stSpeak: "타이핑 대신 말하기",
+    stChats: "대화와 개인정보",
+    stYourChats: "내 대화",
+    stYourChatsDesc: "모든 것을 파일로 내보내거나 모두 삭제합니다.",
+    stExportAll: "모두 내보내기",
+    stDeleteAll: "모두 삭제",
+    stAiNotes: "AI와 내 노트",
+    stAbout: "정보",
+    stHelp: "도움말",
+    stEmail: "이메일 보내기",
+    stFindTokens: "무료 토큰 더 찾기",
+    stChatDisplay: "채팅 표시",
+    stFontSize: "채팅 글꼴 크기",
+    stFontSizeDesc: "채팅 메시지의 글자 크기.",
+    stVoiceModel: "음성 모델",
+    stVoiceModelDesc: "음성을 텍스트로 바꿔 줄 제공업체와 모델.",
+    stAutomatic: "자동",
+    stAdvanced: "고급",
+    stAnyOpenAI: "OpenAI 호환 서비스 추가",
+    stAnyOpenAIDesc: "로컬 모델(Ollama, LM Studio) 또는 OpenAI 방식으로 동작하는 서비스용. 주소는 보통 /v1 로 끝납니다.",
+    toolsBtn: "빠른 도구",
+    toolsTitle: "빠른 도구",
+    toolsInputPh: "입력 또는 붙여넣기…",
+    tTranslate: "번역",
+    tSummarize: "요약",
+    tCalc: "계산/풀이",
+    tExplain: "설명/정의",
+    tAskNote: "현재 노트에 대해 질문",
+    tRun: "실행",
+    tNeedInput: "먼저 내용을 입력하거나 붙여넣으세요.",
+    tUsedNote: "현재 노트를 사용 중입니다.",
+    stWebAllowance: "무료 웹 할당량",
+    connectingPh: "연결 중…",
+    connectedOne: "연결됨 · 모델 1개",
+    connectedMany: "연결됨 · 모델 {n}개",
+    keySaved: "키가 저장되었습니다. '연결'을 눌러 확인하세요.",
+    notConnected: "연결되지 않음. 키를 붙여넣어 연결하세요.",
+    onlyNeeded: "키를 받은 경우에만 필요합니다. 무료 토큰은 키 없이도 사용할 수 있습니다.",
+    keySentTo: "키는 {host}로 전송됩니다.",
+    connectBtn: "연결",
+    saveKeyBtn: "키 저장",
+    allowBtn: "허용",
+    denyBtn: "거부",
+    askBeforeChanging: "AI가 노트를 바꾸기 전에 허락을 요청하는 경우",
+    deleteAllTitle: "모든 대화를 삭제할까요?",
+    deleteAllWarn: "이 작업은 되돌릴 수 없습니다. 확인하려면 'delete'를 입력하세요.",
+    cancelBtn: "취소",
+    exportedOne: "대화 1개를 {name}으로 내보냈습니다",
+    exportedMany: "대화 {n}개를 {name}으로 내보냈습니다",
+    exportFailedMsg: "대화를 내보낼 수 없습니다.",
+    deletedAllNote: "모든 대화가 삭제되었습니다.",
+    enterNameUrl: "이름과 http:// 또는 https://로 시작하는 웹 주소를 입력하세요.",
+    cantAddService: "해당 서비스를 추가할 수 없습니다.",
+    noAudio: "음성이 감지되지 않았습니다. 다시 시도하세요.",
+    micBlocked: "마이크 접근이 차단되었습니다. 시스템 또는 앱 설정에서 허용한 후 다시 시도하세요.",
+    useOwnJina: "본인 소유 Jina 키를 사용 중입니다. 내장 무료 웹 할당량은 사용되지 않습니다.",
+    getKey: "키 받기",
+    pasteKeyFirst: "먼저 키를 붙여넣으세요.",
+    msgTooLong: "메시지가 너무 깁니다(약 {n}k 토큰, 최대 약 100k). 더 짧은 내용을 붙여넣으세요.",
+    deleteAsk: "삭제할까요?",
+    deleteChatTitle: "이 대화 삭제",
+    noChatMatch: "'{q}'와 일치하는 대화가 없습니다.",
+    searchingChats: "대화 안에서 검색 중…",
+    closePane: "이 패널 닫기",
+    closeInsp: "메시지 검사기 닫기",
+    tapDot: "점을 눌러 전체 메시지를 읽으세요.",
+    details: "세부 정보",
+    alwaysAllow: "이 대화에서는 항상 허용",
+    searchModelsPh: "모델 또는 제공업체 검색",
+    myFreePool: "내 무료 풀",
+    poolEmpty: "풀이 비어 있음",
+    tagFree: "무료",
+    quotaCheckFail: "지금 확인할 수 없습니다. 채팅은 계속할 수 있습니다. '풀' 모델을 선택하면 무료 토큰이 사용됩니다.",
+    webCheckFail: "지금 웹 할당량을 확인할 수 없습니다. 웹 도구는 여전히 작동할 수 있습니다.",
+    recUnsupported: "이 환경에서는 녹음을 지원하지 않습니다.",
+    startRecFail: "녹음을 시작할 수 없습니다.",
+    openMicFail: "마이크를 열 수 없습니다.",
+    voiceUnavailableHere: "여기서는 음성 입력을 사용할 수 없습니다.",
+    addGroqKey: "Groq 키 추가",
+    updateBtn: "업데이트",
+    remove: "제거",
+    yesRemoveOne: "예 — 메시지 1개 제거",
+    yesRemoveMany: "예 — 메시지 {n}개 제거"
+  },
+  es: {
+    newChat: "Nuevo chat",
+    pastChats: "Chats anteriores",
+    map: "Mapa",
+    chat: "Chat",
+    backToChat: "Volver a la conversación",
+    viewAsMap: "Ver la conversación como mapa",
+    characters: "Personajes",
+    exploreChars: "Elige quién responde",
+    export: "Exportar",
+    exportTitle: "Exportar este chat como una nota en tu vault",
+    reportProblem: "Informar de un problema",
+    reportComingSoon: "La opción de informar de problemas llegará pronto. Por ahora, escríbenos a support@usefree.space: ayudamos con todo.",
+    freeTokens: "Tokens gratis",
+    quotaTitle: "Tokens gratis restantes en este dispositivo: haz clic para ver detalles",
+    quotaLeftNow: "Quedan",
+    quotaMonthly: "Límite mensual",
+    quotaRefill: "Recarga",
+    quotaThisChat: "Este chat hasta ahora",
+    quotaSentIn: "Enviado",
+    quotaWroteOut: "Escrito",
+    quotaMore: "Más tokens gratis en usefree.space",
+    checking: "comprobando…",
+    askPh: "Pregunta lo que sea...",
+    listeningPh: "Escuchando… toca el micrófono cuando termines",
+    transcribingPh: "Transcribiendo…",
+    micUnavailable: "La entrada por voz no está disponible en este entorno",
+    micStop: "Detener y usar lo que dijiste",
+    micListen: "Entrada por voz: habla y se escribirá por ti",
+    voiceAria: "Entrada por voz",
+    send: "Enviar",
+    stop: "Detener",
+    warnPickModel: "Elige al menos 1 modelo abajo para enviar.",
+    noModels: "Sin modelos",
+    models: "modelos",
+    emptyNothing: "Aquí no hay nada todavía: envía un mensaje abajo.",
+    emptyNoModels: "No hay modelos conectados: añade una clave en Ajustes para empezar.",
+    openSettings: "Abrir ajustes",
+    emptyHistory: "Aún no hay chats guardados. Tus conversaciones se guardan automáticamente en este dispositivo.",
+    emptyDiscover: "Aquí no hay nada todavía: ve a Chat y envía un mensaje.",
+    loading: "Cargando…",
+    stFreeTokens: "Tokens gratis",
+    stFreeTokensDesc: "No se necesita cuenta. Los tokens gratis se usan cuando eliges un modelo de «pool» en el chat.",
+    stGoFree: "Ir a usefree.space",
+    stWebAccess: "Acceso web",
+    stWebDesc: "La IA puede abrir páginas web y buscar en la web. Deja la clave en blanco para usar la asignación web gratuita incluida para este dispositivo. El medidor de abajo muestra lo que queda.",
+    stJinaKey: "Tu propia clave de Jina",
+    stJinaDesc: "Opcional. Pega una clave de jina.ai para usar tu propia cuota y saltarte la asignación web gratuita. Solo se guarda en este dispositivo.",
+    stAccounts: "Tus propias cuentas de IA",
+    stAccountsDesc: "Conecta una cuenta de otro proveedor de IA para usar sus modelos. Pagas directamente a ese proveedor o usas su nivel gratuito.",
+    stNoAccounts: "Aún no hay cuentas conectadas. Añade una abajo.",
+    stAddProvider: "Añadir un proveedor",
+    stAddProviderDesc: "Elige uno, añádelo y pega tu clave.",
+    stAdd: "Añadir",
+    stKeepKeys: "Conservar mis claves al reiniciar Obsidian",
+    stVoice: "Escritura por voz",
+    stSpeak: "Hablar en lugar de escribir",
+    stChats: "Chats y privacidad",
+    stYourChats: "Tus chats",
+    stYourChatsDesc: "Exporta todo a un archivo o elimínelo todo.",
+    stExportAll: "Exportar todo",
+    stDeleteAll: "Eliminar todo",
+    stAiNotes: "La IA y tus notas",
+    stAbout: "Acerca de",
+    stHelp: "Obtener ayuda",
+    stEmail: "Escríbenos",
+    stFindTokens: "Encontrar más tokens gratis",
+    stChatDisplay: "Pantalla del chat",
+    stFontSize: "Tamaño de letra del chat",
+    stFontSizeDesc: "El tamaño del texto en los mensajes del chat.",
+    stVoiceModel: "Modelo de voz",
+    stVoiceModelDesc: "Qué proveedor y modelo convierte tu voz en texto.",
+    stAutomatic: "Automático",
+    stAdvanced: "Avanzado",
+    stAnyOpenAI: "Añadir cualquier servicio estilo OpenAI",
+    stAnyOpenAIDesc: "Para modelos locales (Ollama, LM Studio) u otros servicios que funcionan como OpenAI. La dirección web suele terminar en /v1.",
+    toolsBtn: "Herramientas rápidas",
+    toolsTitle: "Herramientas rápidas",
+    toolsInputPh: "Escribe o pega...",
+    tTranslate: "Traducir",
+    tSummarize: "Resumir",
+    tCalc: "Calcular / resolver",
+    tExplain: "Explicar / definir",
+    tAskNote: "Preguntar sobre la nota actual",
+    tRun: "Ejecutar",
+    tNeedInput: "Primero escribe o pega algo.",
+    tUsedNote: "Usando la nota actual.",
+    stWebAllowance: "Asignación web gratuita",
+    connectingPh: "Conectando…",
+    connectedOne: "Conectado · 1 modelo",
+    connectedMany: "Conectado · {n} modelos",
+    keySaved: "Clave guardada. Haz clic en Conectar para verificarla.",
+    notConnected: "No conectado. Pega tu clave para conectar.",
+    onlyNeeded: "Solo se necesita si te dieron una clave. Los tokens gratis funcionan sin una.",
+    keySentTo: "Tu clave se envía a {host}.",
+    connectBtn: "Conectar",
+    saveKeyBtn: "Guardar clave",
+    allowBtn: "Permitir",
+    denyBtn: "Denegar",
+    askBeforeChanging: "Cuando la IA pide permiso antes de cambiar tus notas",
+    deleteAllTitle: "¿Eliminar todos los chats?",
+    deleteAllWarn: "Esto no se puede deshacer. Escribe «delete» para confirmar.",
+    cancelBtn: "Cancelar",
+    exportedOne: "Exportado 1 chat a {name}",
+    exportedMany: "Exportados {n} chats a {name}",
+    exportFailedMsg: "No se pudieron exportar los chats.",
+    deletedAllNote: "Todos los chats fueron eliminados.",
+    enterNameUrl: "Introduce un nombre y una dirección web que empiece por http:// o https://.",
+    cantAddService: "No se pudo añadir ese servicio.",
+    noAudio: "No se captó nada. Inténtalo de nuevo.",
+    micBlocked: "El acceso al micrófono está bloqueado. Permítelo en los ajustes del sistema o de la app y vuelve a intentarlo.",
+    useOwnJina: "Usando tu propia clave de Jina. No se usa la asignación gratuita incluida.",
+    getKey: "Obtener una clave",
+    pasteKeyFirst: "Primero pega tu clave.",
+    msgTooLong: "Mensaje demasiado largo (~{n}k tokens, máximo ~100k). Pega un fragmento más corto.",
+    deleteAsk: "¿Eliminar?",
+    deleteChatTitle: "Eliminar este chat",
+    noChatMatch: "Ningún chat coincide con «{q}».",
+    searchingChats: "Buscando dentro de las conversaciones…",
+    closePane: "Cerrar este panel",
+    closeInsp: "Cerrar el inspector de mensajes",
+    tapDot: "Toca cualquier punto para leer el mensaje completo.",
+    details: "Detalles",
+    alwaysAllow: "Permitir siempre en este chat",
+    searchModelsPh: "Buscar modelos o proveedores",
+    myFreePool: "Mi pool gratuito",
+    poolEmpty: "Pool vacío",
+    tagFree: "Gratis",
+    quotaCheckFail: "No se pudo comprobar ahora. Aún puedes chatear. Los tokens gratis se usan cuando el selector dice «pool».",
+    webCheckFail: "No se pudo comprobar la asignación web ahora. Las herramientas web pueden seguir funcionando.",
+    recUnsupported: "La grabación no es compatible aquí.",
+    startRecFail: "No se pudo iniciar la grabación.",
+    openMicFail: "No se pudo abrir el micrófono.",
+    voiceUnavailableHere: "La entrada por voz no está disponible aquí.",
+    addGroqKey: "Añadir una clave de Groq",
+    updateBtn: "Actualizar",
+    remove: "Eliminar",
+    yesRemoveOne: "Sí — eliminar 1 mensaje",
+    yesRemoveMany: "Sí — eliminar {n} mensajes"
+  },
+  fr: {
+    newChat: "Nouveau chat",
+    pastChats: "Chats précédents",
+    map: "Carte",
+    chat: "Chat",
+    backToChat: "Revenir à la conversation",
+    viewAsMap: "Voir la conversation sous forme de carte",
+    characters: "Personnages",
+    exploreChars: "Choisir qui répond",
+    export: "Exporter",
+    exportTitle: "Exporter ce chat comme note dans votre coffre",
+    reportProblem: "Signaler un problème",
+    reportComingSoon: "La fonctionnalité de signalement arrive bientôt. En attendant, écrivez-nous à support@usefree.space : nous aidons pour tout.",
+    freeTokens: "Tokens gratuits",
+    quotaTitle: "Tokens gratuits restants sur cet appareil — cliquez pour les détails",
+    quotaLeftNow: "Restant",
+    quotaMonthly: "Limite mensuelle",
+    quotaRefill: "Recharge",
+    quotaThisChat: "Ce chat jusqu'à présent",
+    quotaSentIn: "Envoyé",
+    quotaWroteOut: "Écrit",
+    quotaMore: "Plus de tokens gratuits sur usefree.space",
+    checking: "vérification…",
+    askPh: "Demandez ce que vous voulez...",
+    listeningPh: "Écoute… touchez le micro quand vous avez terminé",
+    transcribingPh: "Transcription…",
+    micUnavailable: "La saisie vocale n'est pas disponible dans cet environnement",
+    micStop: "Arrêter et utiliser ce que vous avez dit",
+    micListen: "Saisie vocale — parlez, cela tape pour vous",
+    voiceAria: "Saisie vocale",
+    send: "Envoyer",
+    stop: "Arrêter",
+    warnPickModel: "Sélectionnez au moins 1 modèle ci-dessous pour envoyer.",
+    noModels: "Aucun modèle",
+    models: "modèles",
+    emptyNothing: "Rien ici pour l'instant — envoyez un message ci-dessous.",
+    emptyNoModels: "Aucun modèle connecté — ajoutez une clé dans les réglages pour commencer.",
+    openSettings: "Ouvrir les réglages",
+    emptyHistory: "Aucun chat enregistré pour l'instant. Vos conversations sont enregistrées automatiquement sur cet appareil.",
+    emptyDiscover: "Rien ici pour l'instant — allez dans Chat et envoyez un message.",
+    loading: "Chargement…",
+    stFreeTokens: "Tokens gratuits",
+    stFreeTokensDesc: "Aucun compte nécessaire. Les tokens gratuits sont utilisés quand vous choisissez un modèle « pool » dans le chat.",
+    stGoFree: "Aller sur usefree.space",
+    stWebAccess: "Accès web",
+    stWebDesc: "L'IA peut ouvrir des pages web et rechercher sur le web. Laissez la clé vide pour utiliser l'allocation web gratuite incluse pour cet appareil. Le compteur ci-dessous affiche ce qui reste.",
+    stJinaKey: "Votre propre clé Jina",
+    stJinaDesc: "Facultatif. Collez une clé de jina.ai pour utiliser votre propre quota et ignorer l'allocation web gratuite. Stockée uniquement sur cet appareil.",
+    stAccounts: "Vos propres comptes IA",
+    stAccountsDesc: "Connectez un compte d'un autre fournisseur d'IA pour utiliser ses modèles. Vous payez ce fournisseur directement, ou utilisez son offre gratuite.",
+    stNoAccounts: "Aucun compte connecté pour l'instant. Ajoutez-en un ci-dessous.",
+    stAddProvider: "Ajouter un fournisseur",
+    stAddProviderDesc: "Choisissez-en un, ajoutez-le, puis collez votre clé.",
+    stAdd: "Ajouter",
+    stKeepKeys: "Conserver mes clés après redémarrage d'Obsidian",
+    stVoice: "Saisie vocale",
+    stSpeak: "Parler au lieu de taper",
+    stChats: "Chats et confidentialité",
+    stYourChats: "Vos chats",
+    stYourChatsDesc: "Exportez tout dans un fichier, ou supprimez tout.",
+    stExportAll: "Tout exporter",
+    stDeleteAll: "Tout supprimer",
+    stAiNotes: "L'IA et vos notes",
+    stAbout: "À propos",
+    stHelp: "Obtenir de l'aide",
+    stEmail: "Nous écrire",
+    stFindTokens: "Trouver plus de tokens gratuits",
+    stChatDisplay: "Affichage du chat",
+    stFontSize: "Taille de police du chat",
+    stFontSizeDesc: "La taille du texte dans les messages du chat.",
+    stVoiceModel: "Modèle vocal",
+    stVoiceModelDesc: "Quel fournisseur et modèle transforme votre voix en texte.",
+    stAutomatic: "Automatique",
+    stAdvanced: "Avancé",
+    stAnyOpenAI: "Ajouter tout service de type OpenAI",
+    stAnyOpenAIDesc: "Pour les modèles locaux (Ollama, LM Studio) ou d'autres services fonctionnant comme OpenAI. L'adresse web se termine généralement par /v1.",
+    toolsBtn: "Outils rapides",
+    toolsTitle: "Outils rapides",
+    toolsInputPh: "Écrivez ou collez...",
+    tTranslate: "Traduire",
+    tSummarize: "Résumer",
+    tCalc: "Calculer / résoudre",
+    tExplain: "Expliquer / définir",
+    tAskNote: "Questionner la note actuelle",
+    tRun: "Exécuter",
+    tNeedInput: "Écrivez ou collez d'abord quelque chose.",
+    tUsedNote: "Utilisation de la note actuelle.",
+    stWebAllowance: "Allocation web gratuite",
+    connectingPh: "Connexion…",
+    connectedOne: "Connecté · 1 modèle",
+    connectedMany: "Connecté · {n} modèles",
+    keySaved: "Clé enregistrée. Cliquez sur Connecter pour la vérifier.",
+    notConnected: "Non connecté. Collez votre clé pour vous connecter.",
+    onlyNeeded: "Nécessaire uniquement si une clé vous a été donnée. Les tokens gratuits fonctionnent sans clé.",
+    keySentTo: "Votre clé est envoyée à {host}.",
+    connectBtn: "Connecter",
+    saveKeyBtn: "Enregistrer la clé",
+    allowBtn: "Autoriser",
+    denyBtn: "Refuser",
+    askBeforeChanging: "Quand l'IA demande la permission avant de modifier vos notes",
+    deleteAllTitle: "Supprimer tous les chats ?",
+    deleteAllWarn: "Cette action est irréversible. Tapez « delete » pour confirmer.",
+    cancelBtn: "Annuler",
+    exportedOne: "1 chat exporté vers {name}",
+    exportedMany: "{n} chats exportés vers {name}",
+    exportFailedMsg: "Impossible d'exporter les chats.",
+    deletedAllNote: "Tous les chats ont été supprimés.",
+    enterNameUrl: "Saisissez un nom et une adresse web commençant par http:// ou https://.",
+    cantAddService: "Impossible d'ajouter ce service.",
+    noAudio: "Rien n'a été capté. Réessayez.",
+    micBlocked: "L'accès au microphone est bloqué. Autorisez-le dans les réglages système ou de l'application, puis réessayez.",
+    useOwnJina: "Utilisation de votre propre clé Jina. L'allocation gratuite incluse n'est pas utilisée.",
+    getKey: "Obtenir une clé",
+    pasteKeyFirst: "Collez d'abord votre clé.",
+    msgTooLong: "Message trop long (~{n}k tokens, max ~100k). Collez un extrait plus court.",
+    deleteAsk: "Supprimer ?",
+    deleteChatTitle: "Supprimer ce chat",
+    noChatMatch: "Aucun chat ne correspond à «{q}».",
+    searchingChats: "Recherche dans les conversations…",
+    closePane: "Fermer ce panneau",
+    closeInsp: "Fermer l'inspecteur de messages",
+    tapDot: "Touchez un point pour lire le message complet.",
+    details: "Détails",
+    alwaysAllow: "Toujours autoriser dans ce chat",
+    searchModelsPh: "Rechercher des modèles ou fournisseurs",
+    myFreePool: "Mon pool gratuit",
+    poolEmpty: "Pool vide",
+    tagFree: "Gratuit",
+    quotaCheckFail: "Impossible de vérifier maintenant. Vous pouvez toujours discuter. Les tokens gratuits sont utilisés quand le sélecteur dit « pool ».",
+    webCheckFail: "Impossible de vérifier l'allocation web maintenant. Les outils web peuvent encore fonctionner.",
+    recUnsupported: "L'enregistrement n'est pas pris en charge ici.",
+    startRecFail: "Impossible de démarrer l'enregistrement.",
+    openMicFail: "Impossible d'ouvrir le microphone.",
+    voiceUnavailableHere: "La saisie vocale n'est pas disponible ici.",
+    addGroqKey: "Ajouter une clé Groq",
+    updateBtn: "Mettre à jour",
+    remove: "Supprimer",
+    yesRemoveOne: "Oui — supprimer 1 message",
+    yesRemoveMany: "Oui — supprimer {n} messages"
+  },
+  de: {
+    newChat: "Neuer Chat",
+    pastChats: "Frühere Chats",
+    map: "Karte",
+    chat: "Chat",
+    backToChat: "Zurück zur Unterhaltung",
+    viewAsMap: "Unterhaltung als Karte anzeigen",
+    characters: "Charaktere",
+    exploreChars: "Antwortenden wählen",
+    export: "Exportieren",
+    exportTitle: "Diesen Chat als Notiz in deinem Tresor exportieren",
+    reportProblem: "Problem melden",
+    reportComingSoon: "Die Problem-Meldefunktion kommt bald. Bis dahin schreib uns an support@usefree.space – wir helfen bei allem.",
+    freeTokens: "Gratis-Tokens",
+    quotaTitle: "Gratis-Tokens auf diesem Gerät – klicken für Details",
+    quotaLeftNow: "Übrig",
+    quotaMonthly: "Monatslimit",
+    quotaRefill: "Auffüllung",
+    quotaThisChat: "Dieser Chat bisher",
+    quotaSentIn: "Gesendet",
+    quotaWroteOut: "Geschrieben",
+    quotaMore: "Mehr Gratis-Tokens auf usefree.space",
+    checking: "wird geprüft…",
+    askPh: "Frag einfach etwas...",
+    listeningPh: "Höre zu… tippe aufs Mikrofon, wenn du fertig bist",
+    transcribingPh: "Werde transkribiert…",
+    micUnavailable: "Spracheingabe ist in dieser Umgebung nicht verfügbar",
+    micStop: "Anhalten und das Gesagte verwenden",
+    micListen: "Spracheingabe – sprich, und es tippt für dich",
+    voiceAria: "Spracheingabe",
+    send: "Senden",
+    stop: "Stopp",
+    warnPickModel: "Wähle unten mindestens 1 Modell, um zu senden.",
+    noModels: "Keine Modelle",
+    models: "Modelle",
+    emptyNothing: "Hier ist noch nichts – sende unten eine Nachricht.",
+    emptyNoModels: "Keine Modelle verbunden – füge in den Einstellungen einen Schlüssel hinzu.",
+    openSettings: "Einstellungen öffnen",
+    emptyHistory: "Noch keine gespeicherten Chats. Deine Unterhaltungen werden automatisch auf diesem Gerät gespeichert.",
+    emptyDiscover: "Hier ist noch nichts – geh zu Chat und sende eine Nachricht.",
+    loading: "Wird geladen…",
+    stFreeTokens: "Gratis-Tokens",
+    stFreeTokensDesc: "Kein Konto nötig. Gratis-Tokens werden verwendet, wenn du im Chat ein „Pool“-Modell wählst.",
+    stGoFree: "Zu usefree.space",
+    stWebAccess: "Webzugriff",
+    stWebDesc: "Die KI kann Webseiten öffnen und im Web suchen. Lass den Schlüssel leer, um das enthaltene Gratis-Webkontingent dieses Geräts zu nutzen. Der Zähler unten zeigt, was übrig ist.",
+    stJinaKey: "Dein eigener Jina-Schlüssel",
+    stJinaDesc: "Optional. Füge einen Schlüssel von jina.ai ein, um dein eigenes Kontingent zu nutzen und das Gratis-Webkontingent zu überspringen. Wird nur auf diesem Gerät gespeichert.",
+    stAccounts: "Deine eigenen KI-Konten",
+    stAccountsDesc: "Verbinde ein Konto eines anderen KI-Anbieters, um dessen Modelle zu nutzen. Du zahlst direkt an diesen Anbieter oder nutzt dessen Gratis-Stufe.",
+    stNoAccounts: "Noch keine Konten verbunden. Füge unten eines hinzu.",
+    stAddProvider: "Anbieter hinzufügen",
+    stAddProviderDesc: "Wähle einen aus, füge ihn hinzu und füge deinen Schlüssel ein.",
+    stAdd: "Hinzufügen",
+    stKeepKeys: "Schlüssel nach Neustart von Obsidian behalten",
+    stVoice: "Spracheingabe",
+    stSpeak: "Statt zu tippen sprechen",
+    stChats: "Chats und Datenschutz",
+    stYourChats: "Deine Chats",
+    stYourChatsDesc: "Alles in eine Datei exportieren oder alles löschen.",
+    stExportAll: "Alles exportieren",
+    stDeleteAll: "Alles löschen",
+    stAiNotes: "Die KI und deine Notizen",
+    stAbout: "Über",
+    stHelp: "Hilfe erhalten",
+    stEmail: "E-Mail senden",
+    stFindTokens: "Mehr Gratis-Tokens finden",
+    stChatDisplay: "Chat-Anzeige",
+    stFontSize: "Schriftgröße im Chat",
+    stFontSizeDesc: "Die Größe des Texts in Chatnachrichten.",
+    stVoiceModel: "Sprachmodell",
+    stVoiceModelDesc: "Welcher Anbieter und welches Modell verwandelt deine Sprache in Text.",
+    stAutomatic: "Automatisch",
+    stAdvanced: "Erweitert",
+    stAnyOpenAI: "Beliebigen OpenAI-kompatiblen Dienst hinzufügen",
+    stAnyOpenAIDesc: "Für lokale Modelle (Ollama, LM Studio) oder andere Dienste, die wie OpenAI funktionieren. Die Webadresse endet meist auf /v1.",
+    toolsBtn: "Schnellwerkzeuge",
+    toolsTitle: "Schnellwerkzeuge",
+    toolsInputPh: "Tippe oder füge ein...",
+    tTranslate: "Übersetzen",
+    tSummarize: "Zusammenfassen",
+    tCalc: "Berechnen / lösen",
+    tExplain: "Erklären / definieren",
+    tAskNote: "Zur aktuellen Notiz fragen",
+    tRun: "Ausführen",
+    tNeedInput: "Tippe oder füge zuerst etwas ein.",
+    tUsedNote: "Verwende die aktuelle Notiz.",
+    stWebAllowance: "Gratis-Webkontingent",
+    connectingPh: "Verbinde…",
+    connectedOne: "Verbunden · 1 Modell",
+    connectedMany: "Verbunden · {n} Modelle",
+    keySaved: "Schlüssel gespeichert. Klicke auf Verbinden, um ihn zu prüfen.",
+    notConnected: "Nicht verbunden. Füge deinen Schlüssel ein, um dich zu verbinden.",
+    onlyNeeded: "Nur nötig, wenn du einen Schlüssel erhalten hast. Gratis-Tokens funktionieren ohne einen.",
+    keySentTo: "Dein Schlüssel wird an {host} gesendet.",
+    connectBtn: "Verbinden",
+    saveKeyBtn: "Schlüssel speichern",
+    allowBtn: "Erlauben",
+    denyBtn: "Ablehnen",
+    askBeforeChanging: "Wenn die KI vor Änderungen an deinen Notizen um Erlaubnis fragt",
+    deleteAllTitle: "Alle Chats löschen?",
+    deleteAllWarn: "Dies kann nicht rückgängig gemacht werden. Gib „delete“ ein, um zu bestätigen.",
+    cancelBtn: "Abbrechen",
+    exportedOne: "1 Chat nach {name} exportiert",
+    exportedMany: "{n} Chats nach {name} exportiert",
+    exportFailedMsg: "Chats konnten nicht exportiert werden.",
+    deletedAllNote: "Alle Chats wurden gelöscht.",
+    enterNameUrl: "Gib einen Namen und eine Webadresse ein, die mit http:// oder https:// beginnt.",
+    cantAddService: "Dieser Dienst konnte nicht hinzugefügt werden.",
+    noAudio: "Nichts erfasst. Versuche es erneut.",
+    micBlocked: "Der Mikrofonzugriff ist blockiert. Erlaube ihn in den System- oder App-Einstellungen und versuche es erneut.",
+    useOwnJina: "Du verwendest deinen eigenen Jina-Schlüssel. Das enthaltene Gratis-Kontingent wird nicht genutzt.",
+    getKey: "Schlüssel erhalten",
+    pasteKeyFirst: "Füge zuerst deinen Schlüssel ein.",
+    msgTooLong: "Nachricht zu lang (~{n}k Tokens, max ~100k). Füge einen kürzeren Ausschnitt ein.",
+    deleteAsk: "Löschen?",
+    deleteChatTitle: "Diesen Chat löschen",
+    noChatMatch: "Kein Chat passt zu „{q}“.",
+    searchingChats: "Suche in Unterhaltungen…",
+    closePane: "Dieses Panel schließen",
+    closeInsp: "Nachrichtenprüfer schließen",
+    tapDot: "Tippe auf einen Punkt, um die ganze Nachricht zu lesen.",
+    details: "Details",
+    alwaysAllow: "In diesem Chat immer erlauben",
+    searchModelsPh: "Modelle oder Anbieter suchen",
+    myFreePool: "Mein Gratis-Pool",
+    poolEmpty: "Pool leer",
+    tagFree: "Gratis",
+    quotaCheckFail: "Gerade nicht prüfbar. Du kannst weiter chatten. Gratis-Tokens werden verwendet, wenn der Wähler „Pool“ sagt.",
+    webCheckFail: "Das Web-Kontingent ist gerade nicht prüfbar. Web-Tools funktionieren möglicherweise weiterhin.",
+    recUnsupported: "Aufnahme hier nicht unterstützt.",
+    startRecFail: "Aufnahme konnte nicht gestartet werden.",
+    openMicFail: "Mikrofon konnte nicht geöffnet werden.",
+    voiceUnavailableHere: "Spracheingabe ist hier nicht verfügbar.",
+    addGroqKey: "Groq-Schlüssel hinzufügen",
+    updateBtn: "Aktualisieren",
+    remove: "Entfernen",
+    yesRemoveOne: "Ja — 1 Nachricht entfernen",
+    yesRemoveMany: "Ja — {n} Nachrichten entfernen"
+  },
+  pt: {
+    newChat: "Novo chat",
+    pastChats: "Chats anteriores",
+    map: "Mapa",
+    chat: "Chat",
+    backToChat: "Voltar à conversa",
+    viewAsMap: "Ver a conversa como mapa",
+    characters: "Personagens",
+    exploreChars: "Escolha quem responde",
+    export: "Exportar",
+    exportTitle: "Exportar este chat como uma nota no seu cofre",
+    reportProblem: "Relatar um problema",
+    reportComingSoon: "O recurso de relatar problemas chega em breve. Por enquanto, escreva para support@usefree.space — ajudamos com tudo.",
+    freeTokens: "Tokens grátis",
+    quotaTitle: "Tokens grátis restantes neste dispositivo — clique para ver detalhes",
+    quotaLeftNow: "Restam",
+    quotaMonthly: "Limite mensal",
+    quotaRefill: "Recarga",
+    quotaThisChat: "Este chat até agora",
+    quotaSentIn: "Enviado",
+    quotaWroteOut: "Escrito",
+    quotaMore: "Mais tokens grátis em usefree.space",
+    checking: "verificando…",
+    askPh: "Pergunte o que quiser...",
+    listeningPh: "Ouvindo… toque no microfone quando terminar",
+    transcribingPh: "Transcrevendo…",
+    micUnavailable: "A entrada por voz não está disponível neste ambiente",
+    micStop: "Parar e usar o que você disse",
+    micListen: "Entrada por voz — fale e ele digita por você",
+    voiceAria: "Entrada por voz",
+    send: "Enviar",
+    stop: "Parar",
+    warnPickModel: "Escolha pelo menos 1 modelo abaixo para enviar.",
+    noModels: "Nenhum modelo",
+    models: "modelos",
+    emptyNothing: "Nada aqui ainda — envie uma mensagem abaixo.",
+    emptyNoModels: "Nenhum modelo conectado — adicione uma chave em Configurações para começar.",
+    openSettings: "Abrir configurações",
+    emptyHistory: "Ainda não há chats salvos. Suas conversas são salvas automaticamente neste dispositivo.",
+    emptyDiscover: "Nada aqui ainda — vá para Chat e envie uma mensagem.",
+    loading: "Carregando…",
+    stFreeTokens: "Tokens grátis",
+    stFreeTokensDesc: "Nenhuma conta necessária. Os tokens grátis são usados quando você escolhe um modelo de \"pool\" no chat.",
+    stGoFree: "Ir para usefree.space",
+    stWebAccess: "Acesso à web",
+    stWebDesc: "A IA pode abrir páginas da web e pesquisar na web. Deixe a chave em branco para usar a cota gratuita de web deste dispositivo. O medidor abaixo mostra o que resta.",
+    stJinaKey: "Sua própria chave Jina",
+    stJinaDesc: "Opcional. Cole uma chave de jina.ai para usar sua própria cota e pular a cota gratuita de web. Armazenada apenas neste dispositivo.",
+    stAccounts: "Suas próprias contas de IA",
+    stAccountsDesc: "Conecte uma conta de outro provedor de IA para usar seus modelos. Você paga diretamente a esse provedor ou usa o nível gratuito.",
+    stNoAccounts: "Ainda não há contas conectadas. Adicione uma abaixo.",
+    stAddProvider: "Adicionar um provedor",
+    stAddProviderDesc: "Escolha um, adicione-o e cole sua chave.",
+    stAdd: "Adicionar",
+    stKeepKeys: "Manter minhas chaves após reiniciar o Obsidian",
+    stVoice: "Digitação por voz",
+    stSpeak: "Falar em vez de digitar",
+    stChats: "Chats e privacidade",
+    stYourChats: "Seus chats",
+    stYourChatsDesc: "Exporte tudo para um arquivo ou apague tudo.",
+    stExportAll: "Exportar tudo",
+    stDeleteAll: "Apagar tudo",
+    stAiNotes: "A IA e suas notas",
+    stAbout: "Sobre",
+    stHelp: "Obter ajuda",
+    stEmail: "Enviar e-mail",
+    stFindTokens: "Encontrar mais tokens grátis",
+    stChatDisplay: "Exibição do chat",
+    stFontSize: "Tamanho da fonte do chat",
+    stFontSizeDesc: "O tamanho do texto nas mensagens do chat.",
+    stVoiceModel: "Modelo de voz",
+    stVoiceModelDesc: "Qual provedor e modelo transforma sua fala em texto.",
+    stAutomatic: "Automático",
+    stAdvanced: "Avançado",
+    stAnyOpenAI: "Adicionar qualquer serviço estilo OpenAI",
+    stAnyOpenAIDesc: "Para modelos locais (Ollama, LM Studio) ou outros serviços que funcionam como OpenAI. O endereço da web costuma terminar em /v1.",
+    toolsBtn: "Ferramentas rápidas",
+    toolsTitle: "Ferramentas rápidas",
+    toolsInputPh: "Digite ou cole...",
+    tTranslate: "Traduzir",
+    tSummarize: "Resumir",
+    tCalc: "Calcular / resolver",
+    tExplain: "Explicar / definir",
+    tAskNote: "Perguntar sobre a nota atual",
+    tRun: "Executar",
+    tNeedInput: "Primeiro digite ou cole algo.",
+    tUsedNote: "Usando a nota atual.",
+    stWebAllowance: "Cota gratuita de web",
+    connectingPh: "Conectando…",
+    connectedOne: "Conectado · 1 modelo",
+    connectedMany: "Conectado · {n} modelos",
+    keySaved: "Chave salva. Clique em Conectar para verificar.",
+    notConnected: "Não conectado. Cole sua chave para conectar.",
+    onlyNeeded: "Só é necessário se você recebeu uma chave. Tokens grátis funcionam sem uma.",
+    keySentTo: "Sua chave é enviada para {host}.",
+    connectBtn: "Conectar",
+    saveKeyBtn: "Salvar chave",
+    allowBtn: "Permitir",
+    denyBtn: "Negar",
+    askBeforeChanging: "Quando a IA pede permissão antes de alterar suas notas",
+    deleteAllTitle: "Excluir todos os chats?",
+    deleteAllWarn: "Isto não pode ser desfeito. Digite «delete» para confirmar.",
+    cancelBtn: "Cancelar",
+    exportedOne: "1 chat exportado para {name}",
+    exportedMany: "{n} chats exportados para {name}",
+    exportFailedMsg: "Não foi possível exportar os chats.",
+    deletedAllNote: "Todos os chats foram excluídos.",
+    enterNameUrl: "Digite um nome e um endereço web que comece com http:// ou https://.",
+    cantAddService: "Não foi possível adicionar esse serviço.",
+    noAudio: "Nada foi captado. Tente novamente.",
+    micBlocked: "O acesso ao microfone está bloqueado. Permita nas configurações do sistema ou do aplicativo e tente novamente.",
+    useOwnJina: "Usando sua própria chave Jina. A cota gratuita incluída não é usada.",
+    getKey: "Obter uma chave",
+    pasteKeyFirst: "Primeiro cole sua chave.",
+    msgTooLong: "Mensagem longa demais (~{n}k tokens, máx ~100k). Cole um trecho menor.",
+    deleteAsk: "Excluir?",
+    deleteChatTitle: "Excluir este chat",
+    noChatMatch: "Nenhum chat corresponde a «{q}».",
+    searchingChats: "Procurando dentro das conversas…",
+    closePane: "Fechar este painel",
+    closeInsp: "Fechar o inspetor de mensagens",
+    tapDot: "Toque em qualquer ponto para ler a mensagem completa.",
+    details: "Detalhes",
+    alwaysAllow: "Permitir sempre neste chat",
+    searchModelsPh: "Buscar modelos ou provedores",
+    myFreePool: "Meu pool gratuito",
+    poolEmpty: "Pool vazio",
+    tagFree: "Grátis",
+    quotaCheckFail: "Não foi possível verificar agora. Você ainda pode conversar. Os tokens grátis são usados quando o seletor diz «pool».",
+    webCheckFail: "Não foi possível verificar a cota web agora. As ferramentas web podem continuar funcionando.",
+    recUnsupported: "A gravação não é compatível aqui.",
+    startRecFail: "Não foi possível iniciar a gravação.",
+    openMicFail: "Não foi possível abrir o microfone.",
+    voiceUnavailableHere: "A entrada por voz não está disponível aqui.",
+    addGroqKey: "Adicionar uma chave Groq",
+    updateBtn: "Atualizar",
+    remove: "Remover",
+    yesRemoveOne: "Sim — remover 1 mensagem",
+    yesRemoveMany: "Sim — remover {n} mensagens"
+  },
+  ru: {
+    newChat: "Новый чат",
+    pastChats: "Прошлые чаты",
+    map: "Карта",
+    chat: "Чат",
+    backToChat: "Вернуться к беседе",
+    viewAsMap: "Показать беседу как карту",
+    characters: "Персонажи",
+    exploreChars: "Выберите, кто отвечает",
+    export: "Экспорт",
+    exportTitle: "Экспортировать этот чат как заметку в ваше хранилище",
+    reportProblem: "Сообщить о проблеме",
+    reportComingSoon: "Функция сообщения о проблемах скоро появится. А пока пишите нам на support@usefree.space — поможем с чем угодно.",
+    freeTokens: "Бесплатные токены",
+    quotaTitle: "Осталось бесплатных токенов на этом устройстве — нажмите для подробностей",
+    quotaLeftNow: "Осталось",
+    quotaMonthly: "Месячный лимит",
+    quotaRefill: "Пополнение",
+    quotaThisChat: "Этот чат пока",
+    quotaSentIn: "Отправлено",
+    quotaWroteOut: "Написано",
+    quotaMore: "Больше бесплатных токенов на usefree.space",
+    checking: "проверка…",
+    askPh: "Спросите что угодно...",
+    listeningPh: "Слушаю… нажмите на микрофон, когда закончите",
+    transcribingPh: "Расшифровка…",
+    micUnavailable: "Голосовой ввод недоступен в этом окружении",
+    micStop: "Остановить и использовать сказанное",
+    micListen: "Голосовой ввод — говорите, и он наберёт за вас",
+    voiceAria: "Голосовой ввод",
+    send: "Отправить",
+    stop: "Остановить",
+    warnPickModel: "Выберите хотя бы 1 модель ниже, чтобы отправить.",
+    noModels: "Нет моделей",
+    models: "моделей",
+    emptyNothing: "Здесь пока ничего нет — отправьте сообщение ниже.",
+    emptyNoModels: "Нет подключённых моделей — добавьте ключ в настройках, чтобы начать.",
+    openSettings: "Открыть настройки",
+    emptyHistory: "Сохранённых чатов пока нет. Ваши беседы сохраняются автоматически на этом устройстве.",
+    emptyDiscover: "Здесь пока ничего нет — перейдите в Чат и отправьте сообщение.",
+    loading: "Загрузка…",
+    stFreeTokens: "Бесплатные токены",
+    stFreeTokensDesc: "Аккаунт не нужен. Бесплатные токены используются, когда вы выбираете модель «пула» в чате.",
+    stGoFree: "Перейти на usefree.space",
+    stWebAccess: "Доступ к вебу",
+    stWebDesc: "ИИ может открывать веб-страницы и искать в вебе. Оставьте ключ пустым, чтобы использовать включённую бесплатную веб-квоту этого устройства. Счётчик ниже показывает, что осталось.",
+    stJinaKey: "Ваш собственный ключ Jina",
+    stJinaDesc: "Необязательно. Вставьте ключ с jina.ai, чтобы использовать свою квоту и пропустить бесплатную веб-квоту. Хранится только на этом устройстве.",
+    stAccounts: "Ваши собственные ИИ-аккаунты",
+    stAccountsDesc: "Подключите аккаунт другого ИИ-провайдера, чтобы использовать его модели. Вы платите этому провайдеру напрямую или используете его бесплатный тариф.",
+    stNoAccounts: "Подключённых аккаунтов пока нет. Добавьте один ниже.",
+    stAddProvider: "Добавить провайдера",
+    stAddProviderDesc: "Выберите одного, добавьте его и вставьте свой ключ.",
+    stAdd: "Добавить",
+    stKeepKeys: "Сохранять мои ключи после перезапуска Obsidian",
+    stVoice: "Голосовой ввод",
+    stSpeak: "Говорить вместо набора",
+    stChats: "Чаты и конфиденциальность",
+    stYourChats: "Ваши чаты",
+    stYourChatsDesc: "Экспортируйте всё в файл или удалите всё.",
+    stExportAll: "Экспортировать всё",
+    stDeleteAll: "Удалить всё",
+    stAiNotes: "ИИ и ваши заметки",
+    stAbout: "О плагине",
+    stHelp: "Получить помощь",
+    stEmail: "Написать нам",
+    stFindTokens: "Найти больше бесплатных токенов",
+    stChatDisplay: "Отображение чата",
+    stFontSize: "Размер шрифта чата",
+    stFontSizeDesc: "Размер текста в сообщениях чата.",
+    stVoiceModel: "Голосовая модель",
+    stVoiceModelDesc: "Какой провайдер и модель превращают вашу речь в текст.",
+    stAutomatic: "Автоматически",
+    stAdvanced: "Дополнительно",
+    stAnyOpenAI: "Добавить любой сервис в стиле OpenAI",
+    stAnyOpenAIDesc: "Для локальных моделей (Ollama, LM Studio) или других сервисов, работающих как OpenAI. Веб-адрес обычно заканчивается на /v1.",
+    toolsBtn: "Быстрые инструменты",
+    toolsTitle: "Быстрые инструменты",
+    toolsInputPh: "Введите или вставьте...",
+    tTranslate: "Перевести",
+    tSummarize: "Резюмировать",
+    tCalc: "Вычислить / решить",
+    tExplain: "Объяснить / определить",
+    tAskNote: "Спросить о текущей заметке",
+    tRun: "Выполнить",
+    tNeedInput: "Сначала введите или вставьте что-нибудь.",
+    tUsedNote: "Используется текущая заметка.",
+    stWebAllowance: "Бесплатная веб-квота",
+    connectingPh: "Подключение…",
+    connectedOne: "Подключено · 1 модель",
+    connectedMany: "Подключено · {n} моделей",
+    keySaved: "Ключ сохранён. Нажмите «Подключить», чтобы проверить его.",
+    notConnected: "Не подключено. Вставьте ключ для подключения.",
+    onlyNeeded: "Нужно только если вам выдали ключ. Бесплатные токены работают без него.",
+    keySentTo: "Ваш ключ отправляется на {host}.",
+    connectBtn: "Подключить",
+    saveKeyBtn: "Сохранить ключ",
+    allowBtn: "Разрешить",
+    denyBtn: "Отклонить",
+    askBeforeChanging: "Когда ИИ запрашивает разрешение перед изменением заметок",
+    deleteAllTitle: "Удалить все чаты?",
+    deleteAllWarn: "Это действие нельзя отменить. Введите «delete» для подтверждения.",
+    cancelBtn: "Отмена",
+    exportedOne: "Экспортирован 1 чат в {name}",
+    exportedMany: "Экспортировано {n} чатов в {name}",
+    exportFailedMsg: "Не удалось экспортировать чаты.",
+    deletedAllNote: "Все чаты удалены.",
+    enterNameUrl: "Введите имя и веб-адрес, начинающийся с http:// или https://.",
+    cantAddService: "Не удалось добавить этот сервис.",
+    noAudio: "Ничего не захвачено. Попробуйте ещё раз.",
+    micBlocked: "Доступ к микрофону заблокирован. Разрешите его в настройках системы или приложения и попробуйте снова.",
+    useOwnJina: "Используется ваш собственный ключ Jina. Включённая бесплатная квота не используется.",
+    getKey: "Получить ключ",
+    pasteKeyFirst: "Сначала вставьте свой ключ.",
+    msgTooLong: "Сообщение слишком длинное (~{n}k токенов, максимум ~100k). Вставьте более короткий фрагмент.",
+    deleteAsk: "Удалить?",
+    deleteChatTitle: "Удалить этот чат",
+    noChatMatch: "Нет чатов, соответствующих «{q}».",
+    searchingChats: "Поиск внутри бесед…",
+    closePane: "Закрыть эту панель",
+    closeInsp: "Закрыть инспектор сообщений",
+    tapDot: "Нажмите на точку, чтобы прочитать всё сообщение.",
+    details: "Подробности",
+    alwaysAllow: "Всегда разрешать в этом чате",
+    searchModelsPh: "Поиск моделей или провайдеров",
+    myFreePool: "Мой бесплатный пул",
+    poolEmpty: "Пул пуст",
+    tagFree: "Бесплатно",
+    quotaCheckFail: "Не удалось проверить сейчас. Вы всё ещё можете общаться. Бесплатные токены используются, когда селектор говорит «пул».",
+    webCheckFail: "Не удалось проверить веб-квоту сейчас. Веб-инструменты могут продолжать работать.",
+    recUnsupported: "Запись здесь не поддерживается.",
+    startRecFail: "Не удалось начать запись.",
+    openMicFail: "Не удалось открыть микрофон.",
+    voiceUnavailableHere: "Голосовой ввод здесь недоступен.",
+    addGroqKey: "Добавить ключ Groq",
+    updateBtn: "Обновить",
+    remove: "Удалить",
+    yesRemoveOne: "Да — удалить 1 сообщение",
+    yesRemoveMany: "Да — удалить {n} сообщений"
+  },
+  it: {
+    newChat: "Nuovo chat", pastChats: "Chat precedenti", map: "Mappa", chat: "Chat", backToChat: "Torna alla conversazione", viewAsMap: "Vedi la conversazione come mappa", export: "Esporta", exportTitle: "Esporta questo chat come nota nel tuo vault", reportProblem: "Segnala un problema", reportComingSoon: "La segnalazione problemi arriva presto. Per ora scrivici a support@usefree.space: aiutiamo con tutto.",
+    freeTokens: "Token gratuiti", quotaTitle: "Token gratuiti rimasti su questo dispositivo – clicca per i dettagli", quotaLeftNow: "Rimasti", quotaMonthly: "Limite mensile", quotaRefill: "Ricarica", quotaThisChat: "Questo chat finora", quotaSentIn: "Inviato", quotaWroteOut: "Scritto", quotaMore: "Altri token gratuiti su usefree.space", checking: "verifica…",
+    askPh: "Chiedi quello che vuoi...", listeningPh: "In ascolto… tocca il microfono quando hai finito", transcribingPh: "Trascrizione…", micUnavailable: "L'input vocale non è disponibile in questo ambiente", micStop: "Ferma e usa quello che hai detto", micListen: "Input vocale – parla e scrive per te", voiceAria: "Input vocale", send: "Invia", stop: "Ferma", warnPickModel: "Scegli almeno 1 modello qui sotto per inviare.", noModels: "Nessun modello", models: "modelli",
+    emptyNothing: "Qui non c'è ancora niente – invia un messaggio qui sotto.", emptyNoModels: "Nessun modello collegato – aggiungi una chiave nelle Impostazioni per iniziare.", openSettings: "Apri impostazioni", emptyHistory: "Ancora nessun chat salvato. Le conversazioni vengono salvate automaticamente su questo dispositivo.", emptyDiscover: "Qui non c'è ancora niente – vai su Chat e invia un messaggio.", loading: "Caricamento…",
+    stFreeTokens: "Token gratuiti", stGoFree: "Vai su usefree.space", stWebAccess: "Accesso web", stWebAllowance: "Assegnazione web gratuita", stJinaKey: "La tua chiave Jina", stJinaDesc: "Opzionale. Incolla una chiave da jina.ai per usare la tua quota e saltare l'assegnazione web gratuita. Salvata solo su questo dispositivo.", stAccounts: "I tuoi account IA", stAccountsDesc: "Collega un account di un altro provider IA per usare i suoi modelli. Paghi direttamente quel provider o usi il suo piano gratuito.", stNoAccounts: "Nessun account collegato. Aggiungine uno qui sotto.", stAddProvider: "Aggiungi un provider", stAddProviderDesc: "Scegline uno, aggiungilo e incolla la tua chiave.", stAdd: "Aggiungi", stKeepKeys: "Conserva le mie chiavi dopo il riavvio di Obsidian", stVoice: "Digitazione vocale", stSpeak: "Parla invece di digitare", stChats: "Chat e privacy", stYourChats: "I tuoi chat", stYourChatsDesc: "Esporta tutto in un file o elimina tutto.", stExportAll: "Esporta tutto", stDeleteAll: "Elimina tutto", stAiNotes: "L'IA e le tue note", stAbout: "Informazioni", stHelp: "Ottieni aiuto", stEmail: "Scrivici", stFindTokens: "Trova altri token gratuiti", stChatDisplay: "Visualizzazione chat", stFontSize: "Dimensione carattere chat", stFontSizeDesc: "La dimensione del testo nei messaggi del chat.", stVoiceModel: "Modello vocale", stVoiceModelDesc: "Quale provider e modello trasforma la tua voce in testo.", stAutomatic: "Automatico", stAdvanced: "Avanzato", stAnyOpenAI: "Aggiungi qualsiasi servizio stile OpenAI", stAnyOpenAIDesc: "Per modelli locali (Ollama, LM Studio) o altri servizi che funzionano come OpenAI. L'indirizzo web di solito termina con /v1.",
+    toolsBtn: "Strumenti rapidi", toolsTitle: "Strumenti rapidi", toolsInputPh: "Digita o incolla...", tTranslate: "Traduci", tSummarize: "Riassumi", tCalc: "Calcola / risolvi", tExplain: "Spiega / definisci", tAskNote: "Chiedi sulla nota corrente", tRun: "Esegui", tNeedInput: "Prima digita o incolla qualcosa.", tUsedNote: "Uso della nota corrente.",
+    connectingPh: "Connessione…", connectedOne: "Connesso · 1 modello", connectedMany: "Connesso · {n} modelli", keySaved: "Chiave salvata. Clicca Connetti per verificarla.", notConnected: "Non connesso. Incolla la tua chiave per connetterti.", onlyNeeded: "Servono solo se ti è stata data una chiave. I token gratuiti funzionano senza.", keySentTo: "La tua chiave viene inviata a {host}.", connectBtn: "Connetti", saveKeyBtn: "Salva chiave", allowBtn: "Consenti", denyBtn: "Rifiuta", askBeforeChanging: "Quando l'IA chiede il permesso prima di modificare le tue note", deleteAllTitle: "Eliminare tutti i chat?", deleteAllWarn: "Questa operazione non può essere annullata. Digita «delete» per confermare.", cancelBtn: "Annulla", exportedOne: "Esportato 1 chat in {name}", exportedMany: "Esportati {n} chat in {name}", exportFailedMsg: "Impossibile esportare i chat.", deletedAllNote: "Tutti i chat eliminati.", enterNameUrl: "Inserisci un nome e un indirizzo web che inizi con http:// o https://.", cantAddService: "Impossibile aggiungere questo servizio.", noAudio: "Non è stato catturato nulla. Riprova.", micBlocked: "L'accesso al microfono è bloccato. Consentilo nelle impostazioni di sistema o dell'app e riprova.",
+    useOwnJina: "Usi la tua chiave Jina. L'assegnazione gratuita inclusa non viene usata.",
+    getKey: "Ottieni una chiave",
+    pasteKeyFirst: "Prima incolla la tua chiave.",
+    msgTooLong: "Messaggio troppo lungo (~{n}k token, max ~100k). Incolla un frammento più corto.",
+    deleteAsk: "Eliminare?",
+    deleteChatTitle: "Elimina questo chat",
+    noChatMatch: "Nessun chat corrisponde a «{q}».",
+    searchingChats: "Ricerca nelle conversazioni…",
+    closePane: "Chiudi questo pannello",
+    closeInsp: "Chiudi l'ispettore dei messaggi",
+    tapDot: "Tocca un punto per leggere il messaggio completo.",
+    details: "Dettagli",
+    alwaysAllow: "Consenti sempre in questo chat",
+    searchModelsPh: "Cerca modelli o provider",
+    myFreePool: "Il mio pool gratuito",
+    poolEmpty: "Pool vuoto",
+    tagFree: "Gratuito",
+    quotaCheckFail: "Impossibile verificare ora. Puoi ancora chattare. I token gratuiti vengono usati quando il selettore dice «pool».",
+    webCheckFail: "Impossibile verificare l'assegnazione web ora. Gli strumenti web potrebbero funzionare ancora.",
+    recUnsupported: "La registrazione non è supportata qui.",
+    startRecFail: "Impossibile avviare la registrazione.",
+    openMicFail: "Impossibile aprire il microfono.",
+    voiceUnavailableHere: "L'input vocale non è disponibile qui.",
+    addGroqKey: "Aggiungi una chiave Groq",
+    updateBtn: "Aggiorna",
+    remove: "Rimuovi",
+    yesRemoveOne: "Sì — rimuovi 1 messaggio",
+    yesRemoveMany: "Sì — rimuovi {n} messaggi"
+  },
+  ar: {
+    newChat: "محادثة جديدة", pastChats: "المحادثات السابقة", map: "خريطة", chat: "محادثة", backToChat: "العودة إلى المحادثة", viewAsMap: "عرض المحادثة كخريطة", export: "تصدير", exportTitle: "تصدير هذه المحادثة كملاحظة في مخزنك", reportProblem: "الإبلاغ عن مشكلة", reportComingSoon: "ميزة الإبلاغ عن المشاكل قادمة قريباً. حالياً راسلنا على support@usefree.space — نساعد في كل شيء.",
+    freeTokens: "رموز مجانية", quotaTitle: "الرموز المجانية المتبقية على هذا الجهاز — اضغط للتفاصيل", quotaLeftNow: "المتبقي", quotaMonthly: "الحد الشهري", quotaRefill: "إعادة التعبئة", quotaThisChat: "هذه المحادثة حتى الآن", quotaSentIn: "أُرسل", quotaWroteOut: "كُتب", quotaMore: "المزيد من الرموز المجانية على usefree.space", checking: "جارٍ التحقق…",
+    askPh: "اسأل عن أي شيء...", listeningPh: "جارٍ الاستماع… المس الميكروفون عند الانتهاء", transcribingPh: "جارٍ التفريغ…", micUnavailable: "الإدخال الصوتي غير متاح في هذه البيئة", micStop: "إيقاف واستخدام ما قلته", micListen: "إدخال صوتي — تحدث وسيكتب عنك", voiceAria: "إدخال صوتي", send: "إرسال", stop: "إيقاف", warnPickModel: "اختر نموذجاً واحداً على الأقل أدناه للإرسال.", noModels: "لا توجد نماذج", models: "نماذج",
+    emptyNothing: "لا يوجد شيء هنا بعد — أرسل رسالة أدناه.", emptyNoModels: "لا توجد نماذج متصلة — أضف مفتاحاً في الإعدادات للبدء.", openSettings: "فتح الإعدادات", emptyHistory: "لا توجد محادثات محفوظة بعد. تُحفظ محادثاتك تلقائياً على هذا الجهاز.", emptyDiscover: "لا يوجد شيء هنا بعد — انتقل إلى المحادثة وأرسل رسالة.", loading: "جارٍ التحميل…",
+    stFreeTokens: "رموز مجانية", stGoFree: "الانتقال إلى usefree.space", stWebAccess: "الوصول للويب", stWebAllowance: "الحصة المجانية للويب", stJinaKey: "مفتاح Jina الخاص بك", stJinaDesc: "اختياري. الصق مفتاحاً من jina.ai لاستخدام حصتك وتخطي الحصة المجانية للويب. يُحفظ على هذا الجهاز فقط.", stAccounts: "حسابات الذكاء الاصطناعي الخاصة بك", stAccountsDesc: "اربط حساباً لمزوّد ذكاء اصطناعي آخر لاستخدام نماذجه. تدفع لذلك المزوّد مباشرة أو تستخدم خطته المجانية.", stNoAccounts: "لا توجد حسابات متصلة بعد. أضف واحداً أدناه.", stAddProvider: "إضافة مزوّد", stAddProviderDesc: "اختر واحداً وأضفه ثم الصق مفتاحك.", stAdd: "إضافة", stKeepKeys: "الاحتفاظ بمفاتيحي بعد إعادة تشغيل Obsidian", stVoice: "الإدخال الصوتي", stSpeak: "التحدث بدلاً من الكتابة", stChats: "المحادثات والخصوصية", stYourChats: "محادثاتك", stYourChatsDesc: "صدّر كل شيء إلى ملف، أو احذف كل شيء.", stExportAll: "تصدير الكل", stDeleteAll: "حذف الكل", stAiNotes: "الذكاء الاصطناعي وملاحظاتك", stAbout: "حول", stHelp: "الحصول على مساعدة", stEmail: "راسلنا", stFindTokens: "إيجاد المزيد من الرموز المجانية", stChatDisplay: "عرض المحادثة", stFontSize: "حجم خط المحادثة", stFontSizeDesc: "حجم النص في رسائل المحادثة.", stVoiceModel: "نموذج صوتي", stVoiceModelDesc: "أي مزوّد ونموذج يحوّل صوتك إلى نص.", stAutomatic: "تلقائي", stAdvanced: "متقدم", stAnyOpenAI: "إضافة أي خدمة بأسلوب OpenAI", stAnyOpenAIDesc: "للنماذج المحلية (Ollama، LM Studio) أو خدمات أخرى تعمل مثل OpenAI. ينتهي عنوان الويب عادةً بـ /v1.",
+    toolsBtn: "أدوات سريعة", toolsTitle: "أدوات سريعة", toolsInputPh: "اكتب أو الصق...", tTranslate: "ترجمة", tSummarize: "تلخيص", tCalc: "حساب / حل", tExplain: "شرح / تعريف", tAskNote: "السؤال عن الملاحظة الحالية", tRun: "تشغيل", tNeedInput: "اكتب أو الصق شيئاً أولاً.", tUsedNote: "جارٍ استخدام الملاحظة الحالية.",
+    connectingPh: "جارٍ الاتصال…", connectedOne: "متصل · نموذج واحد", connectedMany: "متصل · {n} نماذج", keySaved: "تم حفظ المفتاح. اضغط اتصال للتحقق منه.", notConnected: "غير متصل. الصق مفتاحك للاتصال.", onlyNeeded: "مطلوب فقط إذا أُعطيت مفتاحاً. الرموز المجانية تعمل بدونه.", keySentTo: "يُرسل مفتاحك إلى {host}.", connectBtn: "اتصال", saveKeyBtn: "حفظ المفتاح", allowBtn: "سماح", denyBtn: "رفض", askBeforeChanging: "عندما يطلب الذكاء الاصطناعي الإذن قبل تعديل ملاحظاتك", deleteAllTitle: "حذف كل المحادثات؟", deleteAllWarn: "لا يمكن التراجع عن هذا. اكتب «delete» للتأكيد.", cancelBtn: "إلغاء", exportedOne: "تم تصدير محادثة واحدة إلى {name}", exportedMany: "تم تصدير {n} محادثات إلى {name}", exportFailedMsg: "تعذر تصدير المحادثات.", deletedAllNote: "تم حذف كل المحادثات.", enterNameUrl: "أدخل اسماً وعنوان ويب يبدأ بـ http:// أو https://.", cantAddService: "تعذرت إضافة هذه الخدمة.", noAudio: "لم يتم التقاط أي شيء. حاول مرة أخرى.", micBlocked: "وصول الميكروفون محظور. اسمح به في إعدادات النظام أو التطبيق ثم حاول مجدداً.",
+    useOwnJina: "تستخدم مفتاح Jina الخاص بك. لا تُستخدم الحصة المجانية المضمنة.",
+    getKey: "الحصول على مفتاح",
+    pasteKeyFirst: "الصق مفتاحك أولاً.",
+    msgTooLong: "الرسالة طويلة جداً (~{n}k رمز، الحد الأقصى ~100k). الصق جزءاً أقصر.",
+    deleteAsk: "حذف؟",
+    deleteChatTitle: "حذف هذه المحادثة",
+    noChatMatch: "لا توجد محادثات تطابق «{q}».",
+    searchingChats: "جارٍ البحث داخل المحادثات…",
+    closePane: "إغلاق هذه اللوحة",
+    closeInsp: "إغلاق مفحص الرسائل",
+    tapDot: "المس أي نقطة لقراءة الرسالة كاملة.",
+    details: "التفاصيل",
+    alwaysAllow: "السماح دائماً في هذه المحادثة",
+    searchModelsPh: "البحث عن نماذج أو مزوّدين",
+    myFreePool: "مجمعي المجاني",
+    poolEmpty: "المجمع فارغ",
+    tagFree: "مجاني",
+    quotaCheckFail: "تعذر التحقق الآن. لا يزال بإمكانك الدردشة. تُستخدم الرموز المجانية عندما يقول المحدد «مجمع».",
+    webCheckFail: "تعذر التحقق من الحصة المجانية للويب الآن. قد تظل أدوات الويب تعمل.",
+    recUnsupported: "التسجيل غير مدعوم هنا.",
+    startRecFail: "تعذر بدء التسجيل.",
+    openMicFail: "تعذر فتح الميكروفون.",
+    voiceUnavailableHere: "الإدخال الصوتي غير متاح هنا.",
+    addGroqKey: "إضافة مفتاح Groq",
+    updateBtn: "تحديث",
+    remove: "إزالة",
+    yesRemoveOne: "نعم — إزالة رسالة واحدة",
+    yesRemoveMany: "نعم — إزالة {n} رسائل"
+  },
+  hi: {
+    newChat: "नई बातचीत", pastChats: "पिछली बातचीतें", map: "मानचित्र", chat: "बातचीत", backToChat: "बातचीत पर वापस जाएँ", viewAsMap: "बातचीत को मानचित्र के रूप में देखें", export: "निर्यात करें", exportTitle: "इस बातचीत को अपने वॉल्ट में नोट के रूप में निर्यात करें", reportProblem: "समस्या की रिपोर्ट करें", reportComingSoon: "समस्या रिपोर्ट सुविधा जल्द आ रही है। अभी support@usefree.space पर लिखें — हम हर चीज़ में मदद करते हैं।",
+    freeTokens: "मुफ़्त टोकन", quotaTitle: "इस डिवाइस पर शेष मुफ़्त टोकन — विवरण के लिए क्लिक करें", quotaLeftNow: "शेष", quotaMonthly: "मासिक सीमा", quotaRefill: "रीफ़िल", quotaThisChat: "अब तक की यह बातचीत", quotaSentIn: "भेजा गया", quotaWroteOut: "लिखा गया", quotaMore: "usefree.space पर और मुफ़्त टोकन पाएँ", checking: "जाँच हो रही है…",
+    askPh: "कुछ भी पूछें...", listeningPh: "सुन रहे हैं… पूरा होने पर माइक दबाएँ", transcribingPh: "लिप्यंतरण हो रहा है…", micUnavailable: "इस वातावरण में वॉइस इनपुट उपलब्ध नहीं है", micStop: "रोकें और जो आपने कहा उसे इस्तेमाल करें", micListen: "वॉइस इनपुट — बोलें, यह आपके लिए टाइप करेगा", voiceAria: "वॉइस इनपुट", send: "भेजें", stop: "रोकें", warnPickModel: "भेजने के लिए नीचे कम से कम 1 मॉडल चुनें।", noModels: "कोई मॉडल नहीं", models: "मॉडल",
+    emptyNothing: "यहाँ अभी कुछ नहीं है — नीचे संदेश भेजें।", emptyNoModels: "कोई मॉडल कनेक्ट नहीं है — शुरू करने के लिए सेटिंग्स में कुंजी जोड़ें।", openSettings: "सेटिंग्स खोलें", emptyHistory: "अभी कोई सहेजी गई बातचीत नहीं है। आपकी बातचीतें इस डिवाइस पर स्वचालित रूप से सहेजी जाती हैं।", emptyDiscover: "यहाँ अभी कुछ नहीं है — बातचीत में जाकर संदेश भेजें।", loading: "लोड हो रहा है…",
+    stFreeTokens: "मुफ़्त टोकन", stGoFree: "usefree.space पर जाएँ", stWebAccess: "वेब एक्सेस", stWebAllowance: "मुफ़्त वेब भत्ता", stJinaKey: "आपकी अपनी Jina कुंजी", stJinaDesc: "वैकल्पिक। अपनी कोटा उपयोग करने और मुफ़्त वेब भत्ता छोड़ने के लिए jina.ai से कुंजी चिपकाएँ। केवल इस डिवाइस पर संग्रहित होती है।", stAccounts: "आपके अपने AI खाते", stAccountsDesc: "किसी अन्य AI प्रदाता का खाता जोड़कर उसके मॉडल उपयोग करें। आप उस प्रदाता को सीधे भुगतान करते हैं या उसकी मुफ़्त योजना उपयोग करते हैं।", stNoAccounts: "अभी कोई खाता कनेक्ट नहीं है। नीचे एक जोड़ें।", stAddProvider: "प्रदाता जोड़ें", stAddProviderDesc: "एक चुनें, जोड़ें, फिर अपनी कुंजी चिपकाएँ।", stAdd: "जोड़ें", stKeepKeys: "Obsidian पुनः आरंभ करने पर मेरी कुंजियाँ रखें", stVoice: "वॉइस टाइपिंग", stSpeak: "टाइप करने के बजाय बोलें", stChats: "बातचीतें और गोपनीयता", stYourChats: "आपकी बातचीतें", stYourChatsDesc: "सब कुछ फ़ाइल में निर्यात करें, या सब हटा दें।", stExportAll: "सब निर्यात करें", stDeleteAll: "सब हटाएँ", stAiNotes: "AI और आपके नोट", stAbout: "परिचय", stHelp: "सहायता लें", stEmail: "हमें ईमेल करें", stFindTokens: "और मुफ़्त टोकन खोजें", stChatDisplay: "बातचीत प्रदर्शन", stFontSize: "बातचीत फ़ॉन्ट आकार", stFontSizeDesc: "बातचीत संदेशों में पाठ का आकार।", stVoiceModel: "वॉइस मॉडल", stVoiceModelDesc: "कौन सा प्रदाता और मॉडल आपकी आवाज़ को पाठ में बदलता है।", stAutomatic: "स्वचालित", stAdvanced: "उन्नत", stAnyOpenAI: "कोई भी OpenAI-शैली सेवा जोड़ें", stAnyOpenAIDesc: "स्थानीय मॉडल (Ollama, LM Studio) या अन्य सेवाओं के लिए जो OpenAI की तरह काम करती हैं। वेब पता आमतौर पर /v1 पर समाप्त होता है।",
+    toolsBtn: "त्वरित उपकरण", toolsTitle: "त्वरित उपकरण", toolsInputPh: "टाइप करें या चिपकाएँ...", tTranslate: "अनुवाद करें", tSummarize: "सारांश बनाएँ", tCalc: "गणना / हल करें", tExplain: "समझाएँ / परिभाषित करें", tAskNote: "वर्तमान नोट के बारे में पूछें", tRun: "चलाएँ", tNeedInput: "पहले कुछ टाइप करें या चिपकाएँ।", tUsedNote: "वर्तमान नोट का उपयोग हो रहा है।",
+    connectingPh: "कनेक्ट हो रहा है…", connectedOne: "कनेक्टेड · 1 मॉडल", connectedMany: "कनेक्टेड · {n} मॉडल", keySaved: "कुंजी सहेजी गई। जाँचने के लिए कनेक्ट पर क्लिक करें।", notConnected: "कनेक्ट नहीं है। कनेक्ट करने के लिए अपनी कुंजी चिपकाएँ।", onlyNeeded: "केवल तभी आवश्यक यदि आपको कुंजी दी गई थी। मुफ़्त टोकन बिना कुंजी के काम करते हैं।", keySentTo: "आपकी कुंजी {host} पर भेजी जाती है।", connectBtn: "कनेक्ट करें", saveKeyBtn: "कुंजी सहेजें", allowBtn: "अनुमति दें", denyBtn: "अस्वीकार करें", askBeforeChanging: "जब AI आपके नोट बदलने से पहले अनुमति माँगता है", deleteAllTitle: "सभी बातचीतें हटाएँ?", deleteAllWarn: "इसे पूर्ववत नहीं किया जा सकता। पुष्टि के लिए «delete» टाइप करें।", cancelBtn: "रद्द करें", exportedOne: "1 बातचीत {name} में निर्यात हुई", exportedMany: "{n} बातचीतें {name} में निर्यात हुईं", exportFailedMsg: "बातचीतें निर्यात नहीं हो सकीं।", deletedAllNote: "सभी बातचीतें हटा दी गईं।", enterNameUrl: "ऐसा नाम और वेब पता दर्ज करें जो http:// या https:// से शुरू हो।", cantAddService: "यह सेवा जोड़ी नहीं जा सकी।", noAudio: "कुछ भी कैप्चर नहीं हुआ। पुनः प्रयास करें।", micBlocked: "माइक एक्सेस अवरुद्ध है। सिस्टम या ऐप सेटिंग्स में अनुमति दें और पुनः प्रयास करें।",
+    useOwnJina: "आपकी अपनी Jina कुंजी उपयोग हो रही है। शामिल मुफ़्त भत्ता उपयोग नहीं होता।",
+    getKey: "कुंजी प्राप्त करें",
+    pasteKeyFirst: "पहले अपनी कुंजी चिपकाएँ।",
+    msgTooLong: "संदेश बहुत लंबा है (~{n}k टोकन, अधिकतम ~100k)। छोटा भाग चिपकाएँ।",
+    deleteAsk: "हटाएँ?",
+    deleteChatTitle: "यह बातचीत हटाएँ",
+    noChatMatch: "«{q}» से मेल खाती कोई बातचीत नहीं।",
+    searchingChats: "बातचीतों के अंदर खोज हो रही है…",
+    closePane: "यह पैनल बंद करें",
+    closeInsp: "संदेश निरीक्षक बंद करें",
+    tapDot: "पूरा संदेश पढ़ने के लिए किसी बिंदु पर टैप करें।",
+    details: "विवरण",
+    alwaysAllow: "इस बातचीत में हमेशा अनुमति दें",
+    searchModelsPh: "मॉडल या प्रदाता खोजें",
+    myFreePool: "मेरा मुफ़्त पूल",
+    poolEmpty: "पूल खाली है",
+    tagFree: "मुफ़्त",
+    quotaCheckFail: "अभी जाँच नहीं हो सकी। आप फिर भी चैट कर सकते हैं। चयनकर्ता 'पूल' कहे तो मुफ़्त टोकन उपयोग होते हैं।",
+    webCheckFail: "अभी वेब भत्ता जाँच नहीं हो सका। वेब उपकरण अब भी काम कर सकते हैं।",
+    recUnsupported: "यहाँ रिकॉर्डिंग समर्थित नहीं है।",
+    startRecFail: "रिकॉर्डिंग शुरू नहीं हो सकी।",
+    openMicFail: "माइक खोला नहीं जा सका।",
+    voiceUnavailableHere: "यहाँ वॉइस इनपुट उपलब्ध नहीं है।",
+    addGroqKey: "Groq कुंजी जोड़ें",
+    updateBtn: "अपडेट",
+    remove: "हटाएँ",
+    yesRemoveOne: "हाँ — 1 संदेश हटाएँ",
+    yesRemoveMany: "हाँ — {n} संदेश हटाएँ"
+  },
+  th: {
+    newChat: "แชทใหม่", pastChats: "แชทก่อนหน้า", map: "แผนที่", chat: "แชท", backToChat: "กลับไปที่บทสนทนา", viewAsMap: "ดูบทสนทนาเป็นแผนที่", export: "ส่งออก", exportTitle: "ส่งออกแชทนี้เป็นโน้ตในคลังของคุณ", reportProblem: "รายงานปัญหา", reportComingSoon: "ฟีเจอร์รายงานปัญหาจะมาเร็ว ๆ นี้ ตอนนี้ติดต่อเราที่ support@usefree.space — เราช่วยได้ทุกเรื่อง",
+    freeTokens: "โทเคนฟรี", quotaTitle: "โทเคนฟรีที่เหลือบนอุปกรณ์นี้ — คลิกเพื่อดูรายละเอียด", quotaLeftNow: "เหลืออยู่", quotaMonthly: "ขีดจำกัดรายเดือน", quotaRefill: "เติมใหม่", quotaThisChat: "แชทนี้จนถึงตอนนี้", quotaSentIn: "ส่งแล้ว", quotaWroteOut: "เขียนแล้ว", quotaMore: "โทเคนฟรีเพิ่มเติมที่ usefree.space", checking: "กำลังตรวจสอบ…",
+    askPh: "ถามอะไรก็ได้...", listeningPh: "กำลังฟัง… แตะไมโครโฟนเมื่อพูดเสร็จ", transcribingPh: "กำลังถอดเสียง…", micUnavailable: "ไม่มีเสียงนำเข้าในสภาพแวดล้อมนี้", micStop: "หยุดและใช้ที่คุณพูด", micListen: "เสียงนำเข้า — พูดแล้วมันพิมพ์ให้คุณ", voiceAria: "เสียงนำเข้า", send: "ส่ง", stop: "หยุด", warnPickModel: "เลือกโมเดลอย่างน้อย 1 ตัวด้านล่างเพื่อส่ง", noModels: "ไม่มีโมเดล", models: "โมเดล",
+    emptyNothing: "ยังไม่มีอะไรที่นี่ — ส่งข้อความด้านล่าง", emptyNoModels: "ยังไม่มีโมเดลเชื่อมต่อ — เพิ่มคีย์ในตั้งค่าเพื่อเริ่มต้น", openSettings: "เปิดการตั้งค่า", emptyHistory: "ยังไม่มีแชทที่บันทึกไว้ บทสนทนาของคุณจะถูกบันทึกบนอุปกรณ์นี้โดยอัตโนมัติ", emptyDiscover: "ยังไม่มีอะไรที่นี่ — ไปที่แชทแล้วส่งข้อความ", loading: "กำลังโหลด…",
+    stFreeTokens: "โทเคนฟรี", stGoFree: "ไปที่ usefree.space", stWebAccess: "การเข้าถึงเว็บ", stWebAllowance: "โควต้าเว็บฟรี", stJinaKey: "คีย์ Jina ของคุณ", stJinaDesc: "ไม่บังคับ วางคีย์จาก jina.ai เพื่อใช้โควต้าของคุณและข้ามโควต้าเว็บฟรี เก็บเฉพาะบนอุปกรณ์นี้เท่านั้น", stAccounts: "บัญชี AI ของคุณเอง", stAccountsDesc: "เชื่อมต่อบัญชีของผู้ให้บริการ AI รายอื่นเพื่อใช้โมเดลของเขา คุณจ่ายตรงกับผู้ให้บริการนั้น หรือใช้ระดับฟรีของเขา", stNoAccounts: "ยังไม่มีบัญชีที่เชื่อมต่อ เพิ่มหนึ่งรายการด้านล่าง", stAddProvider: "เพิ่มผู้ให้บริการ", stAddProviderDesc: "เลือกหนึ่งรายการ เพิ่ม แล้ววางคีย์ของคุณ", stAdd: "เพิ่ม", stKeepKeys: "เก็บคีย์ของฉันหลังรีสตาร์ท Obsidian", stVoice: "พิมพ์ด้วยเสียง", stSpeak: "พูดแทนการพิมพ์", stChats: "แชทและความเป็นส่วนตัว", stYourChats: "แชทของคุณ", stYourChatsDesc: "ส่งออกทุกอย่างเป็นไฟล์ หรือลบทั้งหมด", stExportAll: "ส่งออกทั้งหมด", stDeleteAll: "ลบทั้งหมด", stAiNotes: "AI และโน้ตของคุณ", stAbout: "เกี่ยวกับ", stHelp: "รับความช่วยเหลือ", stEmail: "ส่งอีเมลหาเรา", stFindTokens: "ค้นหาโทเคนฟรีเพิ่มเติม", stChatDisplay: "การแสดงผลแชท", stFontSize: "ขนาดฟอนต์แชท", stFontSizeDesc: "ขนาดข้อความในข้อความแชท", stVoiceModel: "โมเดลเสียง", stVoiceModelDesc: "ผู้ให้บริการและโมเดลใดแปลงเสียงของคุณเป็นข้อความ", stAutomatic: "อัตโนมัติ", stAdvanced: "ขั้นสูง", stAnyOpenAI: "เพิ่มบริการสไตล์ OpenAI ใดก็ได้", stAnyOpenAIDesc: "สำหรับโมเดลภายในเครื่อง (Ollama, LM Studio) หรือบริการอื่นที่ทำงานเหมือน OpenAI ที่อยู่เว็บมักลงท้ายด้วย /v1",
+    toolsBtn: "เครื่องมือด่วน", toolsTitle: "เครื่องมือด่วน", toolsInputPh: "พิมพ์หรือวาง...", tTranslate: "แปลภาษา", tSummarize: "สรุป", tCalc: "คำนวณ / แก้โจทย์", tExplain: "อธิบาย / ให้คำนิยาม", tAskNote: "ถามเกี่ยวกับโน้ตปัจจุบัน", tRun: "รัน", tNeedInput: "พิมพ์หรือวางบางอย่างก่อน", tUsedNote: "กำลังใช้โน้ตปัจจุบัน",
+    connectingPh: "กำลังเชื่อมต่อ…", connectedOne: "เชื่อมต่อแล้ว · 1 โมเดล", connectedMany: "เชื่อมต่อแล้ว · {n} โมเดล", keySaved: "บันทึกคีย์แล้ว คลิกเชื่อมต่อเพื่อตรวจสอบ", notConnected: "ยังไม่เชื่อมต่อ วางคีย์ของคุณเพื่อเชื่อมต่อ", onlyNeeded: "จำเป็นเฉพาะเมื่อคุณได้รับคีย์ โทเคนฟรีทำงานโดยไม่ต้องใช้", keySentTo: "คีย์ของคุณถูกส่งไปที่ {host}", connectBtn: "เชื่อมต่อ", saveKeyBtn: "บันทึกคีย์", allowBtn: "อนุญาต", denyBtn: "ปฏิเสธ", askBeforeChanging: "เมื่อ AI ขออนุญาตก่อนแก้ไขโน้ตของคุณ", deleteAllTitle: "ลบแชททั้งหมด?", deleteAllWarn: "การกระทำนี้ไม่สามารถย้อนกลับได้ พิมพ์ «delete» เพื่อยืนยัน", cancelBtn: "ยกเลิก", exportedOne: "ส่งออก 1 แชทไปที่ {name}", exportedMany: "ส่งออก {n} แชทไปที่ {name}", exportFailedMsg: "ไม่สามารถส่งออกแชทได้", deletedAllNote: "ลบแชททั้งหมดแล้ว", enterNameUrl: "กรอกชื่อและที่อยู่เว็บที่ขึ้นต้นด้วย http:// หรือ https://", cantAddService: "ไม่สามารถเพิ่มบริการนั้นได้", noAudio: "ไม่พบเสียงที่จับได้ ลองอีกครั้ง", micBlocked: "การเข้าถึงไมโครโฟนถูกบล็อก อนุญาตในการตั้งค่าระบบหรือแอป แล้วลองอีกครั้ง",
+    useOwnJina: "กำลังใช้คีย์ Jina ของคุณเอง ไม่ใช้โควต้าเว็บฟรีที่ให้มา",
+    getKey: "รับคีย์",
+    pasteKeyFirst: "วางคีย์ของคุณก่อน",
+    msgTooLong: "ข้อความยาวเกินไป (~{n}k โทเคน สูงสุด ~100k) วางข้อความที่สั้นลง",
+    deleteAsk: "ลบ?",
+    deleteChatTitle: "ลบแชทนี้",
+    noChatMatch: "ไม่มีแชทที่ตรงกับ «{q}»",
+    searchingChats: "กำลังค้นหาภายในบทสนทนา…",
+    closePane: "ปิดแผงนี้",
+    closeInsp: "ปิดตัวตรวจสอบข้อความ",
+    tapDot: "แตะจุดใดก็ได้เพื่ออ่านข้อความเต็ม",
+    details: "รายละเอียด",
+    alwaysAllow: "อนุญาตเสมอในแชทนี้",
+    searchModelsPh: "ค้นหาโมเดลหรือผู้ให้บริการ",
+    myFreePool: "พูลฟรีของฉัน",
+    poolEmpty: "พูลว่าง",
+    tagFree: "ฟรี",
+    quotaCheckFail: "ไม่สามารถตรวจสอบได้ตอนนี้ คุณยังคุยได้ โทเคนฟรีจะถูกใช้เมื่อตัวเลือกบอกว่า «พูล»",
+    webCheckFail: "ไม่สามารถตรวจสอบโควต้าเว็บได้ตอนนี้ เครื่องมือเว็บอาจยังทำงานได้",
+    recUnsupported: "ไม่รองรับการบันทึกที่นี่",
+    startRecFail: "ไม่สามารถเริ่มบันทึกได้",
+    openMicFail: "ไม่สามารถเปิดไมโครโฟนได้",
+    voiceUnavailableHere: "ไม่มีเสียงนำเข้าที่นี่",
+    addGroqKey: "เพิ่มคีย์ Groq",
+    updateBtn: "อัปเดต",
+    remove: "นำออก",
+    yesRemoveOne: "ใช่ — นำข้อความ 1 ข้อความออก",
+    yesRemoveMany: "ใช่ — นำ {n} ข้อความออก"
+  },
+  vi: {
+    newChat: "Cuộc trò chuyện mới", pastChats: "Cuộc trò chuyện trước", map: "Bản đồ", chat: "Trò chuyện", backToChat: "Quay lại cuộc trò chuyện", viewAsMap: "Xem cuộc trò chuyện dưới dạng bản đồ", export: "Xuất", exportTitle: "Xuất cuộc trò chuyện này thành ghi chú trong kho của bạn", reportProblem: "Báo cáo sự cố", reportComingSoon: "Tính năng báo cáo sự cố sắp ra mắt. Hiện tại hãy liên hệ support@usefree.space — chúng tôi giúp mọi thứ.",
+    freeTokens: "Token miễn phí", quotaTitle: "Token miễn phí còn lại trên thiết bị này — bấm để xem chi tiết", quotaLeftNow: "Còn lại", quotaMonthly: "Giới hạn hàng tháng", quotaRefill: "Nạp lại", quotaThisChat: "Cuộc trò chuyện này đến nay", quotaSentIn: "Đã gửi", quotaWroteOut: "Đã viết", quotaMore: "Thêm token miễn phí tại usefree.space", checking: "đang kiểm tra…",
+    askPh: "Hỏi bất cứ điều gì...", listeningPh: "Đang nghe… chạm micro khi bạn nói xong", transcribingPh: "Đang phiên âm…", micUnavailable: "Không hỗ trợ nhập bằng giọng nói trong môi trường này", micStop: "Dừng và dùng những gì bạn đã nói", micListen: "Nhập bằng giọng nói — nói và nó sẽ gõ cho bạn", voiceAria: "Nhập bằng giọng nói", send: "Gửi", stop: "Dừng", warnPickModel: "Chọn ít nhất 1 mô hình bên dưới để gửi.", noModels: "Không có mô hình", models: "mô hình",
+    emptyNothing: "Chưa có gì ở đây — hãy gửi tin nhắn bên dưới.", emptyNoModels: "Chưa kết nối mô hình nào — thêm khóa trong Cài đặt để bắt đầu.", openSettings: "Mở cài đặt", emptyHistory: "Chưa có cuộc trò chuyện nào được lưu. Cuộc trò chuyện của bạn tự động được lưu trên thiết bị này.", emptyDiscover: "Chưa có gì ở đây — hãy vào Trò chuyện và gửi tin nhắn.", loading: "Đang tải…",
+    stFreeTokens: "Token miễn phí", stGoFree: "Đến usefree.space", stWebAccess: "Truy cập web", stWebAllowance: "Hạn mức web miễn phí", stJinaKey: "Khóa Jina của riêng bạn", stJinaDesc: "Tùy chọn. Dán khóa từ jina.ai để dùng hạn mức riêng và bỏ qua hạn mức web miễn phí. Chỉ lưu trên thiết bị này.", stAccounts: "Tài khoản AI của riêng bạn", stAccountsDesc: "Kết nối tài khoản của nhà cung cấp AI khác để dùng mô hình của họ. Bạn trả tiền trực tiếp hoặc dùng gói miễn phí của họ.", stNoAccounts: "Chưa có tài khoản nào được kết nối. Thêm một tài khoản bên dưới.", stAddProvider: "Thêm nhà cung cấp", stAddProviderDesc: "Chọn một, thêm vào rồi dán khóa của bạn.", stAdd: "Thêm", stKeepKeys: "Giữ khóa của tôi sau khi khởi động lại Obsidian", stVoice: "Gõ bằng giọng nói", stSpeak: "Nói thay vì gõ", stChats: "Trò chuyện và quyền riêng tư", stYourChats: "Cuộc trò chuyện của bạn", stYourChatsDesc: "Xuất tất cả ra tệp, hoặc xóa tất cả.", stExportAll: "Xuất tất cả", stDeleteAll: "Xóa tất cả", stAiNotes: "AI và ghi chú của bạn", stAbout: "Giới thiệu", stHelp: "Nhận trợ giúp", stEmail: "Viết email cho chúng tôi", stFindTokens: "Tìm thêm token miễn phí", stChatDisplay: "Hiển thị trò chuyện", stFontSize: "Cỡ chữ trò chuyện", stFontSizeDesc: "Kích thước văn bản trong tin nhắn trò chuyện.", stVoiceModel: "Mô hình giọng nói", stVoiceModelDesc: "Nhà cung cấp và mô hình nào chuyển giọng nói của bạn thành văn bản.", stAutomatic: "Tự động", stAdvanced: "Nâng cao", stAnyOpenAI: "Thêm bất kỳ dịch vụ nào kiểu OpenAI", stAnyOpenAIDesc: "Dành cho mô hình cục bộ (Ollama, LM Studio) hoặc dịch vụ khác hoạt động như OpenAI. Địa chỉ web thường kết thúc bằng /v1.",
+    toolsBtn: "Công cụ nhanh", toolsTitle: "Công cụ nhanh", toolsInputPh: "Nhập hoặc dán...", tTranslate: "Dịch", tSummarize: "Tóm tắt", tCalc: "Tính toán / giải", tExplain: "Giải thích / định nghĩa", tAskNote: "Hỏi về ghi chú hiện tại", tRun: "Chạy", tNeedInput: "Trước tiên hãy nhập hoặc dán nội dung.", tUsedNote: "Đang dùng ghi chú hiện tại.",
+    connectingPh: "Đang kết nối…", connectedOne: "Đã kết nối · 1 mô hình", connectedMany: "Đã kết nối · {n} mô hình", keySaved: "Đã lưu khóa. Bấm Kết nối để kiểm tra.", notConnected: "Chưa kết nối. Dán khóa của bạn để kết nối.", onlyNeeded: "Chỉ cần nếu bạn được cấp khóa. Token miễn phí hoạt động không cần khóa.", keySentTo: "Khóa của bạn được gửi đến {host}.", connectBtn: "Kết nối", saveKeyBtn: "Lưu khóa", allowBtn: "Cho phép", denyBtn: "Từ chối", askBeforeChanging: "Khi AI xin phép trước khi thay đổi ghi chú của bạn", deleteAllTitle: "Xóa tất cả cuộc trò chuyện?", deleteAllWarn: "Không thể hoàn tác hành động này. Nhập «delete» để xác nhận.", cancelBtn: "Hủy", exportedOne: "Đã xuất 1 cuộc trò chuyện đến {name}", exportedMany: "Đã xuất {n} cuộc trò chuyện đến {name}", exportFailedMsg: "Không thể xuất các cuộc trò chuyện.", deletedAllNote: "Đã xóa tất cả cuộc trò chuyện.", enterNameUrl: "Nhập tên và địa chỉ web bắt đầu bằng http:// hoặc https://.", cantAddService: "Không thể thêm dịch vụ đó.", noAudio: "Không thu được gì. Hãy thử lại.", micBlocked: "Quyền truy cập micro bị chặn. Hãy cho phép trong cài đặt hệ thống hoặc ứng dụng rồi thử lại.",
+    useOwnJina: "Đang dùng khóa Jina của riêng bạn. Hạn mức miễn phí kèm theo không được dùng.",
+    getKey: "Nhận khóa",
+    pasteKeyFirst: "Trước tiên hãy dán khóa của bạn.",
+    msgTooLong: "Tin nhắn quá dài (~{n}k token, tối đa ~100k). Hãy dán đoạn ngắn hơn.",
+    deleteAsk: "Xóa?",
+    deleteChatTitle: "Xóa cuộc trò chuyện này",
+    noChatMatch: "Không có cuộc trò chuyện nào khớp với «{q}».",
+    searchingChats: "Đang tìm kiếm bên trong các cuộc trò chuyện…",
+    closePane: "Đóng bảng điều khiển này",
+    closeInsp: "Đóng trình kiểm tra tin nhắn",
+    tapDot: "Chạm vào bất kỳ điểm nào để đọc toàn bộ tin nhắn.",
+    details: "Chi tiết",
+    alwaysAllow: "Luôn cho phép trong cuộc trò chuyện này",
+    searchModelsPh: "Tìm kiếm mô hình hoặc nhà cung cấp",
+    myFreePool: "Nhóm miễn phí của tôi",
+    poolEmpty: "Nhóm trống",
+    tagFree: "Miễn phí",
+    quotaCheckFail: "Không thể kiểm tra lúc này. Bạn vẫn có thể trò chuyện. Token miễn phí được dùng khi bộ chọn nói «nhóm».",
+    webCheckFail: "Không thể kiểm tra hạn mức web lúc này. Các công cụ web có thể vẫn hoạt động.",
+    recUnsupported: "Không hỗ trợ ghi âm ở đây.",
+    startRecFail: "Không thể bắt đầu ghi âm.",
+    openMicFail: "Không thể mở micro.",
+    voiceUnavailableHere: "Không có nhập bằng giọng nói ở đây.",
+    addGroqKey: "Thêm khóa Groq",
+    updateBtn: "Cập nhật",
+    remove: "Gỡ bỏ",
+    yesRemoveOne: "Có — gỡ bỏ 1 tin nhắn",
+    yesRemoveMany: "Có — gỡ bỏ {n} tin nhắn"
+  },
+};
+function aiUiLang() {
+  try {
+    const A = window.app;
+    const v = A && A.vault && typeof A.vault.getConfig === "function" ? A.vault.getConfig("language") : null;
+    if (v) return String(v).toLowerCase().replace("_", "-");
+  } catch (e) {
+  }
+  try {
+    const M = window.moment;
+    if (M && typeof M.locale === "function") return String(M.locale()).toLowerCase().replace("_", "-");
+  } catch (e) {
+  }
+  return (navigator.language || "en").toLowerCase().replace("_", "-");
+}
+function aiT(key, vars) {
+  const lang = aiUiLang();
+  const norm = AI_UI[lang] ? lang : AI_UI[lang.split("-")[0]] ? lang.split("-")[0] : "en";
+  const dict = AI_UI[norm];
+  let s = dict && dict[key];
+  if (s === undefined || s === null) s = AI_UI.en[key] !== undefined ? AI_UI.en[key] : key;
+  if (vars) {
+    Object.keys(vars).forEach((vk) => {
+      s = String(s).split("{" + vk + "}").join(String(vars[vk]));
+    });
+  }
+  return String(s);
+}
 var import_obsidian5 = require("obsidian");
 
 // doors/types.ts
@@ -38,6 +1660,71 @@ function splitAppId(appId) {
 function validateHexColor(c) {
   if (/^#[0-9a-fA-F]{6}$/.test(c)) return c;
   return "#9d9d9d";
+}
+
+// doors/mcp.ts - minimal streamable-HTTP MCP client (works from renderer sandbox)
+async function mcpPost(url, token, payload) {
+  const headers = { "Content-Type": "application/json", Accept: "application/json, text/event-stream", "X-App-Name": APP_NAME, "X-App-Version": APP_VERSION };
+  if (token) headers.Authorization = "Bearer " + token;
+  let res;
+  try {
+    res = await (0, import_obsidian5.requestUrl)({ url, method: "POST", headers, body: JSON.stringify(payload), throw: false });
+  } catch (e) {
+    throw new Error("MCP server unreachable: " + (e instanceof Error ? e.message : String(e)));
+  }
+  if (res.status < 200 || res.status >= 300) {
+    const errText = String(res.text || "");
+    throw new Error("MCP server error (" + res.status + ")" + (errText ? ": " + errText.slice(0, 200) : ""));
+  }
+  const ct = String((res.headers && (res.headers["content-type"] || res.headers["Content-Type"])) || "");
+  if (/event-stream/i.test(ct)) {
+    const txt = String(res.text || "");
+    let last = null;
+    txt.split(/\r?\n/).forEach((line) => {
+      if (line.indexOf("data:") === 0) {
+        const v = line.slice(5).trim();
+        if (v && v !== "[DONE]") last = v;
+      }
+    });
+    if (!last) throw new Error("Empty MCP stream response");
+    return JSON.parse(last);
+  }
+  return res.json && typeof res.json === "object" ? res.json : JSON.parse(String(res.text || "{}"));
+}
+var CONN_CATALOG_URL = "https://conn.usefree.space/catalog.json";
+var SECTIONS_URL = "https://conn.usefree.space/sections.json";
+var APP_NAME = "free-ai-agents-obsidian";
+var APP_VERSION = "1.5.5";
+async function mcpListTools(url, token) {
+  await mcpPost(url, token, { jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2025-03-26", capabilities: {}, clientInfo: { name: "free-ai-agents", version: "1.5.8" } } });
+  void mcpPost(url, token, { jsonrpc: "2.0", method: "notifications/initialized" }).catch(() => {
+  });
+  const out = await mcpPost(url, token, { jsonrpc: "2.0", id: 2, method: "tools/list", params: {} });
+  return out && out.result && Array.isArray(out.result.tools) ? out.result.tools : [];
+}
+async function mcpCallTool(url, token, name, args) {
+  const out = await mcpPost(url, token, { jsonrpc: "2.0", id: 3, method: "tools/call", params: { name, arguments: args || {} } });
+  const r = out && out.result ? out.result : {};
+  const content = Array.isArray(r.content) ? r.content.map((c) => c.text || String(c)).filter(Boolean).join("\n") : "";
+  if (r.isError) throw new Error(content || "MCP tool reported an error");
+  return content || JSON.stringify(r.structuredContent || {});
+}
+
+var MCP_CATALOG = [
+  { g: "Dev & code", items: ["GitLab", "Bitbucket", "Linear", "Jira", "Confluence", "Sentry", "Vercel", "Netlify", "Cloudflare", "Supabase", "Firebase", "AWS", "Google Cloud", "Azure", "Terraform", "MySQL", "MongoDB", "Elasticsearch"] },
+  { g: "Productivity", items: ["Google Drive", "Google Calendar", "Google Sheets", "Gmail", "Outlook", "Slack", "Microsoft Teams", "Notion", "Todoist", "Trello", "Asana", "Monday.com", "Airtable", "ClickUp", "Evernote", "Dropbox", "OneDrive", "Microsoft 365"] },
+  { g: "Reading & research", items: ["Readwise", "Pocket", "Instapaper", "Raindrop.io", "Goodreads", "Wikipedia", "Wikidata", "Arxiv", "Google Scholar", "PubMed", "Hacker News", "Stack Overflow", "Firecrawl", "Fetch URL to Markdown", "RSS feeds"] },
+  { g: "Media", items: ["YouTube transcripts", "Reddit", "Spotify", "Figma", "Canva", "Tavily", "Brave Search", "Weather"] },
+  { g: "Commerce & CRM", items: ["Salesforce", "HubSpot", "Stripe", "Shopify", "WooCommerce", "PayPal", "Zendesk", "Intercom"] },
+  { g: "Messaging & more", items: ["Email (IMAP/SMTP)", "Telegram", "Discord", "Twilio", "Foursquare"] }
+];
+function mcpHostedUrl(name) {
+  return "https://conn.usefree.space/" + slug(name) + "/mcp";
+}
+function mcpCatalogAll() {
+  const out = [];
+  MCP_CATALOG.forEach((grp) => grp.items.forEach((n) => out.push({ name: n, g: grp.g })));
+  return out;
 }
 
 // doors/presets.ts
@@ -673,7 +2360,7 @@ function fmtFull(n2) {
 }
 function freeQuotaText(kind, days) {
   const d = typeof days === "number" && days > 0 ? days : 30;
-  const when = "They come back in " + d + (d === 1 ? " day" : " days") + ".";
+  const when = "They come back in 1 day.";
   const seen = QUOTA_SEEN[kind === "web" ? "web" : "ai"];
   const what = (seen ? fmtFull(seen) + " " : "") + (kind === "web" ? "web search" : "AI");
   return "Your FREE " + what + " tokens are used up on this device.\n" + when + "\nBut you do not need to wait!\nYou can get many more millions and billions of AI tokens.\nGo to www.usefree.space\nIt shows all AI models, free deals and promos.\nThere are many to choose from. Enjoy :)\nNo account. No stupid signups.";
@@ -704,8 +2391,9 @@ function buildMultipart(fields, file) {
 function createObsidianTransport(getDeviceId) {
   const withDevice = (headers) => {
     const id = (getDeviceId == null ? void 0 : getDeviceId()) || "";
-    if (id && !headers["X-Device-Id"]) return { ...headers, "X-Device-Id": id };
-    return headers;
+    const out = { ...headers, "X-App-Name": APP_NAME, "X-App-Version": APP_VERSION };
+    if (id && !headers["X-Device-Id"]) out["X-Device-Id"] = id;
+    return out;
   };
   async function friendly(op) {
     var _a;
@@ -788,13 +2476,20 @@ var DEFAULT_DATA = {
   allowEval: false,
   saveChats: true,
   rememberKeys: true,
-  voiceTyping: false,
+  voiceTyping: true,
+  voiceTouched: false,
   voiceChoice: "",
   effort: {},
   jinaKey: "",
   deviceId: "",
   approvalMode: "risky",
-  dismissedUpdate: ""
+  dismissedUpdate: "",
+  chatFontSize: 13,
+  sttEnabled: true,
+  sttUrl: "https://stt.usefree.space",
+  sttDeviceKey: "",
+  connectors: [],
+  autoSendPrompts: false
 };
 function sanitizeData(raw) {
   const d = raw && typeof raw === "object" ? raw : {};
@@ -812,7 +2507,8 @@ function sanitizeData(raw) {
     testMode: false,
     autoDefaulted: true,
     allowEval: false,
-    voiceTyping: d.voiceTyping === true,
+    voiceTyping: d.voiceTyping !== false,
+    voiceTouched: d.voiceTouched === true,
     voiceChoice: typeof d.voiceChoice === "string" ? d.voiceChoice : "",
     effort: d.effort && typeof d.effort === "object" && !Array.isArray(d.effort) ? Object.keys(d.effort).reduce((o, k) => {
       if (typeof d.effort[k] === "string" && /^[a-z0-9_-]{1,24}$/.test(d.effort[k])) o[k] = d.effort[k];
@@ -821,7 +2517,19 @@ function sanitizeData(raw) {
     jinaKey: typeof d.jinaKey === "string" ? d.jinaKey : "",
     deviceId: typeof d.deviceId === "string" ? d.deviceId : "",
     approvalMode: d.approvalMode === "ask" || d.approvalMode === "never" ? d.approvalMode : "risky",
-    dismissedUpdate: typeof d.dismissedUpdate === "string" ? d.dismissedUpdate : ""
+    dismissedUpdate: typeof d.dismissedUpdate === "string" ? d.dismissedUpdate : "",
+    chatFontSize: typeof d.chatFontSize === "number" && d.chatFontSize >= 10 && d.chatFontSize <= 24 ? d.chatFontSize : 13,
+    sttEnabled: d.sttEnabled !== false,
+    sttUrl: typeof d.sttUrl === "string" && d.sttUrl ? d.sttUrl : "https://stt.usefree.space",
+    sttDeviceKey: typeof d.sttDeviceKey === "string" ? d.sttDeviceKey : "",
+    connectors: Array.isArray(d.connectors) ? d.connectors.filter((c) => c && typeof c === "object" && c.name && c.url).map((c) => ({
+      id: typeof c.id === "string" && c.id ? c.id : slug(String(c.name || "")),
+      name: String(c.name || ""),
+      url: String(c.url || ""),
+      token: typeof c.token === "string" ? c.token : "",
+      enabled: c.enabled !== false
+    })) : [],
+    autoSendPrompts: d.autoSendPrompts === true
   };
 }
 
@@ -869,14 +2577,14 @@ var DeleteAllChatsModal = class extends import_obsidian2.Modal {
   }
   onOpen() {
     const { contentEl } = this;
-    contentEl.createEl("h3", { text: "Delete all chats?" });
-    contentEl.createEl("p", { text: 'This cannot be undone. Type "delete" to confirm.' });
+    contentEl.createEl("h3", { text: aiT("deleteAllTitle") });
+    contentEl.createEl("p", { text: aiT("deleteAllWarn") });
     const input = contentEl.createEl("input", { type: "text" });
     input.placeholder = "delete";
     input.style.width = "100%";
     const row = contentEl.createDiv({ cls: "modal-button-container" });
-    const cancel = row.createEl("button", { text: "Cancel" });
-    const ok = row.createEl("button", { text: "Delete all", cls: "mod-warning" });
+    const cancel = row.createEl("button", { text: aiT("cancelBtn") });
+    const ok = row.createEl("button", { text: aiT("stDeleteAll"), cls: "mod-warning" });
     ok.disabled = true;
     input.addEventListener("input", () => {
       ok.disabled = input.value.trim().toLowerCase() !== "delete";
@@ -916,55 +2624,55 @@ var PanelSettingsTab = class extends import_obsidian2.PluginSettingTab {
     const f = this.facade;
     const S = import_obsidian2.Setting;
     const open = (u) => window.open(u, "_blank");
-    new S(containerEl).setName("Free tokens").setHeading();
+    new S(containerEl).setName(aiT("stFreeTokens")).setHeading();
     containerEl.createEl("p", {
-      text: "No account needed. Free tokens are used when you pick a \u201Cpool\u201D model in the chat.",
+      text: aiT("stFreeTokensDesc"),
       cls: "setting-item-description"
     });
-    const qs = new S(containerEl).setName("Free tokens left").setDesc("Checking\u2026");
+    const qs = new S(containerEl).setName(aiT("stFreeTokens") + " " + aiT("quotaLeftNow").toLowerCase()).setDesc(aiT("checking"));
     const bar = qs.infoEl.createDiv({ cls: "ai-rp-sbar" });
     const fill = bar.createDiv({ cls: "ai-rp-sfill" });
     bar.style.display = "none";
-    qs.addButton((b) => b.setButtonText("Go to usefree.space").onClick(() => open(FREE_SITE_URL)));
+    qs.addButton((b) => b.setButtonText(aiT("stGoFree")).onClick(() => open(FREE_SITE_URL)));
     const paintQuota = async () => {
       const q = await f.getQuota();
       if (!containerEl.isConnected) return;
       if (!q) {
-        qs.setDesc("Couldn\u2019t check right now. You can still chat. Free tokens are used when the model picker says \u201Cpool\u201D.");
+        qs.setDesc(aiT("quotaCheckFail"));
         return;
       }
-      const days = q.resetInDays + (q.resetInDays === 1 ? " day" : " days");
+      const days = "1 day";
       if (q.left <= 0) qs.setDesc("You\u2019ve used all " + fmtFull(q.limit) + " free tokens. They come back in " + days + ". Get more at usefree.space.");
       else qs.setDesc(fmtTokens(q.left) + " of " + fmtTokens(q.limit) + " left \xB7 resets in " + days);
       bar.style.display = "";
       fill.style.width = Math.max(0, Math.min(100, q.limit ? q.left / q.limit * 100 : 0)) + "%";
     };
     void paintQuota();
-    new S(containerEl).setName("Web access").setHeading();
+    new S(containerEl).setName(aiT("stWebAccess")).setHeading();
     containerEl.createEl("p", {
-      text: "The AI can open web pages and search the web. Leave the key blank to use the included free web allowance for this device. The meter below shows what is left.",
+      text: aiT("stWebDesc"),
       cls: "setting-item-description"
     });
     const webOwn = () => String(f.data.jinaKey || "").trim();
-    const ws = new S(containerEl).setName("Free web allowance").setDesc("Checking\u2026");
+    const ws = new S(containerEl).setName(aiT("stWebAllowance")).setDesc(aiT("checking"));
     const wbar = ws.infoEl.createDiv({ cls: "ai-rp-sbar" });
     const wfill = wbar.createDiv({ cls: "ai-rp-sfill" });
     wbar.style.display = "none";
     ws.addButton((b) => b.setButtonText("Go to usefree.space").onClick(() => open(FREE_SITE_URL)));
     const paintWeb = async () => {
       if (webOwn()) {
-        ws.setDesc("Using your own Jina key. The included free allowance is not used.");
+        ws.setDesc(aiT("useOwnJina"));
         wbar.style.display = "none";
         return;
       }
       const q = await f.getWebQuota();
       if (!containerEl.isConnected) return;
       if (!q || q.available === false) {
-        ws.setDesc("Couldn\u2019t check the web allowance right now. Web tools may still work.");
+        ws.setDesc(aiT("webCheckFail"));
         wbar.style.display = "none";
         return;
       }
-      const days = q.resetInDays + (q.resetInDays === 1 ? " day" : " days");
+      const days = "1 day";
       if (q.left <= 0) {
         ws.setDesc("You\u2019ve used all " + fmtFull(q.limit) + " free web tokens. They come back in " + days + ". Get more at usefree.space.");
       } else {
@@ -984,7 +2692,7 @@ var PanelSettingsTab = class extends import_obsidian2.PluginSettingTab {
       void paintQuota();
       void paintWeb();
     }, 15e3);
-    new S(containerEl).setName("Your own Jina key").setDesc("Optional. Paste a key from jina.ai to use your own quota and skip the free web allowance. Stored on this device only.").addText((t) => {
+    new S(containerEl).setName(aiT("stJinaKey")).setDesc(aiT("stJinaDesc")).addText((t) => {
       t.setPlaceholder("jina_...");
       t.setValue(f.data.jinaKey || "");
       t.inputEl.type = "password";
@@ -994,9 +2702,9 @@ var PanelSettingsTab = class extends import_obsidian2.PluginSettingTab {
         void paintWeb();
       });
     });
-    new S(containerEl).setName("Your own AI accounts").setHeading();
+    new S(containerEl).setName(aiT("stAccounts")).setHeading();
     containerEl.createEl("p", {
-      text: "Connect an account with another AI provider to use its models. You pay that provider directly, or use their free tier.",
+      text: aiT("stAccountsDesc"),
       cls: "setting-item-description"
     });
     if (f.catalogReady && !f.catalogReady() && !this.catalogTried) {
@@ -1007,7 +2715,7 @@ var PanelSettingsTab = class extends import_obsidian2.PluginSettingTab {
     }
     const added = f.registry.doors.map((d) => d.id).filter((id) => id !== "riemann" && id !== "test");
     if (!added.length) {
-      containerEl.createEl("p", { text: "No accounts connected yet. Add one below.", cls: "setting-item-description" });
+      containerEl.createEl("p", { text: aiT("stNoAccounts"), cls: "setting-item-description" });
     }
     added.forEach((id) => {
       const d = f.registry.doorById(id);
@@ -1017,13 +2725,13 @@ var PanelSettingsTab = class extends import_obsidian2.PluginSettingTab {
     const avail = PRESETS.filter((p) => !f.registry.doorById(p.id)).map((p) => ({ id: p.id, name: p.name })).concat(fromCatalog).sort((a, b) => a.name.localeCompare(b.name));
     if (avail.length) {
       let pick = avail[0].id;
-      new S(containerEl).setName("Add a provider").setDesc("Choose one, add it, then paste your key.").addDropdown((dd) => {
+      new S(containerEl).setName(aiT("stAddProvider")).setDesc(aiT("stAddProviderDesc")).addDropdown((dd) => {
         avail.forEach((p) => dd.addOption(p.id, p.name));
         dd.setValue(pick);
         dd.onChange((v) => pick = v);
-      }).addButton((b) => b.setButtonText("Add").setCta().onClick(() => void this.addProvider(pick)));
+      }).addButton((b) => b.setButtonText(aiT("stAdd")).setCta().onClick(() => void this.addProvider(pick)));
     }
-    new S(containerEl).setName("Keep my keys after restarting Obsidian").setDesc(
+    new S(containerEl).setName(aiT("stKeepKeys")).setDesc(
       "Keys are stored unencrypted in this vault\u2019s plugin settings. If you sync or share your vault, your keys go with it. Turn this off on a shared computer."
     ).addToggle(
       (t) => t.setValue(f.data.rememberKeys !== false).onChange(async (v) => {
@@ -1031,37 +2739,54 @@ var PanelSettingsTab = class extends import_obsidian2.PluginSettingTab {
         await f.save();
       })
     );
-    new S(containerEl).setName("Voice typing").setHeading();
-    const voiceOpts = f.registry.voiceOptions();
-    const vs = new S(containerEl).setName("Speak instead of typing").setDesc(
+    new S(containerEl).setName(aiT("stVoice")).setHeading();
+    const selfHosted = f.data.sttEnabled !== false;
+    const voiceOpts0 = f.registry.voiceOptions();
+    const voiceOpts = selfHosted ? [{ value: "riemann-stt", label: "Riemann STT" }].concat(voiceOpts0) : voiceOpts0;
+    const vs = new S(containerEl).setName(aiT("stSpeak")).setDesc(
       voiceOpts.length ? "Shows a mic in the chat. Uses the voice model chosen below." : "Needs a provider that offers speech-to-text, like Groq (free tier) or OpenAI. Add a key to turn this on."
     ).addToggle(
       (t) => t.setValue(f.data.voiceTyping === true).onChange(async (v) => {
         f.data.voiceTyping = v;
+        f.data.voiceTouched = true;
         await f.save();
         f.refreshPanel();
       })
     );
     if (!voiceOpts.length) {
-      vs.addButton((b) => b.setButtonText("Add a Groq key").onClick(() => void this.addProvider("groq")));
+      vs.addButton((b) => b.setButtonText(aiT("addGroqKey")).onClick(() => void this.addProvider("groq")));
     } else {
-      new S(containerEl).setName("Voice model").setDesc("Which provider and model turns your speech into text.").addDropdown((dd) => {
-        dd.addOption("", "Automatic");
+      new S(containerEl).setName(aiT("stVoiceModel")).setDesc(aiT("stVoiceModelDesc")).addDropdown((dd) => {
+        dd.addOption("", aiT("stAutomatic"));
         voiceOpts.forEach((o) => dd.addOption(o.value, o.label));
-        dd.setValue(voiceOpts.some((o) => o.value === f.data.voiceChoice) ? f.data.voiceChoice : "");
+        const cur = voiceOpts.some((o) => o.value === f.data.voiceChoice) ? f.data.voiceChoice : (selfHosted ? "riemann-stt" : "");
+        if (cur !== f.data.voiceChoice) {
+          f.data.voiceChoice = cur;
+          void f.save();
+        }
+        dd.setValue(cur);
         dd.onChange(async (v) => {
           f.data.voiceChoice = v;
           await f.save();
         });
       });
     }
-    new S(containerEl).setName("Chats and privacy").setHeading();
+    if (selfHosted) {
+      new S(containerEl).setName("Riemann transcription").setDesc("No key needed \u2014 a device key is issued automatically on first use. Audio goes to the Riemann STT service.").addToggle(
+        (t) => t.setValue(f.data.sttEnabled !== false).onChange(async (v) => {
+          f.data.sttEnabled = v;
+          await f.save();
+          f.refreshPanel();
+        })
+      );
+    }
+    new S(containerEl).setName(aiT("stChats")).setHeading();
     containerEl.createEl("p", {
       text: "Your chats are saved on this device automatically. With free-pool models, your messages go to our server to get a reply. With your own provider, they go straight to that provider.",
       cls: "setting-item-description"
     });
-    const io = new S(containerEl).setName("Your chats").setDesc("Export everything to a file, or delete everything.");
-    io.addButton((b) => b.setButtonText("Export all").onClick(async () => {
+    const io = new S(containerEl).setName(aiT("stYourChats")).setDesc(aiT("stYourChatsDesc"));
+    io.addButton((b) => b.setButtonText(aiT("stExportAll")).onClick(async () => {
       try {
         const items = await f.chats.list();
         const chats = [];
@@ -1072,22 +2797,22 @@ var PanelSettingsTab = class extends import_obsidian2.PluginSettingTab {
         const stamp = new Date().toISOString().replace(/[:.]/g, "-");
         const name = "usefree-chats-" + stamp + ".json";
         await this.app.vault.adapter.write(name, JSON.stringify({ exported: new Date().toISOString(), chats }, null, 2));
-        new import_obsidian2.Notice("Exported " + chats.length + (chats.length === 1 ? " chat" : " chats") + " to " + name);
+        new import_obsidian2.Notice(aiT(chats.length === 1 ? "exportedOne" : "exportedMany", { n: chats.length, name }));
       } catch (e) {
-        new import_obsidian2.Notice("Couldn\u2019t export the chats.");
+        new import_obsidian2.Notice(aiT("exportFailedMsg"));
       }
     }));
-    io.addButton((b) => b.setButtonText("Delete all").setWarning().onClick(() => {
+    io.addButton((b) => b.setButtonText(aiT("stDeleteAll")).setWarning().onClick(() => {
       new DeleteAllChatsModal(this.app, async () => {
         try {
           await f.chats.clear();
         } catch (e) {
         }
         f.chatsCleared();
-        new import_obsidian2.Notice("All chats deleted.");
+        new import_obsidian2.Notice(aiT("deletedAllNote"));
       }).open();
     }));
-    new S(containerEl).setName("The AI and your notes").setHeading();
+    new S(containerEl).setName(aiT("stAiNotes")).setHeading();
     containerEl.createEl("p", {
       text: "The AI can read and search your notes. You choose when it asks before changing them.",
       cls: "setting-item-description"
@@ -1097,26 +2822,26 @@ var PanelSettingsTab = class extends import_obsidian2.PluginSettingTab {
     adv.addEventListener("toggle", () => {
       this.advOpen = adv.open;
     });
-    adv.createEl("summary", { text: "Advanced" });
+    adv.createEl("summary", { text: aiT("stAdvanced") });
     let cName = "";
     let cUrl = "";
-    new S(adv).setName("Add any OpenAI-style service").setDesc(
-      "For local models (Ollama, LM Studio) or other services that work like OpenAI. The web address usually ends in /v1."
+    new S(adv).setName(aiT("stAnyOpenAI")).setDesc(
+      aiT("stAnyOpenAIDesc")
     ).addText((t) => t.setPlaceholder("Name, e.g. My local model").onChange((v) => cName = v)).addText((t) => {
       t.setPlaceholder("https://host/v1").onChange((v) => cUrl = v);
     }).addButton(
-      (b) => b.setButtonText("Add").onClick(async () => {
+      (b) => b.setButtonText(aiT("stAdd")).onClick(async () => {
         const name = cName.trim();
         const baseUrl = cUrl.trim().replace(/\/+$/, "");
         if (!name || !/^https?:\/\//i.test(baseUrl)) {
-          new import_obsidian2.Notice("Enter a name and a web address that starts with http:// or https://");
+          new import_obsidian2.Notice(aiT("enterNameUrl"));
           return;
         }
         const id = "custom-" + slug(name);
         try {
           f.registry.addCustomDef({ id, name, baseUrl, dialect: "openai" });
         } catch (e) {
-          new import_obsidian2.Notice("Couldn\u2019t add that service.");
+          new import_obsidian2.Notice(aiT("cantAddService"));
           return;
         }
         f.registry.addDoor(id);
@@ -1129,11 +2854,77 @@ var PanelSettingsTab = class extends import_obsidian2.PluginSettingTab {
         this.display();
       })
     );
-    new S(containerEl).setName("About").setDesc("Free AI and Agents \xB7 v" + f.version).addButton(
-      (b) => b.setButtonText("Find more free tokens").onClick(() => open(FREE_MODELS_URL))
+    new S(containerEl).setName("Connectors").setHeading();
+    containerEl.createEl("p", {
+      text: "Connect external services via MCP servers. Each enabled connector adds its tools to the AI agent — every call goes through the approval step.",
+      cls: "setting-item-description"
+    });
+    const conns = f.data.connectors || [];
+    conns.forEach((c, i) => {
+      const row = new S(containerEl).setName(c.name).setDesc(c.url).addToggle(
+        (t) => t.setValue(c.enabled !== false).onChange(async (v) => {
+          c.enabled = v;
+          await f.save();
+          void f.refreshConnectorCache();
+          f.refreshPanel();
+        })
+      );
+      row.addText((t) => {
+        t.setPlaceholder("Token");
+        t.setValue(c.token || "");
+        t.inputEl.type = "password";
+        t.onChange(async (v) => {
+          c.token = v.trim();
+          await f.save();
+          void f.refreshConnectorCache();
+        });
+      }).addButton((b) => b.setButtonText("Remove").setWarning().onClick(async () => {
+        f.data.connectors.splice(i, 1);
+        await f.save();
+        void f.refreshConnectorCache();
+        f.refreshPanel();
+      }));
+    });
+    let newName = "";
+    let newUrl = "";
+    new S(containerEl).setName("Add a connector").setDesc("Pick from the catalog or paste any MCP server URL (streamable HTTP), then add any token it requires.").addDropdown((dd) => {
+      dd.addOption("", "Custom\u2026");
+      mcpCatalogAll().forEach((c) => dd.addOption(c.name, c.name + " (" + c.g + ")"));
+      dd.onChange((v) => {
+        if (v) newName = v;
+      });
+    }).addText(
+      (t) => t.setPlaceholder("Name, e.g. Notion").setValue(newName).onChange((v) => newName = v)
+    ).addText(
+      (t) => t.setPlaceholder("https://\u2026/mcp").onChange((v) => newUrl = v)
+    ).addButton((b) => b.setButtonText("Add").setCta().onClick(async () => {
+      const name = newName.trim();
+      const url = newUrl.trim();
+      if (!name || !/^https?:\/\//i.test(url)) {
+        new import_obsidian2.Notice(aiT("enterNameUrl"));
+        return;
+      }
+      f.data.connectors.push({ id: slug(name) + "_" + Date.now().toString(36), name, url, token: "", enabled: true });
+      await f.save();
+      void f.refreshConnectorCache();
+      f.refreshPanel();
+    }));
+    new S(containerEl).setName(aiT("stChatDisplay")).setHeading();
+    new S(containerEl).setName(aiT("stFontSize")).setDesc(aiT("stFontSizeDesc")).addSlider((sl) => {
+      sl.setLimits(11, 20, 1);
+      sl.setValue(typeof f.data.chatFontSize === "number" && f.data.chatFontSize >= 10 && f.data.chatFontSize <= 24 ? f.data.chatFontSize : 13);
+      sl.setDynamicTooltip();
+      sl.onChange(async (v) => {
+        f.data.chatFontSize = v;
+        await f.save();
+        f.refreshPanel();
+      });
+    });
+    new S(containerEl).setName(aiT("stAbout")).setDesc("Free AI and Agents \xB7 v" + f.version).addButton(
+      (b) => b.setButtonText(aiT("stFindTokens")).onClick(() => open(FREE_MODELS_URL))
     );
-    new S(containerEl).setName("Get help").setDesc("Questions or problems? Email us and we\u2019ll help.").addButton(
-      (b) => b.setButtonText("Email us").onClick(() => open("mailto:support@usefree.space"))
+    new S(containerEl).setName(aiT("stHelp")).setDesc("Questions or problems? Email us and we\u2019ll help.").addButton(
+      (b) => b.setButtonText(aiT("stEmail")).onClick(() => open("mailto:support@usefree.space"))
     );
     const fid = f.consumeFocus();
     if (fid && this.rows[fid]) {
@@ -1171,32 +2962,32 @@ var PanelSettingsTab = class extends import_obsidian2.PluginSettingTab {
       let cls = "idle";
       let text;
       if (id === "riemann" && !hasKey) {
-        text = "Only needed if you were given a key. Free tokens work without one.";
+        text = aiT("onlyNeeded");
       } else if (busy) {
-        text = "Connecting\u2026";
+        text = aiT("connectingPh");
       } else if (d && d.connected && hasKey) {
         cls = "ok";
-        text = "Connected \xB7 " + d.models.length + (d.models.length === 1 ? " model" : " models");
+        text = aiT(d.models.length === 1 ? "connectedOne" : "connectedMany", { n: d.models.length });
       } else if (this.errs[id]) {
         cls = "bad";
         text = this.errs[id];
       } else if (hasKey) {
-        text = "Key saved. Click Connect to check it.";
+        text = aiT("keySaved");
       } else {
-        text = "Not connected. Paste your key to connect.";
+        text = aiT("notConnected");
       }
       desc.createSpan({ cls: "ai-rp-sdot " + cls });
       desc.createSpan({ text });
       const sdef = f.registry.defById(id);
       if (sdef && !presetById(id) && id !== "riemann") {
         try {
-          desc.createSpan({ text: " Your key is sent to " + new URL(sdef.baseUrl).host + "." });
+          desc.createSpan({ text: " " + aiT("keySentTo", { host: new URL(sdef.baseUrl).host }) });
         } catch (e) {
         }
       }
       if (!hasKey && id !== "riemann") {
         desc.createSpan({ text: " " });
-        const a = desc.createEl("a", { text: "Get a key", href: "#" });
+        const a = desc.createEl("a", { text: aiT("getKey"), href: "#" });
         a.addEventListener("click", (e) => {
           e.preventDefault();
           window.open(f.registry.keyUrlFor(id) || KEY_URLS[id] || FREE_SITE_URL, "_blank");
@@ -1204,7 +2995,7 @@ var PanelSettingsTab = class extends import_obsidian2.PluginSettingTab {
       }
       if (btn) {
         btn.setDisabled(busy);
-        btn.setButtonText(busy ? "Connecting\u2026" : d && d.connected && hasKey ? "Reconnect" : "Connect");
+        btn.setButtonText(busy ? aiT("connectingPh") : d && d.connected && hasKey ? "Reconnect" : aiT("connectBtn"));
       }
     };
     const connect = async () => {
@@ -1212,7 +3003,7 @@ var PanelSettingsTab = class extends import_obsidian2.PluginSettingTab {
       const key = (f.data.keys[id] || "").trim();
       const d = f.registry.doorById(id);
       if (!key) {
-        this.errs[id] = "Paste your key first.";
+        this.errs[id] = aiT("pasteKeyFirst");
         paint();
         return;
       }
@@ -1291,7 +3082,7 @@ function estimateTokens(text) {
   const words = String(text).split(/\s+/).filter(Boolean).length;
   return Math.max(1, Math.round(words * 1.35));
 }
-var HISTORY_EXCHANGES = 20;
+var HISTORY_EXCHANGES = 10;
 var MEDIA_IN_MD_RE = /!\[\[[^\]\n]*\]\]|!\[[^\]\n]*\]\([^)\n]+\)|<img\b[^>]*>|<video\b[^>]*>[\s\S]*?<\/video>|<video\b[^>]*\/?>|<audio\b[^>]*>[\s\S]*?<\/audio>|<audio\b[^>]*\/?>|data:image\/[a-z0-9.+-]+;base64,[A-Za-z0-9+/=]+|data:video\/[a-z0-9.+-]+;base64,[A-Za-z0-9+/=]+|data:audio\/[a-z0-9.+-]+;base64,[A-Za-z0-9+/=]+/gi;
 function mediaMediaType(s2) {
   if (/\.png|\.jpe?g|\.gif|\.webp|\.svg|\.avif|\.bmp|\.tiff/i.test(s2)) return "image";
@@ -1328,9 +3119,10 @@ function sanitizeMediaForModel(s2) {
   }
   return out;
 }
-function buildHistory(msgs, nextUserText, attachments = [], extraSystem = "", environment = "") {
+function buildHistory(msgs, nextUserText, attachments = [], extraSystem = "", environment = "", earlier = "") {
   const system = extraSystem ? SYSTEM_PROMPT + "\n\n" + extraSystem : SYSTEM_PROMPT;
-  const out = [{ role: "system", content: system }];
+  const systemFinal = earlier ? system + "\n\n" + earlier : system;
+  const out = [{ role: "system", content: systemFinal }];
   const userIdx = [];
   msgs.forEach((m, i) => {
     if (m.kind === "user") userIdx.push(i);
@@ -2196,9 +3988,40 @@ function mountPanel(root, deps) {
   let quotaUpgrade = FALLBACK_UPGRADE_URL;
   let quotaOut = false;
   let quotaPop = false;
+  let toolsOpen = false;
+  let toolInput = "";
+  let toolQuery = "";
+  let toolsTab = "prompts";
+  let connAsk = null;
+  let reportOpen = false;
+  let section = "chat";
+  let segments = [];
+  let lastSumIdx = 0;
+  let summaryPending = false;
   let voiceClip = null;
   let notice = "";
   let noticeTimer = null;
+  let vSec = 0;
+  let vTimer = null;
+  let userPinnedUp = false;
+  let focusOnSend = false;
+  function stopVTimer() {
+    if (vTimer) {
+      clearInterval(vTimer);
+      vTimer = null;
+    }
+  }
+  function startVTimer() {
+    stopVTimer();
+    vSec = 0;
+    vTimer = setInterval(() => {
+      const el = root.querySelector(".ai-rp-vsec");
+      if (el) {
+        vSec++;
+        el.textContent = vSec + "s";
+      }
+    }, 1000);
+  }
   let exportBusy = false;
   let chatId = null;
   let chatCreated = 0;
@@ -2434,6 +4257,7 @@ function mountPanel(root, deps) {
   }
   function cancelDictation() {
     dict.token++;
+    stopVTimer();
     try {
       if (dict.rec) {
         dict.rec.onresult = dict.rec.onerror = dict.rec.onend = null;
@@ -2457,6 +4281,7 @@ function mountPanel(root, deps) {
   }
   function dictFail(token, msg) {
     if (token !== dict.token || destroyed) return;
+    stopVTimer();
     releaseStream();
     dict.rec = null;
     dict.mr = null;
@@ -2493,8 +4318,8 @@ function mountPanel(root, deps) {
         void startRecorder(token);
         return;
       }
-      if (code === "no-speech") return dictFail(token, "Didn\u2019t catch anything. Try again.");
-      if (code === "not-allowed" || code === "service-not-allowed") return dictFail(token, "Microphone access is blocked. Allow it in your system or app settings, then try again.");
+      if (code === "no-speech") return dictFail(token, aiT("noAudio"));
+      if (code === "not-allowed" || code === "service-not-allowed") return dictFail(token, aiT("micBlocked"));
       if (code === "aborted") return dictFail(token, "");
       dictFail(token, "Voice input failed (" + (code || "unknown") + ").");
     };
@@ -2513,7 +4338,7 @@ function mountPanel(root, deps) {
     }
   }
   async function startRecorder(token) {
-    if (!canRecord) return dictFail(token, "Voice input isn\u2019t available here.");
+    if (!canRecord) return dictFail(token, aiT("voiceUnavailableHere"));
     let stream;
     try {
       stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -2521,7 +4346,7 @@ function mountPanel(root, deps) {
       const nm = String(e && (e.name || e.message) || "");
       return dictFail(
         token,
-        /notallowed|denied|permission/i.test(nm) ? "Microphone access is blocked. Allow it in your system or app settings, then try again." : "Couldn\u2019t open the microphone."
+        /notallowed|denied|permission/i.test(nm) ? aiT("micBlocked") : aiT("openMicFail")
       );
     }
     if (token !== dict.token || destroyed) {
@@ -2541,7 +4366,7 @@ function mountPanel(root, deps) {
     try {
       mr = mime ? new window.MediaRecorder(stream, { mimeType: mime }) : new window.MediaRecorder(stream);
     } catch (e) {
-      return dictFail(token, "Recording isn\u2019t supported here.");
+      return dictFail(token, aiT("recUnsupported"));
     }
     dict.mr = mr;
     dict.chunks = [];
@@ -2555,7 +4380,7 @@ function mountPanel(root, deps) {
     try {
       mr.start();
     } catch (e) {
-      return dictFail(token, "Couldn\u2019t start recording.");
+      return dictFail(token, aiT("startRecFail"));
     }
     dict.timer = setTimeout(() => stopDictation(), 12e4);
     dict.state = "listening";
@@ -2572,6 +4397,7 @@ function mountPanel(root, deps) {
     }
     if (dict.mr && dict.mr.state !== "inactive") {
       dict.state = "transcribing";
+      startVTimer();
       if (dict.timer) {
         clearTimeout(dict.timer);
         dict.timer = null;
@@ -2593,7 +4419,7 @@ function mountPanel(root, deps) {
     releaseStream();
     if (token !== dict.token || destroyed) return;
     const blob = new Blob(chunks, { type: mime });
-    if (!blob.size) return dictFail(token, "Didn\u2019t catch anything. Try again.");
+    if (!blob.size) return dictFail(token, aiT("noAudio"));
     try {
       const bytes = await blob.arrayBuffer();
       const base = String(mime).split(";")[0] || "audio/webm";
@@ -2601,6 +4427,7 @@ function mountPanel(root, deps) {
       const text = deps.transcribe ? await deps.transcribe({ bytes, type: base, name: "voice." + ext }) : "";
       if (token !== dict.token || destroyed) return;
       dict.state = "idle";
+      stopVTimer();
       if (text) {
         try {
           voiceClip = { url: URL.createObjectURL(blob), dur: Math.max(1, Math.round((Date.now() - dict.t0) / 1e3)) };
@@ -2608,10 +4435,11 @@ function mountPanel(root, deps) {
           voiceClip = null;
         }
         setDraft(joinDraft(draft, text));
-      } else flashNotice("Didn\u2019t catch anything. Try again.");
+      } else flashNotice(aiT("noAudio"));
     } catch (e) {
       if (token !== dict.token || destroyed) return;
       dict.state = "idle";
+      stopVTimer();
       flashNotice(e instanceof Error && e.message ? e.message : "Transcription failed.");
     }
     render();
@@ -2648,6 +4476,24 @@ function mountPanel(root, deps) {
     if (!/[A-Za-z]{3,}/.test(s2)) return false;
     if (/(.)\1{3,}/.test(s2)) return false;
     return true;
+  }
+  async function activeNoteText() {
+    try {
+      const A = deps.app;
+      const file = A && A.workspace && typeof A.workspace.getActiveFile === "function" ? A.workspace.getActiveFile() : null;
+      if (!file || !A.vault) return "[no note open]";
+      const text = await A.vault.cachedRead(file);
+      return String(text || "").slice(0, 12000);
+    } catch (e) {
+      return "[could not read the note]";
+    }
+  }
+  function aiLangName() {
+    const full = aiUiLang();
+    const base = full.split("-")[0];
+    if (full === "zh-tw") return "Traditional Chinese";
+    const names = { en: "English", "zh": "简体中文", ja: "Japanese", ko: "Korean", es: "Spanish", fr: "French", de: "German", pt: "Portuguese", ru: "Russian" };
+    return names[base] || "English";
   }
   function title() {
     if (aiTitle) return aiTitle;
@@ -2695,9 +4541,55 @@ function mountPanel(root, deps) {
     } catch (e) {
     }
   }
+  function buildReportMenu() {
+    const m = el("div", "ai-rp-pmenu ai-rp-report");
+    m.appendChild(el("div", "ai-rp-report-head", aiT("reportProblem")));
+    const mailIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg>';
+    const redditIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="4.5" r="1.5"/><circle cx="6.5" cy="12.5" r="2"/><circle cx="17.5" cy="12.5" r="2"/><circle cx="12" cy="16.5" r="5"/><path d="M9.2 17.9c1.8-1 3.8-1 5.6 0"/><circle cx="10.2" cy="15.1" r="0.6"/><circle cx="13.8" cy="15.1" r="0.6"/></svg>';
+    const discordIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" x2="10" y1="11" y2="11"/><line x1="8" x2="8" y1="9" y2="13"/><line x1="15" x2="15.01" y1="12" y2="12"/><line x1="18" x2="18.01" y1="10" y2="10"/><path d="M17.32 5H6.68a4 4 0 0 0-3.978 3.59c-.006.052-.01.101-.017.152C2.604 9.416 2 14.456 2 16a3 3 0 0 0 3 3c1 0 1.5-.5 2-1l1.414-1.414A2 2 0 0 1 9.828 16h4.344a2 2 0 0 1 1.414.586L17 18c.5.5 1 1 2 1a3 3 0 0 0 3-3c0-1.545-.604-6.584-.685-7.258-.007-.05-.011-.1-.017-.151A4 4 0 0 0 17.32 5Z"/></svg>';
+    const githubIcon = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5A11.5 11.5 0 0 0 .5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.3.8-.6v-2c-3.2.7-3.9-1.5-3.9-1.5-.5-1.3-1.3-1.7-1.3-1.7-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.4 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.2 1.2a11 11 0 0 1 5.8 0C17.5 5.6 18.5 5.9 18.5 5.9c.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.2c0 .3.2.7.8.6A11.5 11.5 0 0 0 23.5 12 11.5 11.5 0 0 0 12 .5Z"/></svg>';
+    const bulbIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.3h6c0-1 .4-1.8 1-2.3A7 7 0 0 0 12 2Z"/></svg>';
+    const row = (icon, label, href, badge) => {
+      const b = el("button", "ai-rp-report-row" + (href ? "" : " dis"));
+      b.type = "button";
+      b.innerHTML = icon;
+      b.appendChild(el("span", "", label));
+      if (!href) b.disabled = true;
+      if (badge) b.appendChild(el("span", "ai-rp-report-badge", badge));
+      if (href) b.addEventListener("click", () => window.open(href, "_blank"));
+      return b;
+    };
+    m.appendChild(row(mailIcon, "Email", "mailto:support@usefree.space", "Reply in under 1 hour"));
+    m.appendChild(row(redditIcon, "Reddit (coming soon)", ""));
+    m.appendChild(row(discordIcon, "Discord (Beta)", "https://discord.gg/nqNpm6P5n"));
+    m.appendChild(row(githubIcon, "GitHub", "https://github.com/mokelu/free-ai-agents"));
+    m.appendChild(el("div", "ai-rp-report-sep"));
+    m.appendChild(row(bulbIcon, "Submit a feature request", "mailto:support@usefree.space?subject=Feature%20request%20%E2%80%93%20Free%20AI%20and%20Agents&body=Tell%20us%20what%20you%27d%20love%20to%20see%3A"));
+    m.appendChild(el("div", "ai-rp-report-sep"));
+    const heartIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7Z"/></svg>';
+    m.appendChild(row(heartIcon, "Support us on Patreon", "https://www.patreon.com/17086731/join", "You're awesome, thank you!"));
+    return m;
+  }
   function onDocumentClick(e) {
-    if (!menuOpen && !permOpen && !quotaPop) return;
+    if (!menuOpen && !permOpen && !quotaPop && !toolsOpen && !reportOpen) return;
     let changed = false;
+    if (reportOpen) {
+      const rp = root.querySelector(".ai-rp-report");
+      const rb = root.querySelector(".ai-rp-mapbtn");
+      if (!(rp && rp.contains(e.target)) && !(rb && rb.contains(e.target))) {
+        reportOpen = false;
+        changed = true;
+      }
+    }
+    if (toolsOpen) {
+      const tp = root.querySelector(".ai-rp-tools");
+      const tb = root.querySelector(".ai-rp-tools-trig");
+      if (!(tp && tp.contains(e.target)) && !(tb && tb.contains(e.target))) {
+        toolsOpen = false;
+        toolInput = "";
+        changed = true;
+      }
+    }
     if (quotaPop) {
       const qw = root.querySelector(".ai-rp-qpillwrap");
       if (!(qw && qw.contains(e.target))) {
@@ -2728,13 +4620,16 @@ function mountPanel(root, deps) {
   document.addEventListener("click", onDocumentClick);
   listeners.push(() => document.removeEventListener("click", onDocumentClick));
   function onKey(e) {
-    if (e.key === "Escape" && (menuOpen || permOpen || quotaPop)) {
+    if (e.key === "Escape" && (menuOpen || permOpen || quotaPop || toolsOpen || reportOpen)) {
       e.stopPropagation();
       menuOpen = false;
       menuQuery = "";
       permOpen = false;
       permConfirmNever = false;
       quotaPop = false;
+      toolsOpen = false;
+      toolInput = "";
+      reportOpen = false;
       render();
     }
   }
@@ -2952,6 +4847,58 @@ function mountPanel(root, deps) {
       return "";
     }
   }
+  async function maybeSummarizeOld() {
+    if (summaryPending) return;
+    const idx = [];
+    msgs.forEach((m, i) => {
+      if (m.kind === "user") idx.push(i);
+    });
+    if (idx.length <= HISTORY_EXCHANGES) return;
+    const boundary = idx[idx.length - HISTORY_EXCHANGES];
+    if (boundary <= lastSumIdx) return;
+    const cand = msgs.slice(lastSumIdx, boundary);
+    const usersIn = cand.filter((m) => m.kind === "user").length;
+    const totalChars = cand.reduce((n2, m) => {
+      let t = m.kind === "user" ? m.text : "";
+      if (m.kind !== "user" && m.turn.active && m.turn.responses[m.turn.active]) t = m.turn.responses[m.turn.active].text || "";
+      return n2 + String(t || "").length;
+    }, 0);
+    if (usersIn < 3 || totalChars < 1500) {
+      lastSumIdx = boundary;
+      return;
+    }
+    summaryPending = true;
+    try {
+      const raw = cand.map((m) => {
+        let t = m.kind === "user" ? m.text : "";
+        if (m.kind !== "user" && m.turn.active && m.turn.responses[m.turn.active]) t = m.turn.responses[m.turn.active].text || "";
+        return (m.kind === "user" ? "You: " : "AI: ") + String(t || "");
+      }).join("\n");
+      const models = deps.registry && deps.registry.allModels ? deps.registry.allModels() : [];
+      const pick = models.find((md) => md.doorId === "riemann") || models[0];
+      const appId = pick ? pick.appId : "riemann:mercury-2.5";
+      const res = await deps.registry.callModel(appId, [{
+        role: "user",
+        content: "Concisely summarize this conversation excerpt in exactly 3 to 5 sentences. Capture the key questions, decisions, facts, and requests. No preamble, no headings.\n\n" + raw.slice(0, 12000)
+      }]);
+      const txt = String(res && res.text || "").trim();
+      if (txt) {
+        segments.push({ text: txt, until: boundary });
+        lastSumIdx = boundary;
+        void persistNow(true);
+        if (!destroyed) render();
+      } else {
+        lastSumIdx = boundary;
+      }
+    } catch (e) {
+    } finally {
+      summaryPending = false;
+    }
+  }
+  function segmentsText() {
+    if (!segments.length) return "";
+    return "Earlier conversation (summarized segments):\n" + segments.slice(-8).map((s) => "- " + s.text).join("\n");
+  }
   async function send(currentText) {
     var _a;
     const text = currentText.trim();
@@ -2968,7 +4915,7 @@ function mountPanel(root, deps) {
       0
     );
     if (estTotal > MAX_SEND_TOKENS) {
-      notice = "Message too long (~" + Math.round(estTotal / 1e3) + "k tokens, max ~100k). Paste a smaller snippet.";
+      notice = aiT("msgTooLong", { n: Math.round(estTotal / 1e3) });
       draft = text;
       render();
       return;
@@ -2999,6 +4946,8 @@ function mountPanel(root, deps) {
     const voice = voiceClip;
     voiceClip = null;
     msgs.push({ kind: "user", id: userId, pid: par, text, voice: voice && voice.url ? voice : null });
+    focusOnSend = true;
+    void maybeSummarizeOld();
     mapTarget = userId;
     if (deps.tools) {
       const appId = targets[0];
@@ -3006,7 +4955,7 @@ function mountPanel(root, deps) {
       aturn.responses[appId] = { appId, text: "", status: "pending" };
       msgs.push({ kind: "ai", turn: aturn, pid: userId });
       mapTarget = turnId;
-      const history2 = buildHistory(beforeMsgs, text, [], sysExtra(deps.tools.doc()), env);
+      const history2 = buildHistory(beforeMsgs, text, [], sysExtra(deps.tools.doc()), env, segmentsText());
       render();
       await runAgentTurn(aturn, appId, history2);
       if (usesPool()) bumpQuotaLocally(estTotal + billedTokens(aturn.responses[appId] || { text: "", status: "cancelled" }));
@@ -3026,7 +4975,7 @@ function mountPanel(root, deps) {
     });
     msgs.push({ kind: "ai", turn, pid: userId });
     mapTarget = turnId;
-    const history = buildHistory(beforeMsgs, text, [], sysExtra(""), env);
+    const history = buildHistory(beforeMsgs, text, [], sysExtra(""), env, segmentsText());
     render();
     await runTargets(turn, history);
     if (usesPool()) bumpQuotaLocally(Math.max(estTotal, sumBilled(turn)));
@@ -3102,7 +5051,7 @@ function mountPanel(root, deps) {
     mapOpen = false; discOpen = false;
     editingId = null;
     const env = await envSnapshot();
-    const history = buildHistory(um.pid ? pathNodes(um.pid) : [], text, [], sysExtra(""), env);
+    const history = buildHistory(um.pid ? pathNodes(um.pid) : [], text, [], sysExtra(""), env, segmentsText());
     render();
     await runTargets(turn, history);
     if (usesPool()) bumpQuotaLocally(Math.max(estOfHistory(history), sumBilled(turn)));
@@ -3167,7 +5116,7 @@ function mountPanel(root, deps) {
     }
     lastSig = sig;
     try {
-      await deps.chats.save({ v: 1, id: chatId, title: aiTitle || title(), created: chatCreated, updated: Date.now(), tip: typeof mapTarget === "string" ? mapTarget : null, msgs: data });
+      await deps.chats.save({ v: 1, id: chatId, title: aiTitle || title(), created: chatCreated, updated: Date.now(), tip: typeof mapTarget === "string" ? mapTarget : null, msgs: data, segments: segments.slice(-12), lastSumIdx });
     } catch (e) {
       lastSig = "";
     }
@@ -3178,6 +5127,8 @@ function mountPanel(root, deps) {
     chatCreated = next ? next.created : 0;
     chatSeq++;
     aiTitle = next && typeof next.title === "string" && next.title !== "New conversation" ? next.title : "";
+    segments = next && Array.isArray(next.segments) ? next.segments.map((s) => ({ text: String(s.text || ""), until: Math.floor(Number(s.until) || 0) })).filter((s) => s.text) : [];
+    lastSumIdx = segments.reduce((mx, s) => Math.max(mx, s.until), 0);
     draft = "";
     editingId = null;
     historyOpen = false;
@@ -3361,11 +5312,11 @@ function mountPanel(root, deps) {
     body.appendChild(head2);
     paintHist = null;
     if (!histLoaded) {
-      body.appendChild(el("div", "ai-rp-empty", "Loading\u2026"));
+      body.appendChild(el("div", "ai-rp-empty", aiT("loading")));
       return;
     }
     if (!histList.length) {
-      body.appendChild(el("div", "ai-rp-empty", "No saved chats yet. Your conversations are saved on this device automatically."));
+      body.appendChild(el("div", "ai-rp-empty", aiT("emptyHistory")));
       return;
     }
     const search = document.createElement("input");
@@ -3401,10 +5352,10 @@ function mountPanel(root, deps) {
         row.appendChild(main);
         const del = el("button", "ai-rp-hdel" + (confirmDel === e.id ? " confirm" : ""));
         del.type = "button";
-        if (confirmDel === e.id) del.textContent = "Delete?";
+        if (confirmDel === e.id) del.textContent = aiT("deleteAsk");
         else del.innerHTML = SVG_TRASH;
-        del.title = "Delete this chat";
-        del.setAttribute("aria-label", "Delete this chat");
+        del.title = aiT("deleteChatTitle");
+        del.setAttribute("aria-label", aiT("deleteChatTitle"));
         del.addEventListener("click", (ev) => {
           ev.stopPropagation();
           if (confirmDel === e.id) void deleteChat(e.id);
@@ -3424,9 +5375,9 @@ function mountPanel(root, deps) {
         host.appendChild(row);
       });
       if (!shown) {
-        host.appendChild(el("div", "ai-rp-hint", "No chats match \u201C" + histQuery.trim() + "\u201D."));
+        host.appendChild(el("div", "ai-rp-hint", aiT("noChatMatch", { q: histQuery.trim() })));
       } else if (words.length && histTextLoading) {
-        host.appendChild(el("div", "ai-rp-hint", "Searching inside conversations\u2026"));
+        host.appendChild(el("div", "ai-rp-hint", aiT("searchingChats")));
       }
     };
     search.addEventListener("input", () => {
@@ -3440,7 +5391,7 @@ function mountPanel(root, deps) {
   function buildMapBody(body) {
     body.classList.add("ai-rp-mapview");
     if (!msgs.length) {
-      body.appendChild(el("div", "ai-rp-empty", "Nothing here yet \u2014 go to Chat and send a message."));
+      body.appendChild(el("div", "ai-rp-empty", aiT("emptyDiscover")));
       return;
     }
     const wrap = el("div", "ai-rp-mapwrap");
@@ -3450,8 +5401,8 @@ function mountPanel(root, deps) {
       const insp = el("div", "ai-rp-insp");
       const inspClose = el("button", "ai-rp-inspx", "\u2715");
       inspClose.type = "button";
-      inspClose.title = "Close this pane";
-      inspClose.setAttribute("aria-label", "Close message inspector");
+      inspClose.title = aiT("closePane");
+      inspClose.setAttribute("aria-label", aiT("closeInsp"));
       inspClose.addEventListener("click", () => {
         mapSel = null;
         mapEdit = false;
@@ -3625,7 +5576,7 @@ function mountPanel(root, deps) {
   function paintInsp(host) {
     const m = mapSel ? nodeOf(mapSel) : null;
     if (!m) {
-      host.appendChild(el("div", "ai-rp-insp-empty", "Tap any dot to read the full message."));
+      host.appendChild(el("div", "ai-rp-insp-empty", aiT("tapDot")));
       return;
     }
     const id = nid(m);
@@ -3767,7 +5718,7 @@ function mountPanel(root, deps) {
     }
     if (m.kind === "user" && m.pid) {
       const n2 = descIds(id).length;
-      const rm = el("button", "ai-rp-insp-btn danger" + (mapAsk ? " on" : ""), mapAsk ? "Yes \u2014 remove " + n2 + (n2 === 1 ? " message" : " messages") : "Remove");
+      const rm = el("button", "ai-rp-insp-btn danger" + (mapAsk ? " on" : ""), mapAsk ? (n2 === 1 ? aiT("yesRemoveOne") : aiT("yesRemoveMany", { n: n2 })) : aiT("remove"));
       rm.type = "button";
       rm.disabled = busy;
       rm.addEventListener("click", () => {
@@ -3843,7 +5794,7 @@ function mountPanel(root, deps) {
     render();
     const { before, userText } = historyUpTo(turnId);
     const env = await envSnapshot();
-    const history = buildHistory(before, userText, [], sysExtra(deps.tools ? deps.tools.doc() : ""), env);
+    const history = buildHistory(before, userText, [], sysExtra(deps.tools ? deps.tools.doc() : ""), env, segmentsText());
     if (deps.tools) {
       await runAgentTurn(msg.turn, appId, history);
       if (usesPool()) bumpQuotaLocally(Math.max(estOfHistory(history), billedTokens(r)));
@@ -4229,7 +6180,7 @@ function mountPanel(root, deps) {
     const det = document.createElement("details");
     det.className = "ai-rp-appr-det";
     det.open = apprDetailsOpen;
-    det.appendChild(el("summary", "", "Details"));
+    det.appendChild(el("summary", "", aiT("details")));
     det.appendChild(el("div", "ai-rp-appr-tool", call.tool));
     det.appendChild(el("pre", "ai-rp-appr-args", approvalArgsText(call, app)));
     det.addEventListener("toggle", () => {
@@ -4237,18 +6188,18 @@ function mountPanel(root, deps) {
     });
     card.appendChild(det);
     const row = el("div", "ai-rp-appr-btns");
-    const allow = el("button", "ai-rp-appr-btn allow" + (danger ? " warn" : ""), "Allow");
+    const allow = el("button", "ai-rp-appr-btn allow" + (danger ? " warn" : ""), aiT("allowBtn"));
     allow.type = "button";
     allow.addEventListener("click", () => settleApproval(a, true, false));
     row.appendChild(allow);
     if (!danger) {
-      const always = el("button", "ai-rp-appr-btn", "Always allow this chat");
+      const always = el("button", "ai-rp-appr-btn", aiT("alwaysAllow"));
       always.type = "button";
       always.title = "Stop asking about this kind of change for the rest of this chat";
       always.addEventListener("click", () => settleApproval(a, true, true));
       row.appendChild(always);
     }
-    const deny = el("button", "ai-rp-appr-btn", "Deny");
+    const deny = el("button", "ai-rp-appr-btn", aiT("denyBtn"));
     deny.type = "button";
     deny.addEventListener("click", () => settleApproval(a, false, false));
     row.appendChild(deny);
@@ -4423,7 +6374,7 @@ function mountPanel(root, deps) {
       });
       row.appendChild(wn);
     }
-    const go = el("button", "ai-rp-upd-go", "Update");
+    const go = el("button", "ai-rp-upd-go", aiT("updateBtn"));
     go.type = "button";
     go.title = "Open this plugin\u2019s page in Obsidian, where the Update button is";
     go.addEventListener("click", () => window.open("obsidian://show-plugin?id=" + encodeURIComponent(deps.pluginId || "free-ai-agents")));
@@ -4602,8 +6553,8 @@ function mountPanel(root, deps) {
     const search = document.createElement("input");
     search.type = "search";
     search.className = "ai-rp-search";
-    search.placeholder = "Search models or providers";
-    search.setAttribute("aria-label", "Search models or providers");
+    search.placeholder = aiT("searchModelsPh");
+    search.setAttribute("aria-label", aiT("searchModelsPh"));
     search.value = menuQuery;
     sticky.appendChild(search);
     const tabsHost = el("div", "ai-rp-tabs");
@@ -4648,15 +6599,15 @@ function mountPanel(root, deps) {
       poolHost.innerHTML = "";
       const out = quotaOut;
       const pb = el("div", "ai-rp-pool");
-      const g = el("div", "ai-rp-g", "My free pool");
+      const g = el("div", "ai-rp-g", aiT("myFreePool"));
       const sub = el("span", "ai-rp-gsub", out ? "used up" : quotaLeft !== null ? "You have " + fmtLeft(quotaLeft) : "");
-      if (quotaLeft !== null) sub.title = fmtShort(quotaLeft) + " of " + fmtShort(quotaLimit) + " left \xB7 resets in " + quotaReset + " days";
+      if (quotaLeft !== null) sub.title = fmtShort(quotaLeft) + " of " + fmtShort(quotaLimit) + " left \xB7 resets in 1 day";
       g.appendChild(sub);
       pb.appendChild(g);
       if (out) {
         const e = el("div", "ai-rp-poolout");
         e.appendChild(el("div", "ai-rp-dt", "Your free tokens are used up"));
-        e.appendChild(el("div", "ai-rp-dd", "They come back in " + quotaReset + " days. Get more at usefree.space."));
+        e.appendChild(el("div", "ai-rp-dd", "They come back in 1 day. Get more at usefree.space."));
         const a = el("button", "ai-rp-gobtn", "Go to usefree.space");
         a.type = "button";
         a.addEventListener("click", () => openUrl(quotaUpgrade));
@@ -4669,7 +6620,7 @@ function mountPanel(root, deps) {
         const cm = m.appId === "auto" ? null : catFind("riemann", m.modelId, m.name);
         const tags = [];
         if ((cm && cm.isNew) || m.isNew) tags.push(["ai-rp-t-new", "New"]);
-        tags.push(out ? ["ai-rp-t-lock", "Pool empty"] : ["ai-rp-t-free", "Free"]);
+        tags.push(out ? ["ai-rp-t-lock", aiT("poolEmpty")] : ["ai-rp-t-free", aiT("tagFree")]);
         pb.appendChild(rowEl(m.name, { ok: !out, sel: enabled.has(m.appId), tags, onClick: out ? null : () => select(m.appId) }));
         if (!out && m.appId !== "auto" && enabled.has(m.appId)) {
           const ei = effortInfo("riemann", m.modelId, m.name);
@@ -4781,8 +6732,18 @@ function mountPanel(root, deps) {
     const composerWasFocused = !!prevComposer && document.activeElement === prevComposer && !prevComposer.readOnly && !prevComposer.disabled;
     const composerCaret = composerWasFocused ? [prevComposer.selectionStart || 0, prevComposer.selectionEnd || 0] : null;
     const prevBody = root.querySelector(".ai-rp-body");
-    const stickToBottom = !prevBody || prevBody.scrollHeight - prevBody.scrollTop - prevBody.clientHeight < 80;
+    const stickToBottom = !userPinnedUp && (!prevBody || prevBody.scrollHeight - prevBody.scrollTop - prevBody.clientHeight < 80);
     const prevBodyScroll = prevBody ? prevBody.scrollTop : 0;
+    let anchor = null;
+    if (!stickToBottom && prevBody) {
+      const arows = prevBody.querySelectorAll(".ai-rp-urow, .ai-rp-mres");
+      for (const ar of arows) {
+        if (ar.offsetTop + ar.offsetHeight > prevBody.scrollTop) {
+          anchor = { key: ar.dataset.mid || ar.dataset.tid || "", delta: ar.offsetTop - prevBody.scrollTop };
+          break;
+        }
+      }
+    }
     const prevList = root.querySelector(".ai-rp-mlist");
     const prevListScroll = prevList ? prevList.scrollTop : 0;
     const prevSearch = root.querySelector(".ai-rp-search");
@@ -4798,7 +6759,65 @@ function mountPanel(root, deps) {
     root.innerHTML = "";
     root.classList.add("ai-rp");
     root.classList.toggle("ai-rp-nofeed", mapOpen || discOpen);
+    const chatFsRaw = deps.chatFontSize ? Number(deps.chatFontSize()) : 13;
+    const chatFs = chatFsRaw >= 10 && chatFsRaw <= 24 ? chatFsRaw : 13;
+    root.style.setProperty("--ai-rp-chat-size", chatFs + "px");
+    root.style.direction = /^ar(-|$)/.test(aiUiLang()) ? "rtl" : "";
+    try {
+      const sb = document.querySelector(".status-bar");
+      let pad = 0;
+      if (sb) {
+        const sr = sb.getBoundingClientRect();
+        const rr = root.getBoundingClientRect();
+        if (sr.top <= rr.bottom && sr.bottom >= rr.top) {
+          pad = Math.max(0, Math.round(rr.bottom - sr.top)) + 4;
+        }
+      }
+      root.style.paddingBottom = pad + "px";
+    } catch (e) {
+      root.style.paddingBottom = "0px";
+    }
+    const buildSectBar = () => {
+      const sb = el("div", "ai-rp-sect");
+      ["chat", "play", "study", "automation"].forEach((id) => {
+        const label = id === "chat" ? aiT("chat") : id === "play" ? aiT("sectionPlay") : id === "study" ? aiT("sectionStudy") : aiT("sectionAutomation");
+        const b = el("button", "ai-rp-sect-tab" + (section === id ? " on" : ""), label);
+        b.type = "button";
+        b.setAttribute("aria-pressed", section === id ? "true" : "false");
+        b.addEventListener("click", () => {
+          if (section === id) return;
+          section = id;
+          mapOpen = false; historyOpen = false; discOpen = false;
+          render();
+        });
+        sb.appendChild(b);
+      });
+      return sb;
+    };
+    if (section !== "chat") {
+      root.appendChild(buildSectBar());
+      const src = deps.sectionSrc ? deps.sectionSrc(section) : "";
+      const frameHost = el("div", "ai-rp-aut");
+      if (src) {
+        const frm = document.createElement("iframe");
+        frm.src = src;
+        frm.className = "ai-rp-aut-frame";
+        frm.setAttribute("allow", "clipboard-write; fullscreen");
+        frameHost.appendChild(frm);
+      } else {
+        const frm = document.createElement("iframe");
+        frm.src = "about:blank";
+        frm.className = "ai-rp-aut-frame";
+        frm.setAttribute("aria-hidden", "true");
+        frameHost.appendChild(frm);
+        const overlay = el("div", "ai-rp-aut-overlay", "Coming soon");
+        frameHost.appendChild(overlay);
+      }
+      root.appendChild(frameHost);
+      return;
+    }
     const head = el("div", "ai-rp-head");
+    head.appendChild(buildSectBar());
     const headTop = el("div", "ai-rp-headtop");
     headTop.appendChild(el("span", "ai-rp-title", title()));
     head.appendChild(headTop);
@@ -4807,24 +6826,22 @@ function mountPanel(root, deps) {
     const q = el("button", "ai-rp-qpill" + (quotaOut ? " out" : ""));
     q.type = "button";
     q.setAttribute("aria-expanded", quotaPop ? "true" : "false");
-    q.title = "Free tokens left on this device \u2014 click for details";
-    q.appendChild(el("span", "ai-rp-qpill-txt", quotaLeft === null ? "Free tokens" : fmtLeft(quotaLeft)));
-    q.addEventListener("click", () => {
+    q.title = aiT("quotaTitle");
+    if (quotaLeft === null) q.classList.add("unknown");
+    q.appendChild(el("span", "ai-rp-qpill-txt", quotaLeft === null ? aiT("offlineLabel") : fmtLeft(quotaLeft)));
+    q.addEventListener("click", (e) => {
+      e.stopPropagation();
       quotaPop = !quotaPop;
       render();
     });
     qwrap.appendChild(q);
     if (quotaPop) {
       const pop = el("div", "ai-rp-qpop");
-      pop.appendChild(el("div", "ai-rp-qhead", "Free tokens"));
-      const cIn = chatInOut();
+      pop.appendChild(el("div", "ai-rp-qhead", aiT("freeTokens")));
       const qrows = [
-        ["Left now", quotaLeft === null ? "\u2026checking" : fmtNum(quotaLeft)],
-        ["Monthly limit", quotaLimit ? fmtNum(quotaLimit) : "\u2014"],
-        ["Refill", "in " + quotaReset + " day" + (quotaReset === 1 ? "" : "s")],
-        ["This chat so far", usagePfx(cIn) + fmtK((cIn.inn || 0) + cIn.out) + " tokens"],
-        ["Sent in", cIn.inn === null ? "\u2014 not recorded" : usagePfx(cIn) + fmtK(cIn.inn)],
-        ["Wrote out", usagePfx(cIn) + fmtK(cIn.out)]
+        [aiT("quotaLeftNow"), quotaLeft === null ? aiT("checking") : fmtNum(quotaLeft)],
+        [aiT("quotaLimitLabel"), quotaLimit ? fmtNum(quotaLimit) : "\u2014"],
+        [aiT("quotaRefill"), "in 1 day"]
       ];
       qrows.forEach((qr) => {
         const row = el("div", "ai-rp-qrow");
@@ -4832,7 +6849,7 @@ function mountPanel(root, deps) {
         row.appendChild(el("span", "ai-rp-qv", qr[1]));
         pop.appendChild(row);
       });
-      const more = el("button", "ai-rp-qlink", "More free tokens at usefree.space");
+      const more = el("button", "ai-rp-qlink", aiT("quotaMore"));
       more.type = "button";
       more.addEventListener("click", () => openUrl(quotaUpgrade));
       pop.appendChild(more);
@@ -4842,8 +6859,8 @@ function mountPanel(root, deps) {
       const nb = el("button", "ai-rp-hbtn");
       nb.type = "button";
       nb.innerHTML = SVG_NEW;
-      nb.title = "New chat";
-      nb.setAttribute("aria-label", "New chat");
+      nb.title = aiT("newChat");
+      nb.setAttribute("aria-label", aiT("newChat"));
       nb.disabled = !msgs.length;
       nb.addEventListener("click", () => newChat());
       acts.appendChild(nb);
@@ -4851,8 +6868,8 @@ function mountPanel(root, deps) {
         const hb = el("button", "ai-rp-hbtn" + (historyOpen ? " on" : ""));
         hb.type = "button";
         hb.innerHTML = SVG_HIST;
-        hb.title = "Past chats";
-        hb.setAttribute("aria-label", "Past chats");
+        hb.title = aiT("pastChats");
+        hb.setAttribute("aria-label", aiT("pastChats"));
         hb.setAttribute("aria-pressed", historyOpen ? "true" : "false");
         hb.addEventListener("click", () => {
           mapOpen = false; discOpen = false;
@@ -4862,10 +6879,10 @@ function mountPanel(root, deps) {
       }
     }
     const vg = el("span", "ai-rp-seg");
-    const vm = el("button", "ai-rp-segb", mapOpen || discOpen ? "Chat" : "Map");
+    const vm = el("button", "ai-rp-segb", mapOpen || discOpen ? aiT("chat") : aiT("map"));
     vm.type = "button";
     vm.setAttribute("aria-pressed", mapOpen ? "true" : "false");
-    vm.title = mapOpen ? "Back to the conversation" : "See the conversation as a map";
+    vm.title = mapOpen ? aiT("backToChat") : aiT("viewAsMap");
     vm.addEventListener("click", () => {
       if (mapOpen || discOpen) {
         mapOpen = false;
@@ -4878,30 +6895,212 @@ function mountPanel(root, deps) {
       historyOpen = false;
       render();
     });
-    const vd = el("button", "ai-rp-segb ai-rp-segd" + (discOpen ? " on" : ""), "Characters");
-    vd.type = "button";
-    vd.setAttribute("aria-pressed", discOpen ? "true" : "false");
-    vd.title = "Explore characters \u2014 pick who answers";
-    vd.setAttribute("aria-label", "Explore characters");
-    vd.addEventListener("click", () => {
-      historyOpen = false;
-      mapOpen = false;
-      discOpen = true;
+    vg.appendChild(vm);
+    acts.appendChild(vg);
+    const fsNow = deps.chatFontSize ? Number(deps.chatFontSize()) : 13;
+    const fstep = el("span", "ai-rp-fstep");
+    const fminus = el("button", "ai-rp-fbtn", "\u2212");
+    fminus.type = "button";
+    fminus.title = "Decrease chat font size";
+    fminus.setAttribute("aria-label", "Decrease chat font size");
+    fminus.addEventListener("click", () => {
+      const n = Math.max(11, fsNow - 1);
+      if (deps.setChatFontSize) deps.setChatFontSize(n);
       render();
     });
-    vg.appendChild(vm);
-    vg.appendChild(vd);
-    acts.appendChild(vg);
+    const fval = el("span", "ai-rp-fval", String(fsNow));
+    const fplus = el("button", "ai-rp-fbtn", "+");
+    fplus.type = "button";
+    fplus.title = "Increase chat font size";
+    fplus.setAttribute("aria-label", "Increase chat font size");
+    fplus.addEventListener("click", () => {
+      const n = Math.min(20, fsNow + 1);
+      if (deps.setChatFontSize) deps.setChatFontSize(n);
+      render();
+    });
+    fstep.appendChild(fminus);
+    fstep.appendChild(fval);
+    fstep.appendChild(fplus);
+    acts.appendChild(fstep);
     const ex = el("button", "ai-rp-export");
     ex.type = "button";
-    ex.innerHTML = SVG_EXPORT + "<span>Export</span>";
-    ex.title = "Export this chat as a note in your vault";
-    ex.setAttribute("aria-label", "Export this chat");
+    ex.innerHTML = SVG_EXPORT + "<span>" + aiT("export") + "</span>";
+    ex.title = aiT("exportTitle");
+    ex.setAttribute("aria-label", aiT("exportTitle"));
     ex.disabled = !msgs.length || busy || exportBusy;
     ex.addEventListener("click", () => void exportChat());
     acts.appendChild(ex);
     acts.appendChild(qwrap);
+    const tBtn = el("button", "ai-rp-hbtn ai-rp-tools-trig" + (toolsOpen ? " on" : ""));
+    tBtn.type = "button";
+    tBtn.innerHTML = SVG_TOOL;
+    tBtn.title = aiT("toolsBtn");
+    tBtn.setAttribute("aria-label", aiT("toolsBtn"));
+    tBtn.setAttribute("aria-pressed", toolsOpen ? "true" : "false");
+    tBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      toolsOpen = !toolsOpen;
+      render();
+    });
+    acts.appendChild(tBtn);
     head.appendChild(acts);
+    if (toolsOpen) {
+      const tp = el("div", "ai-rp-tools");
+      const tabs = el("div", "ai-rp-tools-tabs");
+      [["prompts", "Quick Prompts"], ["connectors", "Connectors"]].forEach((tk) => {
+        const tb = el("button", "ai-rp-tools-tab" + (toolsTab === tk[0] ? " on" : ""), tk[1]);
+        tb.type = "button";
+        tb.addEventListener("click", (e) => {
+          e.stopPropagation();
+          toolsTab = tk[0];
+          toolQuery = "";
+          render();
+        });
+        tabs.appendChild(tb);
+      });
+      tp.appendChild(tabs);
+      const srch = document.createElement("input");
+      srch.className = "ai-rp-tools-input";
+      srch.type = "text";
+      srch.placeholder = aiT("searchPh");
+      srch.value = toolQuery;
+      const applyFilter = () => {
+        const q = toolQuery.trim().toLowerCase();
+        let any = false;
+        tp.querySelectorAll(".ai-rp-tools-btn").forEach((b) => {
+          const h = b.dataset.q || "";
+          const ok = !q || h.indexOf(q) >= 0;
+          b.style.display = ok ? "" : "none";
+          if (ok) any = true;
+        });
+        let none = tp.querySelector(".ai-rp-tools-none");
+        const total = tp.querySelectorAll(".ai-rp-tools-btn").length;
+        if (!any && total) {
+          if (!none) {
+            none = el("div", "ai-rp-tools-none", "No matches.");
+            tp.appendChild(none);
+          }
+          none.style.display = "";
+        } else if (none) {
+          none.style.display = "none";
+        }
+      };
+      srch.addEventListener("input", () => {
+        toolQuery = srch.value;
+        applyFilter();
+      });
+      tp.appendChild(srch);
+      if (toolsTab === "prompts") {
+        const autoOn = deps.autoSendPrompts ? deps.autoSendPrompts() : false;
+        const autoRow = document.createElement("label");
+        autoRow.className = "ai-rp-tools-auto";
+        autoRow.appendChild(el("span", "ai-rp-tools-auto-l", "Autosend"));
+        const acb = document.createElement("input");
+        acb.type = "checkbox";
+        acb.checked = autoOn;
+        acb.addEventListener("change", () => {
+          const nv = acb.checked;
+          if (deps.setAutoSendPrompts) deps.setAutoSendPrompts(nv);
+        });
+        autoRow.appendChild(acb);
+        tp.appendChild(autoRow);
+        const promptFor = (kind) => {
+          if (kind === "translate") return "Translate the following into " + aiLangName() + ":\n\n";
+          if (kind === "summarize") return "Summarize the following:\n\n";
+          if (kind === "calc") return "Solve this step by step:\n\n";
+          if (kind === "explain") return "Explain this simply, as if to a curious beginner:\n\n";
+          return "";
+        };
+        const applyPrompt = async (kind) => {
+          const autoNow = deps.autoSendPrompts ? deps.autoSendPrompts() : false;
+          let prompt = promptFor(kind);
+          if (kind === "askNote") {
+            const note = await activeNoteText();
+            prompt = "Here is my current note. Please summarize or comment on the key points:\n\n" + note;
+          }
+          if (!prompt) return;
+          toolsOpen = false;
+          toolQuery = "";
+          if (autoNow) {
+            void send(prompt);
+            return;
+          }
+          setDraft(prompt);
+          render();
+          const input = root.querySelector(".ai-rp-input");
+          if (input) {
+            input.focus();
+            const len = input.value.length;
+            input.setSelectionRange(len, len);
+          }
+        };
+        const toolList = [
+          ["translate", aiT("tTranslate")],
+          ["summarize", aiT("tSummarize")],
+          ["calc", aiT("tCalc")],
+          ["explain", aiT("tExplain")],
+          ["askNote", aiT("tAskNote")]
+        ];
+        toolList.forEach((tk) => {
+          const b = el("button", "ai-rp-tools-btn");
+          b.type = "button";
+          b.textContent = tk[1];
+          b.dataset.q = tk[1].toLowerCase();
+          b.addEventListener("click", () => void applyPrompt(tk[0]));
+          tp.appendChild(b);
+        });
+      } else {
+        const services = deps.connectorServices ? deps.connectorServices() : [];
+        if (!services.length) {
+          tp.appendChild(el("div", "ai-rp-tools-none", "No connectors yet."));
+        } else {
+          const baseUrl = CONN_CATALOG_URL.replace("/catalog.json", "");
+          const runToggle = async (svc) => {
+            const next = !svc.enabled;
+            if (next && svc.requiresToken && (!deps.connectorHasToken || !deps.connectorHasToken(svc.id))) {
+              flashNotice("Add your " + svc.authLabel + " in Settings to use " + svc.name + ".");
+            }
+            if (deps.setConnectorEnabled) await deps.setConnectorEnabled(svc.id, next, { name: svc.name, url: baseUrl });
+            render();
+          };
+          tp.appendChild(el("div", "ai-rp-tools-hint", "Turn on a connector and your AI can use it — just ask it to do a job, like \u201Csearch Wikipedia for\u2026\u201D."));
+          services.forEach((svc) => {
+            const row = el("div", "ai-rp-tools-btn ai-rp-conn" + (!svc.live ? " soon" : ""));
+            if (svc.icon) {
+              const ic = el("span", "ai-rp-conn-icon");
+              const img = document.createElement("img");
+              img.src = svc.icon;
+              img.alt = "";
+              ic.appendChild(img);
+              row.appendChild(ic);
+            }
+            const body = el("span", "ai-rp-conn-body");
+            body.appendChild(el("span", "ai-rp-tools-btn-l", svc.name));
+            if (svc.about) body.appendChild(el("span", "ai-rp-tools-btn-d", svc.about));
+            if (!svc.live) {
+              body.appendChild(el("span", "ai-rp-soon-badge", "Coming soon"));
+            } else if (svc.requiresToken && !(deps.connectorHasToken && deps.connectorHasToken(svc.id))) {
+              body.appendChild(el("span", "ai-rp-tools-btn-d", "Needs " + svc.authLabel + " — set in Settings."));
+            }
+            row.appendChild(body);
+            const sw = el("button", "ai-rp-conn-sw" + (svc.enabled ? " on" : ""));
+            sw.type = "button";
+            sw.setAttribute("aria-pressed", svc.enabled ? "true" : "false");
+            sw.appendChild(el("span", "", svc.enabled ? "On" : "Off"));
+            sw.disabled = !svc.live;
+            sw.addEventListener("click", (e) => {
+              e.stopPropagation();
+              void runToggle(svc);
+            });
+            row.appendChild(sw);
+            row.dataset.q = (svc.name + " " + svc.about).toLowerCase();
+            tp.appendChild(row);
+          });
+        }
+      }
+      applyFilter();
+      head.appendChild(tp);
+    }
     root.appendChild(head);
     const body = el("div", "ai-rp-body");
     const upd = historyOpen || mapOpen || discOpen ? null : updateInfo();
@@ -4914,11 +7113,11 @@ function mountPanel(root, deps) {
       const empty = el(
         "div",
         "ai-rp-empty",
-        models.length ? "Nothing here yet \u2014 send a message below." : "No models connected \u2014 add a key in Settings to begin."
+        models.length ? aiT("emptyNothing") : aiT("emptyNoModels")
       );
       body.appendChild(empty);
       if (!models.length) {
-        const b = el("button", "ai-rp-open-settings", "Open Settings");
+        const b = el("button", "ai-rp-open-settings", aiT("openSettings"));
         b.type = "button";
         b.addEventListener("click", () => deps.openSettings());
         body.appendChild(b);
@@ -4927,6 +7126,7 @@ function mountPanel(root, deps) {
     shownMsgs.forEach((m) => {
       if (m.kind === "user") {
         const row = el("div", "ai-rp-urow");
+        row.dataset.mid = m.id;
         if (editingId === m.id) {
           const wrap2 = el("div", "ai-rp-ububble");
           const eta = document.createElement("textarea");
@@ -4999,6 +7199,7 @@ function mountPanel(root, deps) {
         return;
       }
       const wrap = el("div", "ai-rp-mres");
+      wrap.dataset.tid = m.turn.id;
       const act = m.turn.active ? m.turn.responses[m.turn.active] : void 0;
       const d = el("div", "ai-rp-ai");
       if (!act) {
@@ -5069,7 +7270,7 @@ function mountPanel(root, deps) {
     });
     root.appendChild(body);
     if (quotaOut && usesPool()) {
-      root.appendChild(el("div", "ai-rp-warn", "Free tokens used up. They come back in " + quotaReset + " days."));
+      root.appendChild(el("div", "ai-rp-warn", "Free tokens used up. They come back in 1 day."));
       const more = el("button", "ai-rp-upgrade", "Go to usefree.space");
       more.type = "button";
       more.addEventListener("click", () => window.open(quotaUpgrade, "_blank"));
@@ -5083,7 +7284,7 @@ function mountPanel(root, deps) {
     const ta = document.createElement("textarea");
     ta.className = "ai-rp-input";
     ta.rows = 1;
-    ta.placeholder = dict.state === "listening" ? "Listening\u2026 tap the mic when you\u2019re done" : dict.state === "transcribing" ? "Transcribing\u2026" : "Ask anything...";
+    ta.placeholder = dict.state === "listening" ? aiT("listeningPh") : dict.state === "transcribing" ? aiT("transcribingPh") : aiT("askPh");
     ta.value = draft;
     const autogrow = () => growTa(ta);
     ta.addEventListener("input", () => {
@@ -5110,8 +7311,8 @@ function mountPanel(root, deps) {
       else mic.innerHTML = SVG_MIC;
       const micOk = canSpeechApi || canRecord;
       mic.disabled = !micOk || dict.state === "transcribing";
-      mic.title = !micOk ? "Voice input isn\u2019t available in this environment" : dict.state === "listening" ? "Stop and use what you said" : dict.state === "transcribing" ? "Transcribing\u2026" : "Voice input \u2014 speak and it types for you";
-      mic.setAttribute("aria-label", "Voice input");
+      mic.title = !micOk ? aiT("micUnavailable") : dict.state === "listening" ? aiT("micStop") : dict.state === "transcribing" ? aiT("transcribingPh") : aiT("micListen");
+      mic.setAttribute("aria-label", aiT("voiceAria"));
       mic.setAttribute("aria-pressed", dict.state === "listening" ? "true" : "false");
       mic.addEventListener("click", () => {
         if (dict.state === "listening") stopDictation();
@@ -5122,8 +7323,8 @@ function mountPanel(root, deps) {
     const sendBtn = el("button", "ai-rp-send" + (busy ? " stop" : ""));
     sendBtn.type = "button";
     sendBtn.innerHTML = busy ? SVG_STOP : SVG_SEND;
-    sendBtn.title = busy ? "Stop" : "Send";
-    sendBtn.setAttribute("aria-label", busy ? "Stop" : "Send");
+    sendBtn.title = busy ? aiT("stop") : aiT("send");
+    sendBtn.setAttribute("aria-label", busy ? aiT("stop") : aiT("send"));
     sendBtn.addEventListener("click", () => {
       if (busy) {
         stop();
@@ -5137,8 +7338,15 @@ function mountPanel(root, deps) {
     });
     comp.appendChild(sendBtn);
     foot.appendChild(comp);
+    if (dict.state === "transcribing") {
+      const vs = el("div", "ai-rp-vstatus");
+      vs.appendChild(el("span", "ai-rp-spin"));
+      vs.appendChild(el("span", "ai-rp-vlabel", aiT("transcribingPh")));
+      vs.appendChild(el("span", "ai-rp-vsec", "0s"));
+      foot.appendChild(vs);
+    }
     if (showEmptyWarn || enabled.size === 0 && models.length > 0) {
-      foot.appendChild(el("div", "ai-rp-warn", "Pick at least 1 model below to send."));
+      foot.appendChild(el("div", "ai-rp-warn", aiT("warnPickModel")));
     }
     const bottom = el("div", "ai-rp-bottom");
     const wrapM = el("div", "ai-rp-mwrap");
@@ -5155,7 +7363,7 @@ function mountPanel(root, deps) {
       trig.appendChild(el("span", "", picked[0].name));
       trig.appendChild(el("small", "ai-rp-tsrc", "\xB7 " + picked[0].src));
     } else {
-      trig.appendChild(el("span", "", picked.length ? picked.length + " models" : "No models"));
+      trig.appendChild(el("span", "", picked.length ? picked.length + " " + aiT("models") : aiT("noModels")));
     }
     trig.appendChild(el("span", "ai-rp-chev", "\u25BE"));
     trig.addEventListener("click", (e) => {
@@ -5180,7 +7388,7 @@ function mountPanel(root, deps) {
     ptrig.type = "button";
     ptrig.setAttribute("aria-haspopup", "dialog");
     ptrig.setAttribute("aria-expanded", permOpen ? "true" : "false");
-    ptrig.title = "When the AI asks before changing your notes";
+    ptrig.title = aiT("askBeforeChanging");
     ptrig.innerHTML = SVG_SHIELD;
     ptrig.appendChild(el("span", "", APPROVAL_SHORT[curMode]));
     ptrig.appendChild(el("span", "ai-rp-chev", "\u25BE"));
@@ -5199,21 +7407,48 @@ function mountPanel(root, deps) {
     const helpBtn = el("button", "ai-rp-mapbtn");
     helpBtn.type = "button";
     helpBtn.innerHTML = SVG_HELP;
-    helpBtn.title = "Report a problem \u2014 coming soon";
-    helpBtn.setAttribute("aria-label", "Report a problem (coming soon)");
-    helpBtn.addEventListener("click", () => {
-      flashNotice("Report a problem is coming soon. For now, reach us at support@usefree.space \u2014 we help with anything.");
+    helpBtn.title = aiT("reportProblem");
+    helpBtn.setAttribute("aria-label", aiT("reportProblem"));
+    helpBtn.classList.toggle("on", reportOpen);
+    helpBtn.setAttribute("aria-expanded", reportOpen ? "true" : "false");
+    helpBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      reportOpen = !reportOpen;
+      render();
     });
     bottom.appendChild(helpBtn);
     foot.appendChild(bottom);
+    if (reportOpen) foot.appendChild(buildReportMenu());
     if (menuOpen) foot.appendChild(buildMenu(models));
     if (permOpen) foot.appendChild(buildPermMenu());
     root.appendChild(foot);
     const nextBody = root.querySelector(".ai-rp-body");
-    if (stickToBottom && !historyOpen && !mapOpen) {
+    if (anchor && anchor.key && nextBody && !historyOpen && !mapOpen) {
+      const node = nextBody.querySelector('[data-mid="' + anchor.key + '"], [data-tid="' + anchor.key + '"]');
+      if (node) {
+        nextBody.scrollTop = Math.max(0, Math.min(node.offsetTop - anchor.delta, nextBody.scrollHeight - nextBody.clientHeight));
+      } else {
+        nextBody.scrollTop = Math.max(0, Math.min(prevBodyScroll, nextBody.scrollHeight - nextBody.clientHeight));
+      }
+    } else if (focusOnSend && nextBody && !historyOpen && !mapOpen) {
+      focusOnSend = false;
+      const urows = nextBody.querySelectorAll(".ai-rp-urow");
+      if (urows.length) {
+        const lastRow = urows[urows.length - 1];
+        const target = Math.max(0, lastRow.offsetTop - 8);
+        nextBody.scrollTop = Math.min(target, nextBody.scrollHeight - nextBody.clientHeight);
+        userPinnedUp = true;
+      }
+    } else if (stickToBottom && !historyOpen && !mapOpen) {
       if (nextBody) nextBody.scrollTop = nextBody.scrollHeight;
     } else if (nextBody && !mapOpen) {
       nextBody.scrollTop = Math.max(0, Math.min(prevBodyScroll, nextBody.scrollHeight - nextBody.clientHeight));
+    }
+    if (nextBody) {
+      nextBody.addEventListener("scroll", () => {
+        const up = nextBody.scrollHeight - nextBody.scrollTop - nextBody.clientHeight > 80;
+        if (up !== userPinnedUp) userPinnedUp = up;
+      }, { passive: true });
     }
     if (mapOpen) {
       const nm = root.querySelector(".ai-rp-map");
@@ -5259,7 +7494,7 @@ function mountPanel(root, deps) {
       return;
     }
     const b0 = root.querySelector(".ai-rp-body");
-    const stick = !b0 || b0.scrollHeight - b0.scrollTop - b0.clientHeight < 80;
+    const stick = !userPinnedUp && (!b0 || b0.scrollHeight - b0.scrollTop - b0.clientHeight < 80);
     let painted = false;
     const rows = Array.prototype.slice.call(root.querySelectorAll(".ai-rp-mres"));
     for (const wrapEl of rows) {
@@ -5320,6 +7555,7 @@ function mountPanel(root, deps) {
       if (persistTimer) clearTimeout(persistTimer);
       void persistNow(true);
       destroyed = true;
+      stopVTimer();
       cancelApprovals();
       if (noticeTimer) clearTimeout(noticeTimer);
       cancelDictation();
@@ -6568,9 +8804,22 @@ var PanelView = class extends import_obsidian5.ItemView {
       app: this.app,
       chats: this.plugin.chats,
       chatsEnabled: () => this.plugin.data.saveChats !== false,
-      voiceReady: () => this.plugin.data.voiceTyping === true && this.plugin.registry.voiceDoors().length > 0,
+      voiceReady: () => this.plugin.data.voiceTyping === true && (this.plugin.data.sttEnabled !== false || this.plugin.registry.voiceDoors().length > 0),
       registry: this.plugin.registry,
-      tools: this.plugin.tools,
+      tools: (() => {
+        const base = this.plugin.tools;
+        return {
+          ...base,
+          specs: base.specs.concat(this.plugin.connectorSpecsCached()),
+          schemas: () => base.schemas().concat(this.plugin.connectorSchemasCached()),
+          run: async (name, args) => {
+            if (this.plugin.connectorLookupSync(name)) return this.plugin.connectorRun(name, args);
+            return base.run(name, args);
+          },
+          riskOf: (name) => this.plugin.connectorLookupSync(name) ? "high" : base.riskOf(name),
+          doc: (o) => base.doc(o) + (this.plugin.connectorDoc() ? "\n\n" + this.plugin.connectorDoc() : "")
+        };
+      })(),
       ambient: () => this.plugin.ambient.snapshot(),
       loadEnabled: () => this.plugin.data.enabledModels.slice(),
       saveEnabled: (ids) => {
@@ -6588,7 +8837,7 @@ var PanelView = class extends import_obsidian5.ItemView {
         await this.plugin.ensureProvider(id, cp);
         this.plugin.openSettings(id);
       },
-      transcribe: (audio) => this.plugin.registry.transcribe(audio, this.plugin.data.voiceChoice),
+      transcribe: (audio) => this.plugin.transcribeVoice(audio),
       saveEffort: () => void this.plugin.save(),
       getCatalog: () => this.plugin.loadCatalog(),
       getQuota: () => this.plugin.fetchQuota(),
@@ -6603,6 +8852,25 @@ var PanelView = class extends import_obsidian5.ItemView {
       getDismissedUpdate: () => this.plugin.data.dismissedUpdate || "",
       setDismissedUpdate: (v) => {
         this.plugin.data.dismissedUpdate = v;
+        void this.plugin.save();
+      },
+      chatFontSize: () => this.plugin.data.chatFontSize,
+      connectorSpecs: () => this.plugin.connectorSpecsCached(),
+      connectorServices: () => this.plugin.connectorServicesCached(),
+      setConnectorEnabled: (id, enabled, meta) => this.plugin.setConnectorEnabled(id, enabled, meta),
+      connectorHasToken: (id) => {
+        const c = this.plugin.connectorList().find((x) => x.id === id);
+        return !!(c && c.token);
+      },
+      sectionSrc: (name) => this.plugin.sectionSrc(name),
+      autoSendPrompts: () => this.plugin.data.autoSendPrompts === true,
+      setAutoSendPrompts: (v) => {
+        this.plugin.data.autoSendPrompts = v === true;
+        void this.plugin.save();
+      },
+      addConnector: (c) => this.plugin.addConnector(c),
+      setChatFontSize: (v) => {
+        this.plugin.data.chatFontSize = v;
         void this.plugin.save();
       }
     });
@@ -6642,6 +8910,9 @@ var ObsidianAppPlugin = class extends import_obsidian5.Plugin {
     const raw = await this.loadData();
     this.data = sanitizeData(raw);
     migrateLegacyEffort(this.data);
+    if (this.data.sttEnabled !== false && !this.data.voiceTouched) {
+      this.data.voiceTyping = true;
+    }
     if (!this.data.deviceId) {
       this.data.deviceId = typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : "d-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10);
       await this.saveData(this.data);
@@ -6667,11 +8938,19 @@ var ObsidianAppPlugin = class extends import_obsidian5.Plugin {
       callback: () => void this.activatePanel()
     });
     this.app.workspace.onLayoutReady(() => {
+      void this.refreshConnectorCache();
       void this.connectAll().finally(() => this.refreshPanel());
       void this.activatePanel();
     });
+    this._connTimer = setInterval(() => {
+      void this.refreshConnectorCache();
+    }, 10 * 60 * 1e3);
   }
   onunload() {
+    if (this._connTimer) {
+      clearInterval(this._connTimer);
+      this._connTimer = null;
+    }
     this.app.workspace.detachLeavesOfType(VIEW_TYPE);
   }
   facade() {
@@ -6697,6 +8976,7 @@ var ObsidianAppPlugin = class extends import_obsidian5.Plugin {
       catalogProviders: () => this.catalogProviders(),
       catalogReady: () => !!this.catalogRaw,
       loadCatalog: () => this.loadCatalog(),
+      refreshConnectorCache: () => this.refreshConnectorCache(),
       version: this.manifest && this.manifest.version ? this.manifest.version : "",
       setFocus: (id) => {
         this.settingsFocus = id;
@@ -6834,6 +9114,196 @@ var ObsidianAppPlugin = class extends import_obsidian5.Plugin {
       const v = leaf.view;
       if (v instanceof PanelView) v.render();
     });
+  }
+  async transcribeVoice(audio) {
+    const d = this.data;
+    if (d.sttEnabled !== false && d.sttUrl) return this.riemannStt(audio);
+    return this.registry.transcribe(audio, d.voiceChoice);
+  }
+  async riemannStt(audio, depth) {
+    depth = depth || 0;
+    if (depth > 3) throw new Error("Transcription failed (auth loop)");
+    const base = String(this.data.sttUrl || "https://stt.usefree.space").replace(/\/+$/, "");
+    const headers = { "X-Device-Id": this.data.deviceId, "X-App-Name": APP_NAME, "X-App-Version": APP_VERSION };
+    if (this.data.sttDeviceKey) headers["X-API-Key"] = this.data.sttDeviceKey;
+    const boundary = "----rix" + Math.random().toString(16).slice(2) + Date.now().toString(16);
+    const enc = new TextEncoder();
+    const parts = [];
+    parts.push(enc.encode("--" + boundary + '\r\nContent-Disposition: form-data; name="audio_file"; filename="' + audio.name + '"\r\nContent-Type: ' + audio.type + "\r\n\r\n"));
+    parts.push(new Uint8Array(audio.bytes));
+    parts.push(enc.encode("\r\n--" + boundary + "--\r\n"));
+    const total = parts.reduce((n2, p2) => n2 + p2.length, 0);
+    const out = new Uint8Array(total);
+    let at = 0;
+    parts.forEach((p2) => {
+      out.set(p2, at);
+      at += p2.length;
+    });
+    let res;
+    try {
+      res = await (0, import_obsidian5.requestUrl)({
+        url: base + "/asr",
+        method: "POST",
+        headers,
+        body: out.buffer,
+        contentType: "multipart/form-data; boundary=" + boundary,
+        throw: false
+      });
+    } catch (e) {
+      throw new Error("STT service unreachable: " + (e instanceof Error ? e.message : String(e)));
+    }
+    if (res.status === 401) {
+      const h = res.headers || {};
+      let k = "";
+      Object.keys(h).forEach((key) => {
+        if (String(key).toLowerCase() === "x-api-key") k = h[key];
+      });
+      if (k) {
+        this.data.sttDeviceKey = k;
+        try {
+          await this.save();
+        } catch (e) {
+        }
+        return this.riemannStt(audio, depth + 1);
+      }
+      if (this.data.sttDeviceKey) {
+        this.data.sttDeviceKey = "";
+        try {
+          await this.save();
+        } catch (e) {
+        }
+        return this.riemannStt(audio, depth + 1);
+      }
+    }
+    if (res.status < 200 || res.status >= 300) throw new Error("Transcription failed (" + res.status + ")");
+    const text = String(res.text || "").trim();
+    if (!text) throw new Error("Empty transcription from the STT service");
+    return text;
+  }
+  async refreshConnectorCache() {
+    await this.loadSections();
+    const hosted = await this.refreshAvailableConnectors();
+    const schemas = hosted.schemas.slice();
+    const lookup = Object.assign({}, hosted.lookup);
+    const docLines = hosted.docLines.slice();
+    const list = this.connectorList();
+    for (const c of list) {
+      try {
+        const tools = await mcpListTools(c.url, c.token || "");
+        tools.forEach((t) => {
+          const key = "mcp_" + slug(c.id || c.name) + "_" + slug(t.name || "tool");
+          schemas.push({ name: key, description: String(t.description || t.name || "Tool"), parameters: t.inputSchema && t.inputSchema.properties ? t.inputSchema.properties : {} });
+          lookup[key] = { conn: c, tool: String(t.name || "") };
+        });
+        docLines.push("- " + c.name + " (" + c.url + ") — its tools are callable as mcp_* functions.");
+      } catch (e) {
+      }
+    }
+    this._conn = { schemas, lookup, doc: docLines.join("\n"), services: hosted.services };
+  }
+  async setConnectorEnabled(id, enabled, meta) {
+    let list = this.connectorList();
+    let found = list.find((c) => c.id === id);
+    if (!found && enabled && meta) {
+      found = { id, name: meta.name, url: meta.url, token: "", enabled: true };
+      list.push(found);
+    }
+    if (found) found.enabled = enabled !== false;
+    this.data.connectors = list;
+    await this.save();
+    await this.refreshConnectorCache();
+  }
+  connectorServicesCached() {
+    return this._conn && this._conn.services ? this._conn.services : [];
+  }
+  async refreshAvailableConnectors() {
+    const schemas = [];
+    const lookup = {};
+    const docLines = ["Available connectors (hosted):"];
+    const servicesMeta = [];
+    try {
+      const res = await (0, import_obsidian5.requestUrl)({ url: CONN_CATALOG_URL, method: "GET", headers: { "X-Device-Id": this.data.deviceId, "X-App-Name": APP_NAME, "X-App-Version": APP_VERSION }, throw: false });
+      const j = typeof res.json === "object" && res.json !== null ? res.json : {};
+      const services = Array.isArray(j.services) ? j.services : [];
+      services.forEach((svc) => {
+        const sid = slug(svc.id || svc.name || "conn");
+        const base = CONN_CATALOG_URL.replace("/catalog.json", "");
+        const icon = svc.icon && typeof svc.icon === "string" && svc.icon.indexOf("http") === 0 ? svc.icon : svc.icon ? base + svc.icon : "";
+        const soon = svc.status === "soon" || svc.coming_soon === true;
+        const tools = Array.isArray(svc.tools) ? svc.tools : [];
+        const first = tools[0] || {};
+        docLines.push("- " + String(svc.name || sid) + " (" + base + ")" + (soon ? " — coming soon" : ""));
+        tools.forEach((t) => {
+          const key = "mcp_" + sid + "_" + slug(t.name || "tool");
+          schemas.push({ name: key, description: String(t.label || t.description || t.name || "Tool"), about: String(t.about || t.description || ""), icon, soon });
+          lookup[key] = { conn: { url: base, token: "" }, tool: String(t.name || "") };
+        });
+        servicesMeta.push({
+          id: sid,
+          name: String(svc.name || sid),
+          icon,
+          about: String(svc.about || first.about || first.description || ""),
+          live: !soon,
+          requiresToken: !!svc.auth && svc.auth !== "none",
+          authLabel: String(svc.auth_label || "API key"),
+          enabled: this.connectorList().some((c) => c.id === sid && c.enabled !== false)
+        });
+      });
+    } catch (e) {
+    }
+    return { schemas, lookup, docLines, services: servicesMeta };
+  }
+  async loadSections() {
+    const defs = { automation: { src: null }, play: { src: null }, study: { src: null } };
+    try {
+      const res = await (0, import_obsidian5.requestUrl)({ url: SECTIONS_URL, method: "GET", headers: { "X-Device-Id": this.data.deviceId, "X-App-Name": APP_NAME, "X-App-Version": APP_VERSION }, throw: false });
+      const j = typeof res.json === "object" && res.json !== null ? res.json : {};
+      ["play", "study", "automation"].forEach((k) => {
+        const src = j[k] && typeof j[k].src === "string" && j[k].src ? j[k].src : null;
+        defs[k] = { src };
+      });
+    } catch (e) {
+    }
+    this._sections = defs;
+  }
+  sectionSrc(name) {
+    return this._sections && this._sections[name] ? this._sections[name].src || "" : "";
+  }
+  connectorList() {
+    return this.data.connectors || [];
+  }
+  async addConnector(c) {
+    this.data.connectors.push({
+      id: slug(String(c.name || "")) + "_" + Date.now().toString(36),
+      name: String(c.name || ""),
+      url: String(c.url || ""),
+      token: String(c.token || ""),
+      enabled: true
+    });
+    await this.save();
+    await this.refreshConnectorCache();
+  }
+  connectorSpecsCached() {
+    return this._conn ? this._conn.schemas : [];
+  }
+  connectorSchemasCached() {
+    return this._conn ? this._conn.schemas : [];
+  }
+  connectorLookupSync(name) {
+    return this._conn && this._conn.lookup[name] ? this._conn.lookup[name] : null;
+  }
+  connectorDoc() {
+    return this._conn ? this._conn.doc : "";
+  }
+  async connectorRun(name, args) {
+    const l = this.connectorLookupSync(name);
+    if (!l) return { ok: false, error: "Unknown connector tool: " + name };
+    try {
+      const text = await mcpCallTool(l.conn.url, l.conn.token || "", l.tool, args);
+      return { ok: true, result: text };
+    } catch (e) {
+      return { ok: false, error: e instanceof Error ? e.message : String(e) };
+    }
   }
   openSettings(focusId) {
     this.settingsFocus = focusId || null;
