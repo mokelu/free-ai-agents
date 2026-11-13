@@ -1,0 +1,18 @@
+name: Release
+on:
+  push:
+    tags:
+      - '*'
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create GitHub Release and upload plugin assets
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tag="${{ github.ref_name }}"
+          gh release create "$tag" --title "Free AI and Agents $tag" --generate-notes main.js manifest.json styles.css || gh release upload "$tag" --clobber main.js manifest.json styles.css

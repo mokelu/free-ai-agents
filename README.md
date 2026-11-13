@@ -37,12 +37,6 @@ OR,
 - When an allowance runs out, the plugin tells you the reset time and links to [usefree.space](https://usefree.space) for free keys, promos and deals from many other AI services.
 - Adding your own key (for any provider, including Jina) routes requests to that provider directly and skips the free allowance for that feature.
 
-## Privacy
-
-- No account, no email, and no client-side telemetry.
-- The plugin stores its settings, your API keys (only if you turn on "Remember keys"), and your chats inside your vault.
-See the privacy policy at [usefree.space/privacy](https://usefree.space/privacy).
-
 ## Permissions and safety
 
 - The agent only touches your vault, and only after you approve each change (approval mode is configurable).

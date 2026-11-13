@@ -1694,9 +1694,104 @@ async function mcpPost(url, token, payload) {
 var CONN_CATALOG_URL = "https://conn.usefree.space/catalog.json";
 var SECTIONS_URL = "https://conn.usefree.space/sections.json";
 var APP_NAME = "free-ai-agents-obsidian";
-var APP_VERSION = "1.5.5";
+var APP_VERSION = "1.7.1";
+// device-auth.ts — capability handshake with the gateway. The gateway issues
+// this device a secret key (stored in data.json); AI requests carry
+// X-Device-Auth: <nonce>:<HMAC-SHA256(key, nonce)> with a short-lived
+// server-issued nonce, so a tampered build cannot merely claim a newer version
+// string — without the secret it cannot produce a valid proof. The server
+// starts in shadow mode (logs only) and flips to strict once rollout completes.
+var DEVAUTH = { key: "", deviceId: "", nonce: "", proof: "", at: 0, busy: null, bound: null };
+function deviceAuthBind(bound) {
+  DEVAUTH.bound = bound;
+  DEVAUTH.key = String((bound.getKey && bound.getKey()) || "").trim();
+  DEVAUTH.deviceId = String(bound.deviceId || "").trim();
+}
+function deviceAuthTimeout(p, ms) {
+  return Promise.race([p, new Promise((r) => setTimeout(() => r(null), ms))]);
+}
+async function deviceAuthProvision() {
+  const b = DEVAUTH.bound;
+  if (!b || !b.provision) return "";
+  try {
+    const key = String(await deviceAuthTimeout(b.provision(), 8000) || "").trim();
+    if (/^dk_[A-Za-z0-9_-]{20,80}$/.test(key)) {
+      DEVAUTH.key = key;
+      return key;
+    }
+  } catch (e) { /* offline: retried on the next tick */ }
+  return "";
+}
+async function deviceAuthHmac(key, nonce) {
+  const enc = new TextEncoder();
+  const ck = await crypto.subtle.importKey("raw", enc.encode(key), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const sig = await crypto.subtle.sign("HMAC", ck, enc.encode(nonce));
+  return Array.from(new Uint8Array(sig)).map((b2) => b2.toString(16).padStart(2, "0")).join("");
+}
+async function deviceAuthRefresh(force) {
+  if (!DEVAUTH.key || typeof crypto === "undefined" || !crypto.subtle) return false;
+  if (DEVAUTH.busy) return DEVAUTH.busy;
+  if (!force && DEVAUTH.proof && Date.now() - DEVAUTH.at < 60000) return true;
+  DEVAUTH.busy = (async () => {
+    try {
+      const res = await (0, import_obsidian5.requestUrl)({
+        url: RIEMANN_BASE_URL + "/device/nonce",
+        method: "GET",
+        throw: false,
+        headers: { "X-Device-Id": DEVAUTH.deviceId, "X-App-Name": APP_NAME, "X-App-Version": APP_VERSION }
+      });
+      if (res.status !== 200) return false;
+      const j = res.json || {};
+      const nonce = typeof j.nonce === "string" ? j.nonce : "";
+      if (!/^[0-9a-f]{32}$/.test(nonce)) return false;
+      DEVAUTH.proof = await deviceAuthHmac(DEVAUTH.key, nonce);
+      DEVAUTH.nonce = nonce;
+      DEVAUTH.at = Date.now();
+      return true;
+    } catch (e) { return false; }
+    finally { DEVAUTH.busy = null; }
+  })();
+  return DEVAUTH.busy;
+}
+function deviceAuthHeaders() {
+  if (!DEVAUTH.key || !DEVAUTH.proof || Date.now() - DEVAUTH.at > 100000) return null;
+  return DEVAUTH.nonce + ":" + DEVAUTH.proof;
+}
+async function deviceAuthReady() {
+  if (!DEVAUTH.key) await deviceAuthProvision();
+  if (!DEVAUTH.key) return false;
+  if (!DEVAUTH.proof || Date.now() - DEVAUTH.at > 60000) await deviceAuthTimeout(deviceAuthRefresh(false), 5000);
+  return !!deviceAuthHeaders();
+}
+async function daOnce(fn) {
+  try {
+    return await fn();
+  } catch (e) {
+    if (e && e.code === "device_auth_required") {
+      DEVAUTH.nonce = "";
+      DEVAUTH.proof = "";
+      await deviceAuthTimeout(deviceAuthRefresh(true), 5000);
+      return await fn();
+    }
+    throw e;
+  }
+}
+async function provisionDeviceKey(plugin) {
+  try {
+    const headers = { "Content-Type": "application/json", "X-Device-Id": plugin.data.deviceId, "X-App-Name": APP_NAME, "X-App-Version": APP_VERSION };
+    const da = deviceAuthHeaders();
+    if (da) headers["X-Device-Auth"] = da;
+    const res = await (0, import_obsidian5.requestUrl)({ url: RIEMANN_BASE_URL + "/device/provision", method: "POST", headers, body: "{}", throw: false });
+    if (res.status !== 200) return "";
+    const key = String((res.json || {}).device_key || "");
+    if (!/^dk_[A-Za-z0-9_-]{20,80}$/.test(key)) return "";
+    plugin.data.deviceKey = key;
+    await plugin.saveData(plugin.data);
+    return key;
+  } catch (e) { return ""; }
+}
 async function mcpListTools(url, token) {
-  await mcpPost(url, token, { jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2025-03-26", capabilities: {}, clientInfo: { name: "free-ai-agents", version: "1.5.8" } } });
+  await mcpPost(url, token, { jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2025-03-26", capabilities: {}, clientInfo: { name: "free-ai-agents", version: "1.7.1" } } });
   void mcpPost(url, token, { jsonrpc: "2.0", method: "notifications/initialized" }).catch(() => {
   });
   const out = await mcpPost(url, token, { jsonrpc: "2.0", id: 2, method: "tools/list", params: {} });
@@ -1879,6 +1974,8 @@ function createOpenAiDoor(def, transport, opts) {
       } catch (e) {
         door.connected = false;
         door.models = [];
+        const st = /status (\d+)/.exec(e instanceof Error ? e.message : String(e));
+        if (TEL) TEL.track("provider_key_test", { provider: def.id, ok: false, status: st ? Number(st[1]) : 0 });
         throw e instanceof Error ? e : new Error(String(e));
       }
       const data = asDataArray(j);
@@ -1890,6 +1987,7 @@ function createOpenAiDoor(def, transport, opts) {
         ctx: ""
       }));
       door.connected = true;
+      if (TEL) TEL.track("provider_key_test", { provider: def.id, ok: true, n_models: door.models.length });
     },
     async disconnect() {
       door.connected = false;
@@ -1914,7 +2012,8 @@ function createOpenAiDoor(def, transport, opts) {
       const post = (b) => transport.postJson(
         def.baseUrl + "/chat/completions",
         { "Content-Type": "application/json", Authorization: "Bearer " + key },
-        b
+        b,
+        callOpts && callOpts.signal ? callOpts.signal : void 0
       );
       let effort = def.id === "riemann" ? poolEffort(modelId) : null;
       const picked = callOpts && typeof callOpts.effort === "string" ? callOpts.effort.trim() : "";
@@ -2043,6 +2142,8 @@ function createAnthropicDoor(def, transport) {
       } catch (e) {
         door.connected = false;
         door.models = [];
+        const st = /status (\d+)/.exec(e instanceof Error ? e.message : String(e));
+        if (TEL) TEL.track("provider_key_test", { provider: def.id, ok: false, status: st ? Number(st[1]) : 0 });
         throw e instanceof Error ? e : new Error(String(e));
       }
       const data = j && typeof j === "object" && Array.isArray(j.data) ? j.data : [];
@@ -2054,6 +2155,7 @@ function createAnthropicDoor(def, transport) {
         ctx: ""
       }));
       door.connected = true;
+      if (TEL) TEL.track("provider_key_test", { provider: def.id, ok: true, n_models: door.models.length });
     },
     async disconnect() {
       door.connected = false;
@@ -2166,8 +2268,9 @@ var RIEMANN_BASE_URL = "https://api.usefree.space/v1";
 var JINA_READ_URL = "https://r.jina.ai/";
 var JINA_SEARCH_URL = "https://s.jina.ai/";
 var DoorRegistry = class {
-  constructor(transport) {
+  constructor(transport, telemetry) {
     this.transport = transport;
+    this.telemetry = telemetry || null;
     this.doors = [];
     this.customDefs = [];
     this.efforts = {};
@@ -2260,11 +2363,20 @@ var DoorRegistry = class {
     });
     return out;
   }
-  callModel(appId, history, tools) {
+  callModel(appId, history, tools, signal) {
     const p = splitAppId(appId);
     const d = this.doorById(p.doorId);
     if (!d || !d.connected) return Promise.reject(new Error("door not connected"));
-    return d.chat(p.modelId, history, tools, { effort: this.efforts[appId] || "" });
+    const t0 = Date.now();
+    const byok = d.byok !== false;
+    if (this.telemetry) this.telemetry.track("model_request_started", { door: d.id, model: p.modelId, messages: history.length, tools: !!(tools && tools.length), byok });
+    return d.chat(p.modelId, history, tools, { effort: this.efforts[appId] || "", signal: signal || void 0 }).then((res) => {
+      if (this.telemetry) this.telemetry.track("model_request_completed", { door: d.id, model: p.modelId, ms: Date.now() - t0, tokens: res && typeof res.totalTokens === "number" ? res.totalTokens : void 0, byok });
+      return res;
+    }, (err) => {
+      if (this.telemetry) this.telemetry.track("model_request_failed", { door: d.id, model: p.modelId, ms: Date.now() - t0, byok });
+      throw err;
+    });
   }
   doorIds() {
     return this.doors.map((d) => d.id).filter((id) => id !== "riemann" && id !== "test");
@@ -2284,7 +2396,10 @@ var DoorRegistry = class {
     if (choice) {
       const cut = choice.indexOf(":");
       const cd = cut > 0 ? this.doorById(choice.slice(0, cut)) : null;
-      if (usable(cd)) return cd.transcribe(audio, choice.slice(cut + 1));
+      if (usable(cd)) {
+        if (this.telemetry) this.telemetry.track("voice_used", { door: cd.id });
+        return cd.transcribe(audio, choice.slice(cut + 1));
+      }
     }
     const order = [];
     ["groq", "openai", "riemann"].forEach((id) => {
@@ -2297,7 +2412,9 @@ var DoorRegistry = class {
     let real = null;
     for (const d of order) {
       try {
-        return await d.transcribe(audio);
+        const out = await d.transcribe(audio);
+        if (this.telemetry) this.telemetry.track("voice_used", { door: d.id });
+        return out;
       } catch (e) {
         const st = e && e.status;
         if (!real && st !== 404 && st !== 405 && st !== 501) real = e;
@@ -2360,7 +2477,7 @@ function fmtFull(n2) {
 }
 function freeQuotaText(kind, days) {
   const d = typeof days === "number" && days > 0 ? days : 30;
-  const when = "They come back in 1 day.";
+  const when = kind === "web" ? "They come back in " + d + (d === 1 ? " day" : " days") + "." : "They come back daily at 01:00 UTC+1";
   const seen = QUOTA_SEEN[kind === "web" ? "web" : "ai"];
   const what = (seen ? fmtFull(seen) + " " : "") + (kind === "web" ? "web search" : "AI");
   return "Your FREE " + what + " tokens are used up on this device.\n" + when + "\nBut you do not need to wait!\nYou can get many more millions and billions of AI tokens.\nGo to www.usefree.space\nIt shows all AI models, free deals and promos.\nThere are many to choose from. Enjoy :)\nNo account. No stupid signups.";
@@ -2388,11 +2505,13 @@ function buildMultipart(fields, file) {
   });
   return { body: out.buffer, contentType: "multipart/form-data; boundary=" + boundary };
 }
-function createObsidianTransport(getDeviceId) {
+function createObsidianTransport(getDeviceId, onError) {
   const withDevice = (headers) => {
     const id = (getDeviceId == null ? void 0 : getDeviceId()) || "";
     const out = { ...headers, "X-App-Name": APP_NAME, "X-App-Version": APP_VERSION };
     if (id && !headers["X-Device-Id"]) out["X-Device-Id"] = id;
+    const da = deviceAuthHeaders();
+    if (da && !headers["X-Device-Auth"]) out["X-Device-Auth"] = da;
     return out;
   };
   async function friendly(op) {
@@ -2410,7 +2529,11 @@ function createObsidianTransport(getDeviceId) {
       if (qe && typeof qe.code === "string") out.code = qe.code;
       if (qe && typeof qe.upgradeUrl === "string") out.upgradeUrl = qe.upgradeUrl;
       if (qe && typeof qe.resetInDays === "number") out.resetInDays = qe.resetInDays;
-      if (st === "400") {
+      if (out.code === "update_required" && out.providerMessage) {
+        out.message = out.providerMessage;
+      } else if (out.code === "device_auth_required") {
+        out.message = "Could not verify this device with the server. Restart Obsidian to reconnect.";
+      } else if (st === "400") {
         out.message = "The server rejected that message (usually too long or too large). Try a shorter snippet." + (out.providerMessage && out.providerMessage !== "HTTP 400" ? " Server said: " + out.providerMessage : "");
       } else if (st === "413") {
         out.message = "That message is too large to send. Try a shorter snippet.";
@@ -2423,19 +2546,25 @@ function createObsidianTransport(getDeviceId) {
       } else if (st === "502" || st === "503" || st === "504") {
         out.message = "The AI service is temporarily unavailable. Try again in a bit.";
       }
+      try {
+        onError && onError(st === "429" && out.code === "device_exhausted" ? "quota_exhausted" : "request_error", { status: Number(st) || out.status || 0, code: typeof out.code === "string" ? out.code : "" });
+      } catch (e2) {
+      }
       throw out;
     }
   }
   return {
     async getJson(url, headers) {
-      return friendly(async () => {
+      return friendly(() => daOnce(async () => {
+        await deviceAuthReady();
         const res = await (0, import_obsidian.requestUrl)({ url, method: "GET", headers: withDevice(headers), throw: false });
         if (res.status < 200 || res.status >= 300) throw httpFail(res);
         return jsonOf(res);
-      });
+      }));
     },
     async postBytes(url, headers, body, contentType) {
-      return friendly(async () => {
+      return friendly(() => daOnce(async () => {
+        await deviceAuthReady();
         const res = await (0, import_obsidian.requestUrl)({
           url,
           method: "POST",
@@ -2445,10 +2574,17 @@ function createObsidianTransport(getDeviceId) {
         });
         if (res.status < 200 || res.status >= 300) throw httpFail(res);
         return jsonOf(res);
-      });
+      }));
     },
-    async postJson(url, headers, body) {
-      return friendly(async () => {
+    async postJson(url, headers, body, signal) {
+      return friendly(() => daOnce(async () => {
+        await deviceAuthReady();
+        if (signal && typeof fetch === "function") {
+          const res = await fetch(url, { method: "POST", headers: withDevice({ "Content-Type": "application/json", ...headers }), body: JSON.stringify(body), signal });
+          const j = await res.json().catch(() => null);
+          if (res.status < 200 || res.status >= 300) throw httpFail({ status: res.status, json: j });
+          return j || {};
+        }
         const res = await (0, import_obsidian.requestUrl)({
           url,
           method: "POST",
@@ -2458,9 +2594,65 @@ function createObsidianTransport(getDeviceId) {
         });
         if (res.status < 200 || res.status >= 300) throw httpFail(res);
         return jsonOf(res);
-      });
+      }));
     }
   };
+}
+
+// telemetry.ts
+var TELEMETRY_URL = "https://api.usefree.space/v1/telemetry/events";
+var TEL = null;
+function createTelemetry(opts) {
+  let enabled = opts.enabled !== false;
+  let inflight = null;
+  let seqN = 0;
+  const queue = [];
+  const sessionId = typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : "s-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10);
+  const tel = {
+    sessionId,
+    setEnabled(v) {
+      enabled = !!v;
+      if (!enabled) queue.length = 0;
+    },
+    track(event, props) {
+      if (!enabled) return;
+      const src = props && typeof props === "object" ? props : {};
+      const clean = {};
+      Object.keys(src).forEach((k) => {
+        const v = src[k];
+        if (typeof v === "number" && isFinite(v)) clean[k] = v;
+        else if (typeof v === "boolean") clean[k] = v;
+        else if (typeof v === "string" && v) clean[k] = v.slice(0, 120);
+      });
+      queue.push({ event: String(event).slice(0, 48), props: clean, ts: Date.now(), seq: ++seqN });
+      if (queue.length > 300) queue.splice(0, queue.length - 300);
+      if (queue.length >= 12) void tel.flush();
+    },
+    flush() {
+      if (!enabled || !queue.length || inflight) return inflight || Promise.resolve();
+      const batch = queue.splice(0, queue.length);
+      inflight = (0, import_obsidian.requestUrl)({
+        url: TELEMETRY_URL,
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Device-Id": opts.deviceId(), "X-App-Name": APP_NAME, "X-App-Version": APP_VERSION },
+        body: JSON.stringify({
+          device_id: opts.deviceId(),
+          session_id: sessionId,
+          app_version: APP_VERSION,
+          platform: typeof navigator !== "undefined" && navigator.platform || "",
+          events: batch
+        }),
+        throw: false
+      }).catch(() => {
+        queue.unshift(...batch.slice(-100));
+      }).finally(() => {
+        inflight = null;
+      });
+      return inflight;
+    }
+  };
+  TEL = tel;
+  return tel;
 }
 
 // store.ts
@@ -2476,18 +2668,22 @@ var DEFAULT_DATA = {
   allowEval: false,
   saveChats: true,
   rememberKeys: true,
+  telemetry: true,
   voiceTyping: true,
   voiceTouched: false,
   voiceChoice: "",
   effort: {},
   jinaKey: "",
   deviceId: "",
+  firstModelLogged: false,
   approvalMode: "risky",
   dismissedUpdate: "",
+  updateNudgeDay: "",
   chatFontSize: 13,
   sttEnabled: true,
   sttUrl: "https://stt.usefree.space",
   sttDeviceKey: "",
+  deviceKey: "",
   connectors: [],
   autoSendPrompts: false
 };
@@ -2498,6 +2694,7 @@ function sanitizeData(raw) {
   return {
     saveChats: true,
     rememberKeys: typeof d.rememberKeys === "boolean" ? d.rememberKeys : !Object.keys(rem).some((k) => rem[k] === false),
+    telemetry: d.telemetry !== false,
     version: 1,
     keys: d.keys && typeof d.keys === "object" ? d.keys : {},
     remember: d.remember && typeof d.remember === "object" ? d.remember : {},
@@ -2516,12 +2713,15 @@ function sanitizeData(raw) {
     }, {}) : {},
     jinaKey: typeof d.jinaKey === "string" ? d.jinaKey : "",
     deviceId: typeof d.deviceId === "string" ? d.deviceId : "",
+    firstModelLogged: d.firstModelLogged === true,
     approvalMode: d.approvalMode === "ask" || d.approvalMode === "never" ? d.approvalMode : "risky",
     dismissedUpdate: typeof d.dismissedUpdate === "string" ? d.dismissedUpdate : "",
+    updateNudgeDay: typeof d.updateNudgeDay === "string" ? d.updateNudgeDay : "",
     chatFontSize: typeof d.chatFontSize === "number" && d.chatFontSize >= 10 && d.chatFontSize <= 24 ? d.chatFontSize : 13,
     sttEnabled: d.sttEnabled !== false,
     sttUrl: typeof d.sttUrl === "string" && d.sttUrl ? d.sttUrl : "https://stt.usefree.space",
     sttDeviceKey: typeof d.sttDeviceKey === "string" ? d.sttDeviceKey : "",
+    deviceKey: typeof d.deviceKey === "string" ? d.deviceKey.slice(0, 80) : "",
     connectors: Array.isArray(d.connectors) ? d.connectors.filter((c) => c && typeof c === "object" && c.name && c.url).map((c) => ({
       id: typeof c.id === "string" && c.id ? c.id : slug(String(c.name || "")),
       name: String(c.name || ""),
@@ -2736,6 +2936,15 @@ var PanelSettingsTab = class extends import_obsidian2.PluginSettingTab {
     ).addToggle(
       (t) => t.setValue(f.data.rememberKeys !== false).onChange(async (v) => {
         f.data.rememberKeys = v;
+        await f.save();
+      })
+    );
+    new S(containerEl).setName("Anonymous usage statistics").setDesc(
+      "Help improve Free AI and Agents by sharing anonymous feature-usage counts (e.g. how many messages were sent, which providers connect). Never your chats, notes, or keys. Sent to usefree.space."
+    ).addToggle(
+      (t) => t.setValue(f.data.telemetry !== false).onChange(async (v) => {
+        f.data.telemetry = v;
+        if (f.telemetry) f.telemetry.setEnabled(v);
         await f.save();
       })
     );
@@ -3274,7 +3483,7 @@ var CLAIM_RE = /\b(?:i(?:'ve|\s+have)?|i\s+just|successfully|done[:!.,]?)\s+(?:n
 function claimsAction(text) {
   return CLAIM_RE.test(String(text || ""));
 }
-async function runAgent(base, deps, onUpdate) {
+async function runAgentInner(base, deps, onUpdate) {
   const history = base.slice();
   const steps = [];
   const maxSteps = deps.maxSteps && deps.maxSteps > 0 ? deps.maxSteps : 16;
@@ -3374,6 +3583,8 @@ async function runAgent(base, deps, onUpdate) {
         const risk = deps.riskOf(call.tool);
         let out;
         let denied = false;
+        const toolT0 = Date.now();
+        if (TEL) TEL.track("tool_invoked", { tool: call.tool, risk: risk || "unknown" });
         if (call.argsError) {
           out = { ok: false, error: "Invalid arguments (" + call.argsError + "). Resend the call with a valid JSON object." };
         } else if (risk === null) {
@@ -3399,6 +3610,7 @@ async function runAgent(base, deps, onUpdate) {
           out = await deps.runTool(call.tool, call.args);
         }
         const summary = denied ? "denied by user" : summarizeResult(out);
+        if (TEL) TEL.track(out && out.ok ? "tool_completed" : "tool_failed", { tool: call.tool, ms: Date.now() - toolT0, denied, risk: risk || "unknown" });
         step.results.push({
           call,
           ok: out.ok,
@@ -3432,6 +3644,18 @@ async function runAgent(base, deps, onUpdate) {
     const err = e instanceof Error ? e.message : String(e);
     onUpdate == null ? void 0 : onUpdate(snapshot(""));
     return { ...snapshot(""), error: err };
+  }
+}
+async function runAgent(base, deps, onUpdate) {
+  const t0 = Date.now();
+  if (TEL) TEL.track("agent_started", {});
+  try {
+    const r = await runAgentInner(base, deps, onUpdate);
+    if (TEL) TEL.track(r && r.error ? "agent_failed" : "agent_completed", { ms: Date.now() - t0, steps: r && r.steps ? r.steps.length : 0, tool_calls: r && r.usage ? r.usage.calls : 0, tokens: r && r.usage ? r.usage.total : 0, native: !!(r && r.native) });
+    return r;
+  } catch (e) {
+    if (TEL) TEL.track("agent_failed", { ms: Date.now() - t0 });
+    throw e;
   }
 }
 
@@ -4031,6 +4255,7 @@ function mountPanel(root, deps) {
   let persistTimer = null;
   let historyOpen = false;
   let mapOpen = false;
+  let chatAbort = null;
   let discOpen = false;
   let mapTarget = null;
   let mapSel = null;
@@ -4704,14 +4929,16 @@ function mountPanel(root, deps) {
     return Array.from(enabled).filter((id) => id !== "auto" && connected.has(id));
   }
   async function runTargets(turn, history) {
+    chatAbort = new AbortController();
+    const chatSig = chatAbort.signal;
     await Promise.all(
       turn.models.map(async (appId) => {
         try {
-          const result = await deps.registry.callModel(appId, history);
+          const result = await deps.registry.callModel(appId, history, void 0, chatSig);
           if (destroyed || cancelledTurns.has(turn.id)) return;
           const r = turn.responses[appId];
           if (!r || r.status !== "pending") return;
-          r.text = result.text;
+          r.text = attachUpdateNote(result.text);
           r.status = "success";
           if (result.promptTokens !== void 0) r.promptTokens = result.promptTokens;
           if (result.completionTokens !== void 0) r.completionTokens = result.completionTokens;
@@ -4756,7 +4983,7 @@ function mountPanel(root, deps) {
         h = history.map((m) => m.role === "system" && m.content.indexOf(manual) >= 0 ? { ...m, content: m.content.split(manual).join(short) } : m);
       }
       const agentDeps = {
-        callModel: (hh, schemas) => deps.registry.callModel(appId, hh, schemas),
+        callModel: (hh, schemas) => deps.registry.callModel(appId, hh, schemas, chatSig),
         schemas: mode === "no" ? void 0 : tools.schemas(),
         knownTools: new Set(tools.specs.map((t) => t.name)),
         shouldStop: () => destroyed || cancelledTurns.has(turn.id),
@@ -4824,7 +5051,7 @@ function mountPanel(root, deps) {
           r.status = "error";
           r.error = result.error;
         } else {
-          r.text = agentNarration(result.steps, result.text);
+          r.text = attachUpdateNote(agentNarration(result.steps, result.text));
           r.agent = { steps: viewSteps(result.steps), final: result.text || "" };
           r.status = "success";
         }
@@ -4945,6 +5172,7 @@ function mountPanel(root, deps) {
     const turnId = newId("A");
     const voice = voiceClip;
     voiceClip = null;
+    if (TEL) TEL.track("message_sent", { chars: text.length, est_tokens: estTotal, models: targets.length, model_list: targets.slice(0, 6).join(","), agent: !!deps.tools, voice: !!(voice && voice.url), surface: "chatv1" });
     msgs.push({ kind: "user", id: userId, pid: par, text, voice: voice && voice.url ? voice : null });
     focusOnSend = true;
     void maybeSummarizeOld();
@@ -5388,33 +5616,40 @@ function mountPanel(root, deps) {
     if (histWords().length) void ensureHistText();
     paintHist();
   }
-  function buildMapBody(body) {
+  function buildV2Body(body) {
     body.classList.add("ai-rp-mapview");
-    if (!msgs.length) {
-      body.appendChild(el("div", "ai-rp-empty", aiT("emptyDiscover")));
-      return;
-    }
-    const wrap = el("div", "ai-rp-mapwrap");
-    const host = el("div", "ai-rp-map");
-    wrap.appendChild(host);
-    if (mapSel && nodeOf(mapSel)) {
-      const insp = el("div", "ai-rp-insp");
-      const inspClose = el("button", "ai-rp-inspx", "\u2715");
-      inspClose.type = "button";
-      inspClose.title = aiT("closePane");
-      inspClose.setAttribute("aria-label", aiT("closeInsp"));
-      inspClose.addEventListener("click", () => {
-        mapSel = null;
-        mapEdit = false;
-        mapAsk = false;
-        render();
-      });
-      insp.appendChild(inspClose);
-      wrap.appendChild(insp);
-      paintInsp(insp);
+    const c2 = deps.chatv2Config ? deps.chatv2Config() : { src: null, pad: null, padBottom: null };
+    const wrap = el("div", "ai-rp-v2wrap");
+    if (c2.src) {
+      const host = el("div", "ai-rp-v2host");
+      if (typeof c2.pad === "number") host.style.padding = c2.pad + "px";
+      if (typeof c2.padBottom === "number") host.style.paddingBottom = c2.padBottom + "px";
+      let frm;
+      const v2Origin = srcOrigin(c2.src);
+      if (CHATV2_FRAME && CHATV2_FRAME_SRC === c2.src) {
+        frm = CHATV2_FRAME;
+        HOST_DEVICE = deps.chatDeviceId ? deps.chatDeviceId() : "";
+        framePost(frm, v2Origin, { type: "riemann-v2-init", v: 1, deviceId: HOST_DEVICE, appName: APP_NAME, appVersion: APP_VERSION });
+      } else {
+        frm = document.createElement("iframe");
+        frm.src = c2.src;
+        CHATV2_FRAME_SRC = c2.src;
+        frm.addEventListener("load", () => {
+          HOST_DEVICE = deps.chatDeviceId ? deps.chatDeviceId() : "";
+          framePost(frm, v2Origin, { type: "riemann-v2-init", v: 1, deviceId: HOST_DEVICE, appName: APP_NAME, appVersion: APP_VERSION });
+        });
+      }
+      CHATV2_FRAME = frm;
+      registerFrame(frm, v2Origin, "chatv2");
+      frm.className = "ai-rp-v2frame";
+      frm.setAttribute("allow", "clipboard-write; fullscreen; microphone");
+      host.appendChild(frm);
+      wrap.appendChild(host);
+    } else {
+      CHATV2_FRAME = null;
+      wrap.appendChild(el("div", "ai-rp-v2soon", deps.stringOverride ? deps.stringOverride("chatv2Soon", "Coming soon") : "Coming soon"));
     }
     body.appendChild(wrap);
-    paintMap(host);
   }
   function buildDiscoverBody(body) {
     body.classList.add("ai-rp-discview");
@@ -5783,6 +6018,7 @@ function mountPanel(root, deps) {
     if (!msg || msg.kind !== "ai") return;
     const r = msg.turn.responses[appId];
     if (!r || r.status === "pending") return;
+    const prevStatus = r.status === "error" ? "error" : r.status === "cancelled" ? "cancelled" : "success";
     turnUpgrade.delete(turnId);
     turnWeb.delete(turnId);
     busy = true;
@@ -5795,6 +6031,7 @@ function mountPanel(root, deps) {
     const { before, userText } = historyUpTo(turnId);
     const env = await envSnapshot();
     const history = buildHistory(before, userText, [], sysExtra(deps.tools ? deps.tools.doc() : ""), env, segmentsText());
+    if (TEL) TEL.track("message_regenerated", { model: String(appId).slice(0, 120), prev_status: prevStatus, agent: !!deps.tools, n_models: msg.turn && Array.isArray(msg.turn.models) ? msg.turn.models.length : 1, ctx_msgs: history.length });
     if (deps.tools) {
       await runAgentTurn(msg.turn, appId, history);
       if (usesPool()) bumpQuotaLocally(Math.max(estOfHistory(history), billedTokens(r)));
@@ -5806,7 +6043,7 @@ function mountPanel(root, deps) {
     try {
       const result = await deps.registry.callModel(appId, history);
       if (!destroyed && !cancelledTurns.has(turnId)) {
-        r.text = result.text;
+        r.text = attachUpdateNote(result.text);
         r.status = "success";
         if (result.promptTokens !== void 0) r.promptTokens = result.promptTokens;
         if (result.completionTokens !== void 0) r.completionTokens = result.completionTokens;
@@ -5848,6 +6085,10 @@ function mountPanel(root, deps) {
       if (mapTarget === latest.turn.id) mapTarget = latest.pid || null;
     }
     cancelApprovals();
+    if (chatAbort) {
+      try { chatAbort.abort(); } catch (e) {}
+      chatAbort = null;
+    }
     busy = false;
     render();
   }
@@ -6353,10 +6594,25 @@ function mountPanel(root, deps) {
     menu.appendChild(el("div", "ai-rp-mfoot", "Applies to every chat. You can change it any time."));
     return menu;
   }
+  function todayKey() {
+    const d = new Date();
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  }
+  function attachUpdateNote(text) {
+    try {
+      if (!text || !catalog || !catalog.latest || !deps.version) return text;
+      if (cmpVersion(catalog.latest.version, deps.version) <= 0) return text;
+      if ((deps.getUpdateNudgeDay ? deps.getUpdateNudgeDay() : "") === todayKey()) return text;
+      if (deps.setUpdateNudgeDay) deps.setUpdateNudgeDay(todayKey());
+      return text + "\n\n---\n" + "💡 v" + catalog.latest.version + " is now available. Please update from Obsidian anytime. We are phasing out 1.5.X (beta program) — this is our first stable release. Please update soon to avoid disruption.\n+ New free voice mode\n+ New connectors and tools\n+ New free automation\n+ Support for 15+ languages\n+ Fixed scrolling bugs and more";
+    } catch (e) {
+      return text;
+    }
+  }
   function updateInfo() {
     if (!catalog || !catalog.latest || !deps.version) return null;
     if (cmpVersion(catalog.latest.version, deps.version) <= 0) return null;
-    if (updateDismissed === catalog.latest.version) return null;
+    if (updateDismissed === todayKey()) return null;
     return catalog.latest;
   }
   function buildUpdateBar(u) {
@@ -6385,9 +6641,9 @@ function mountPanel(root, deps) {
     x.title = "Dismiss";
     x.setAttribute("aria-label", "Dismiss update notice");
     x.addEventListener("click", () => {
-      updateDismissed = u.version;
+      updateDismissed = todayKey();
       updateNotesOpen = false;
-      if (deps.setDismissedUpdate) deps.setDismissedUpdate(u.version);
+      if (deps.setDismissedUpdate) deps.setDismissedUpdate(todayKey());
       render();
     });
     row.appendChild(x);
@@ -6756,6 +7012,11 @@ function mountPanel(root, deps) {
     if (historyOpen && !chatsOn()) historyOpen = false;
     pruneAndDefault();
     const models = liveModels();
+    if (CHATV2_FRAME && CHATV2_FRAME.parentNode) CHATV2_FRAME.parentNode.removeChild(CHATV2_FRAME);
+    if (section !== "chat") {
+      const curFrm = root.querySelector(".ai-rp-aut-frame");
+      if (curFrm && curFrm.getAttribute("src") !== "about:blank" && curFrm.parentNode) curFrm.parentNode.removeChild(curFrm);
+    }
     root.innerHTML = "";
     root.classList.add("ai-rp");
     root.classList.toggle("ai-rp-nofeed", mapOpen || discOpen);
@@ -6788,6 +7049,7 @@ function mountPanel(root, deps) {
           if (section === id) return;
           section = id;
           mapOpen = false; historyOpen = false; discOpen = false;
+          if (TEL) TEL.track("surface_open", { surface: id });
           render();
         });
         sb.appendChild(b);
@@ -6797,19 +7059,35 @@ function mountPanel(root, deps) {
     if (section !== "chat") {
       root.appendChild(buildSectBar());
       const src = deps.sectionSrc ? deps.sectionSrc(section) : "";
+      const cfg = deps.sectionCfg ? deps.sectionCfg(section) : null;
       const frameHost = el("div", "ai-rp-aut");
-      if (src) {
-        const frm = document.createElement("iframe");
+      if (cfg && typeof cfg.pad === "number") frameHost.style.padding = cfg.pad + "px";
+      if (cfg && typeof cfg.padBottom === "number") frameHost.style.paddingBottom = cfg.padBottom + "px";
+      const keep = SECT_KEEP[section];
+      let frm;
+      if (src && keep && keep.src === src && keep.frame) {
+        frm = keep.frame;
+        HOST_DEVICE = deps.chatDeviceId ? deps.chatDeviceId() : "";
+        framePost(frm, srcOrigin(src), frameInitMsg(section));
+      } else if (src) {
+        frm = document.createElement("iframe");
         frm.src = src;
-        frm.className = "ai-rp-aut-frame";
-        frm.setAttribute("allow", "clipboard-write; fullscreen");
-        frameHost.appendChild(frm);
+        const origin = srcOrigin(src);
+        frm.addEventListener("load", () => {
+          HOST_DEVICE = deps.chatDeviceId ? deps.chatDeviceId() : "";
+          framePost(frm, origin, frameInitMsg(section));
+        });
+        SECT_KEEP[section] = { frame: frm, src };
+        registerFrame(frm, origin, section);
       } else {
-        const frm = document.createElement("iframe");
+        frm = document.createElement("iframe");
         frm.src = "about:blank";
-        frm.className = "ai-rp-aut-frame";
         frm.setAttribute("aria-hidden", "true");
-        frameHost.appendChild(frm);
+      }
+      frm.className = "ai-rp-aut-frame";
+      frm.setAttribute("allow", "clipboard-write; fullscreen; microphone");
+      frameHost.appendChild(frm);
+      if (!src) {
         const overlay = el("div", "ai-rp-aut-overlay", "Coming soon");
         frameHost.appendChild(overlay);
       }
@@ -6879,10 +7157,14 @@ function mountPanel(root, deps) {
       }
     }
     const vg = el("span", "ai-rp-seg");
-    const vm = el("button", "ai-rp-segb", mapOpen || discOpen ? aiT("chat") : aiT("map"));
+    const v1Label = deps.stringOverride ? deps.stringOverride("chatv1Label", aiT("chat")) : aiT("chat");
+    const v2Label = deps.stringOverride ? deps.stringOverride("chatv2Label", "Modern") : "Modern";
+    const v1Title = deps.stringOverride ? deps.stringOverride("chatv1Title", aiT("backToChat")) : aiT("backToChat");
+    const v2Title = deps.stringOverride ? deps.stringOverride("chatv2Title", "Open the modern chat view") : "Open the modern chat view";
+    const vm = el("button", "ai-rp-segb", mapOpen || discOpen ? v1Label : v2Label);
     vm.type = "button";
     vm.setAttribute("aria-pressed", mapOpen ? "true" : "false");
-    vm.title = mapOpen ? aiT("backToChat") : aiT("viewAsMap");
+    vm.title = mapOpen ? v1Title : v2Title;
     vm.addEventListener("click", () => {
       if (mapOpen || discOpen) {
         mapOpen = false;
@@ -6893,6 +7175,7 @@ function mountPanel(root, deps) {
         mapAsk = false;
       }
       historyOpen = false;
+      if (TEL) TEL.track("surface_open", { surface: mapOpen ? "chatv2" : "chatv1" });
       render();
     });
     vg.appendChild(vm);
@@ -7108,7 +7391,7 @@ function mountPanel(root, deps) {
     const shownMsgs = discOpen ? [] : activePath();
     if (historyOpen) buildHistoryBody(body);
     if (discOpen) buildDiscoverBody(body);
-    else if (mapOpen) buildMapBody(body);
+    else if (mapOpen) buildV2Body(body);
     if (!msgs.length && !historyOpen && !mapOpen && !discOpen) {
       const empty = el(
         "div",
@@ -7641,6 +7924,23 @@ function createVaultTools(app, opts) {
   const allowEval = () => !!(opts && opts.allowEval && opts.allowEval());
   const webState = () => (opts && opts.settings ? opts.settings() : {}) || {};
   async function jinaCall(kind, value) {
+    const t0 = Date.now();
+    const ownKey = String(webState().jinaKey || "").trim();
+    const out = await jinaCallInner(kind, value);
+    if (TEL) {
+      const wp = { via: ownKey ? "own_key" : "gateway", ok: !!(out && out.ok), ms: Date.now() - t0 };
+      if (out && out.ok && out.result) {
+        if (out.result.results && Array.isArray(out.result.results)) wp.results = out.result.results.length;
+        wp.chars = String(out.result.content || "").length;
+        if (typeof out.result.tokens === "number") wp.tokens = out.result.tokens;
+      } else if (out && typeof out.code === "string" && out.code) {
+        wp.err = out.code.slice(0, 24);
+      }
+      TEL.track(kind === "read" ? "web_read" : "web_search", wp);
+    }
+    return out;
+  }
+  async function jinaCallInner(kind, value) {
     const data = webState();
     const own = String(data.jinaKey || "").trim();
     const isRead = kind === "read";
@@ -8781,6 +9081,51 @@ function typesetRixMath(root) {
 var VIEW_TYPE = "free-ai-agents-view";
 var ICON_ID = "free-ai-agents";
 var ICON_SVG = '<g fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"><path d="M26 14h48a14 14 0 0 1 14 14v30a14 14 0 0 1-14 14H50L30 90V72h-4A14 14 0 0 1 12 58V28a14 14 0 0 1 14-14z"/><path d="M33 35l14 11-14 11"/><path d="M54 58h14"/></g>';
+// --- Hosted-frame bridge ------------------------------------------------------
+// Server-rendered surfaces hosted in the panel (chat v2, play, study,
+// automation) talk to the plugin over postMessage. Every attached frame is
+// registered with its origin; a frame may ask for the plugin's device id
+// (hello) so gateway quotas and archives stay keyed to the same device, and
+// may request allow-listed vault actions, dispatched in PanelView.frameAction.
+// Frames are preserved across panel re-renders (detached + reattached) so
+// pages never reload on the 45s quota re-render or view toggles.
+// Protocol: riemann-frame-{hello,ready,init,event,reply}; the riemann-v2-*
+// names from the first bridge draft stay accepted for compatibility.
+var CHATV2_FRAME = null, CHATV2_FRAME_SRC = "", HOST_DEVICE = "";
+var SECT_KEEP = {};
+var FRAME_REG = [];
+var FRAME_HOST_CB = null;
+function framePost(frame, origin, msg) {
+  try {
+    if (frame && frame.contentWindow) frame.contentWindow.postMessage(msg, origin || "*");
+  } catch (e) {}
+}
+function registerFrame(frame, origin, name) {
+  if (frame && !FRAME_REG.some((e) => e.frame === frame)) FRAME_REG.push({ frame, origin: origin || "", name: name || "" });
+}
+function frameInitMsg(section) {
+  const m = { type: "riemann-frame-init", v: 1, deviceId: HOST_DEVICE, appName: APP_NAME, appVersion: APP_VERSION };
+  if (section) m.section = section;
+  return m;
+}
+function srcOrigin(url) {
+  try { return new URL(url, location.href).origin; } catch (e) { return ""; }
+}
+if (typeof window !== "undefined" && window.addEventListener) {
+  window.addEventListener("message", (ev) => {
+    const ent = FRAME_REG.find((e) => e.frame.contentWindow && ev.source === e.frame.contentWindow);
+    if (!ent || (ent.origin && ev.origin !== ent.origin)) return;
+    const d = ev.data;
+    if (!d || typeof d !== "object") return;
+    if (d.type === "riemann-frame-hello" || d.type === "riemann-frame-ready") {
+      framePost(ent.frame, ent.origin, frameInitMsg());
+    } else if (d.type === "riemann-v2-hello" || d.type === "riemann-v2-ready") {
+      framePost(ent.frame, ent.origin, { type: "riemann-v2-init", v: 1, deviceId: HOST_DEVICE, appName: APP_NAME, appVersion: APP_VERSION });
+    } else if ((d.type === "riemann-frame-event" || d.type === "riemann-v2-event") && FRAME_HOST_CB) {
+      FRAME_HOST_CB(d, ent.frame, ent.origin, d.type === "riemann-v2-event" ? "riemann-v2-reply" : "riemann-frame-reply", ent.name);
+    }
+  });
+}
 var PanelView = class extends import_obsidian5.ItemView {
   constructor(leaf, plugin) {
     super(leaf);
@@ -8800,6 +9145,7 @@ var PanelView = class extends import_obsidian5.ItemView {
     this.contentEl.empty();
     this.contentEl.style.padding = "0";
     this.contentEl.style.margin = "0";
+    FRAME_HOST_CB = (d, f, o, rt, fn) => this.frameAction(d, f, o, rt, fn);
     this.panel = mountPanel(this.contentEl, {
       app: this.app,
       chats: this.plugin.chats,
@@ -8813,7 +9159,17 @@ var PanelView = class extends import_obsidian5.ItemView {
           specs: base.specs.concat(this.plugin.connectorSpecsCached()),
           schemas: () => base.schemas().concat(this.plugin.connectorSchemasCached()),
           run: async (name, args) => {
-            if (this.plugin.connectorLookupSync(name)) return this.plugin.connectorRun(name, args);
+            if (this.plugin.connectorLookupSync(name)) {
+              const t0 = Date.now();
+              try {
+                const r = await this.plugin.connectorRun(name, args);
+                if (this.plugin.telemetry) this.plugin.telemetry.track("mcp_tool_done", { tool: name, ok: !!(r && r.ok), ms: Date.now() - t0, chars: r && r.ok && typeof r.result === "string" ? r.result.length : 0 });
+                return r;
+              } catch (e) {
+                if (this.plugin.telemetry) this.plugin.telemetry.track("mcp_tool_done", { tool: name, ok: false, ms: Date.now() - t0 });
+                throw e;
+              }
+            }
             return base.run(name, args);
           },
           riskOf: (name) => this.plugin.connectorLookupSync(name) ? "high" : base.riskOf(name),
@@ -8824,6 +9180,7 @@ var PanelView = class extends import_obsidian5.ItemView {
       loadEnabled: () => this.plugin.data.enabledModels.slice(),
       saveEnabled: (ids) => {
         this.plugin.data.enabledModels = ids.slice();
+        if (this.plugin.telemetry) this.plugin.telemetry.track("model_selected", { count: ids.length, models: ids.slice(0, 6).join(",") });
         void this.plugin.save();
       },
       openSettings: () => this.plugin.openSettings(),
@@ -8854,6 +9211,11 @@ var PanelView = class extends import_obsidian5.ItemView {
         this.plugin.data.dismissedUpdate = v;
         void this.plugin.save();
       },
+      getUpdateNudgeDay: () => this.plugin.data.updateNudgeDay || "",
+      setUpdateNudgeDay: (v) => {
+        this.plugin.data.updateNudgeDay = v;
+        void this.plugin.save();
+      },
       chatFontSize: () => this.plugin.data.chatFontSize,
       connectorSpecs: () => this.plugin.connectorSpecsCached(),
       connectorServices: () => this.plugin.connectorServicesCached(),
@@ -8863,6 +9225,10 @@ var PanelView = class extends import_obsidian5.ItemView {
         return !!(c && c.token);
       },
       sectionSrc: (name) => this.plugin.sectionSrc(name),
+      sectionCfg: (name) => this.plugin.sectionCfg(name),
+      chatv2Config: () => this.plugin.chatv2Config(),
+      stringOverride: (key, fallback) => this.plugin.stringOverride(key, fallback),
+      chatDeviceId: () => this.plugin.data.deviceId || "",
       autoSendPrompts: () => this.plugin.data.autoSendPrompts === true,
       setAutoSendPrompts: (v) => {
         this.plugin.data.autoSendPrompts = v === true;
@@ -8875,7 +9241,39 @@ var PanelView = class extends import_obsidian5.ItemView {
       }
     });
   }
+  frameAction(d, srcFrame, srcOrigin, replyType, frameName) {
+    const act = typeof d.event === "string" ? d.event : "";
+    const rid = typeof d.id === "string" ? d.id : "";
+    const reply = (ok, data, error) => framePost(srcFrame, srcOrigin, { type: replyType, event: act, id: rid, ok, data: data == null ? null : data, error: error || null });
+    if (act === "openNote") {
+      const a = typeof d.args === "object" && d.args ? d.args : {};
+      const p = String(a.path || "");
+      const f = p ? this.app.vault.getAbstractFileByPath(p) : null;
+      if (!f) return reply(false, null, "note-not-found");
+      this.app.workspace.getLeaf("tab").openFile(f).then(() => reply(true), () => reply(false, null, "open-failed"));
+    } else if (act === "createNote") {
+      const a = typeof d.args === "object" && d.args ? d.args : {};
+      const p = String(a.path || "");
+      if (!p || p.indexOf("..") >= 0 || !p.endsWith(".md")) return reply(false, null, "bad-path");
+      if (this.app.vault.getAbstractFileByPath(p)) return reply(false, null, "already-exists");
+      const content = typeof a.content === "string" ? a.content : "";
+      this.app.vault.create(p, content).then(() => reply(true), () => reply(false, null, "create-failed"));
+    } else if (act === "listNotes") {
+      const a = typeof d.args === "object" && d.args ? d.args : {};
+      const q = String(a.query || "").toLowerCase();
+      const paths = this.app.vault.getMarkdownFiles().map((f) => f.path).filter((p) => !q || p.toLowerCase().indexOf(q) >= 0).slice(0, 50);
+      reply(true, { paths });
+    } else if (act === "showToast") {
+      const a = typeof d.args === "object" && d.args ? d.args : {};
+      new import_obsidian5.Notice(String(a.message || ""), a.sticky ? 0 : 4000);
+      reply(true);
+    } else {
+      if (TEL) TEL.track("frame_action_denied", { action: act.slice(0, 60), frame: frameName || "unknown" });
+      reply(false, null, "unknown-action");
+    }
+  }
   async onClose() {
+    FRAME_HOST_CB = null;
     var _a;
     (_a = this.panel) == null ? void 0 : _a.destroy();
     this.panel = null;
@@ -8913,16 +9311,60 @@ var ObsidianAppPlugin = class extends import_obsidian5.Plugin {
     if (this.data.sttEnabled !== false && !this.data.voiceTouched) {
       this.data.voiceTyping = true;
     }
+    const firstRun = !this.data.deviceId;
     if (!this.data.deviceId) {
       this.data.deviceId = typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : "d-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10);
       await this.saveData(this.data);
     }
+    this.telemetry = createTelemetry({ deviceId: () => this.data.deviceId, enabled: this.data.telemetry !== false });
+    deviceAuthBind({ getKey: () => this.data.deviceKey, deviceId: this.data.deviceId, provision: () => provisionDeviceKey(this) });
+    void deviceAuthReady();
+    this.registerInterval(window.setInterval(() => void deviceAuthReady(), 60000));
+    const baseTrack = this.telemetry.track.bind(this.telemetry);
+    this.telemetry.track = (ev, props) => {
+      try {
+        if (ev === "message_sent" && this.data.firstModelLogged !== true) {
+          this.data.firstModelLogged = true;
+          void this.saveData(this.data);
+          const p = props && typeof props === "object" ? props : {};
+          baseTrack("first_model_used", {
+            model: typeof p.model_list === "string" ? p.model_list : "",
+            n: typeof p.models === "number" ? p.models : 1,
+            agent: p.agent === true,
+            voice: p.voice === true,
+            chars: typeof p.chars === "number" ? p.chars : 0,
+            est_tokens: typeof p.est_tokens === "number" ? p.est_tokens : 0,
+            obsidian: typeof this.app.version === "string" ? this.app.version : ""
+          });
+        }
+      } catch (e) {
+      }
+      baseTrack(ev, props);
+    };
+    const telErr = (msg) => {
+      try {
+        this.telemetry.track("plugin_error", { message: String(msg).replace(/(?:[A-Za-z]:)?[\/\\][^\s"'\)]+/g, "[path]").slice(0, 120) });
+      } catch (e) {
+      }
+    };
+    window.addEventListener("error", (ev) => telErr(ev && ev.message || "uncaught error"));
+    window.addEventListener("unhandledrejection", (ev) => telErr(ev && ev.reason && ev.reason.message || "unhandled rejection"));
+    this.telemetry.track("app_open", { obsidian: typeof this.app.version === "string" ? this.app.version : "" });
+    this.registerInterval(window.setInterval(() => void this.telemetry.flush(), 30 * 1e3));
+    this.registerInterval(window.setInterval(() => {
+      this.telemetry.track("heartbeat", {});
+      void this.telemetry.flush();
+    }, 30 * 60 * 1e3));
+    if (firstRun) this.telemetry.track("plugin_activated", {});
     this.chats = createChatStore(
       this.app.vault.adapter,
       (this.manifest && this.manifest.dir ? this.manifest.dir : this.app.vault.configDir + "/plugins/free-ai-agents") + "/chats"
     );
     this.settingsFocus = null;
-    this.registry = new DoorRegistry(createObsidianTransport(() => this.data.deviceId));
+    this.registry = new DoorRegistry(
+      createObsidianTransport(() => this.data.deviceId, (ev, props) => this.telemetry && this.telemetry.track(ev, props)),
+      this.telemetry
+    );
     this.registry.customDefs = this.data.customDefs.slice();
     this.registry.efforts = this.data.effort;
     this.data.doors.forEach((id) => this.registry.addDoor(id));
@@ -8951,6 +9393,7 @@ var ObsidianAppPlugin = class extends import_obsidian5.Plugin {
       clearInterval(this._connTimer);
       this._connTimer = null;
     }
+    if (this.telemetry) void this.telemetry.flush();
     this.app.workspace.detachLeavesOfType(VIEW_TYPE);
   }
   facade() {
@@ -9018,6 +9461,7 @@ var ObsidianAppPlugin = class extends import_obsidian5.Plugin {
       if (!c || !this.registry.addCatalogProvider(c)) return false;
     }
     if (!this.data.doors.includes(id)) this.data.doors.push(id);
+    if (this.telemetry) this.telemetry.track("provider_added", { provider: id });
     await this.save();
     this.refreshPanel();
     return true;
@@ -9117,7 +9561,10 @@ var ObsidianAppPlugin = class extends import_obsidian5.Plugin {
   }
   async transcribeVoice(audio) {
     const d = this.data;
-    if (d.sttEnabled !== false && d.sttUrl) return this.riemannStt(audio);
+    if (d.sttEnabled !== false && d.sttUrl) {
+      if (this.telemetry) this.telemetry.track("voice_used", { door: "stt" });
+      return this.riemannStt(audio);
+    }
     return this.registry.transcribe(audio, d.voiceChoice);
   }
   async riemannStt(audio, depth) {
@@ -9255,19 +9702,48 @@ var ObsidianAppPlugin = class extends import_obsidian5.Plugin {
   }
   async loadSections() {
     const defs = { automation: { src: null }, play: { src: null }, study: { src: null } };
+    this._chatv2 = { src: null, pad: null, padBottom: null };
+    this._strings = null;
     try {
       const res = await (0, import_obsidian5.requestUrl)({ url: SECTIONS_URL, method: "GET", headers: { "X-Device-Id": this.data.deviceId, "X-App-Name": APP_NAME, "X-App-Version": APP_VERSION }, throw: false });
       const j = typeof res.json === "object" && res.json !== null ? res.json : {};
       ["play", "study", "automation"].forEach((k) => {
-        const src = j[k] && typeof j[k].src === "string" && j[k].src ? j[k].src : null;
-        defs[k] = { src };
+        const s = j[k] && typeof j[k] === "object" ? j[k] : {};
+        const src = typeof s.src === "string" && s.src ? s.src : null;
+        defs[k] = { src, pad: typeof s.pad === "number" ? s.pad : null, padBottom: typeof s.padBottom === "number" ? s.padBottom : null };
       });
+      // Chat v2 surface + UI string overrides, server-controlled like the other
+      // sections. All optional: absent keys fall back to baked values.
+      const c2 = j.chatv2 && typeof j.chatv2 === "object" ? j.chatv2 : {};
+      this._chatv2 = {
+        src: typeof c2.src === "string" && c2.src ? c2.src : null,
+        pad: typeof c2.pad === "number" ? c2.pad : null,
+        padBottom: typeof c2.padBottom === "number" ? c2.padBottom : null
+      };
+      const st = j.strings && typeof j.strings === "object" ? j.strings : {};
+      const picked = {};
+      ["chatv1Label", "chatv2Label", "chatv1Title", "chatv2Title", "chatv2Soon"].forEach((k) => {
+        if (typeof st[k] === "string" && st[k].trim()) picked[k] = st[k];
+      });
+      this._strings = picked;
     } catch (e) {
+      this._chatv2 = { src: null, pad: null, padBottom: null };
+      this._strings = null;
     }
     this._sections = defs;
   }
   sectionSrc(name) {
     return this._sections && this._sections[name] ? this._sections[name].src || "" : "";
+  }
+  sectionCfg(name) {
+    return this._sections && this._sections[name] ? this._sections[name] : { src: null, pad: null, padBottom: null };
+  }
+  chatv2Config() {
+    return this._chatv2 || { src: null, pad: null, padBottom: null };
+  }
+  stringOverride(key, fallback) {
+    const s = this._strings;
+    return s && typeof s[key] === "string" && s[key] ? s[key] : fallback;
   }
   connectorList() {
     return this.data.connectors || [];
@@ -9321,6 +9797,8 @@ var ObsidianAppPlugin = class extends import_obsidian5.Plugin {
     }
   }
   async activatePanel() {
+    if (this.telemetry) this.telemetry.track("panel_open", {});
+    if (this.telemetry) this.telemetry.track("surface_open", { surface: "chatv1" });
     const existing = this.app.workspace.getLeavesOfType(VIEW_TYPE)[0];
     if (existing) {
       this.app.workspace.revealLeaf(existing);
