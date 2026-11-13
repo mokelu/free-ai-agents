@@ -1694,7 +1694,7 @@ async function mcpPost(url, token, payload) {
 var CONN_CATALOG_URL = "https://conn.usefree.space/catalog.json";
 var SECTIONS_URL = "https://conn.usefree.space/sections.json";
 var APP_NAME = "free-ai-agents-obsidian";
-var APP_VERSION = "1.7.1";
+var APP_VERSION = "1.7.2";
 // device-auth.ts — capability handshake with the gateway. The gateway issues
 // this device a secret key (stored in data.json); AI requests carry
 // X-Device-Auth: <nonce>:<HMAC-SHA256(key, nonce)> with a short-lived
@@ -1791,7 +1791,7 @@ async function provisionDeviceKey(plugin) {
   } catch (e) { return ""; }
 }
 async function mcpListTools(url, token) {
-  await mcpPost(url, token, { jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2025-03-26", capabilities: {}, clientInfo: { name: "free-ai-agents", version: "1.7.1" } } });
+  await mcpPost(url, token, { jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2025-03-26", capabilities: {}, clientInfo: { name: "free-ai-agents", version: "1.7.2" } } });
   void mcpPost(url, token, { jsonrpc: "2.0", method: "notifications/initialized" }).catch(() => {
   });
   const out = await mcpPost(url, token, { jsonrpc: "2.0", id: 2, method: "tools/list", params: {} });
@@ -4983,7 +4983,7 @@ function mountPanel(root, deps) {
         h = history.map((m) => m.role === "system" && m.content.indexOf(manual) >= 0 ? { ...m, content: m.content.split(manual).join(short) } : m);
       }
       const agentDeps = {
-        callModel: (hh, schemas) => deps.registry.callModel(appId, hh, schemas, chatSig),
+        callModel: (hh, schemas) => deps.registry.callModel(appId, hh, schemas, chatAbort ? chatAbort.signal : void 0),
         schemas: mode === "no" ? void 0 : tools.schemas(),
         knownTools: new Set(tools.specs.map((t) => t.name)),
         shouldStop: () => destroyed || cancelledTurns.has(turn.id),
